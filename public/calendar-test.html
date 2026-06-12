@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendar Test - All YouTube Months</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #000;
+      color: #fff;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #ff0000;
+    }
+    .test-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .month-section {
+      background: #111;
+      border: 2px solid #333;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border-radius: 8px;
+    }
+    .month-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #ff0000;
+    }
+    .month-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #ff0000;
+    }
+    .month-stats {
+      color: #888;
+    }
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .event-card {
+      background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), url('./images/calendario/fondo_calendario.png');
+      background-size: cover;
+      background-position: center;
+      border-left: 4px solid #ff0000;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .event-card:hover {
+      transform: translateX(8px) translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
+      background: rgba(255, 0, 0, 0.25);
+    }
+    .event-title {
+      color: #fff;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+    }
+    .event-dj {
+      color: #ccc;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+    .event-footer {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .video-icon {
+      color: #ff0000;
+      font-size: 1.2rem;
+    }
+    .video-label {
+      color: #ff0000;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #888;
+    }
+    .error {
+      background: #300;
+      border: 2px solid #ff0000;
+      padding: 1rem;
+      border-radius: 8px;
+      color: #ff9999;
+    }
+    .summary {
+      background: #222;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border-radius: 8px;
+      border: 2px solid #ff0000;
+    }
+    .summary h2 {
+      color: #ff0000;
+      margin-bottom: 1rem;
+    }
+    .summary-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .stat-item {
+      background: #111;
+      padding: 1rem;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #ff0000;
+    }
+    .stat-label {
+      color: #888;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="test-container">
+    <h1>🧪 CALENDAR TEST - ALL YOUTUBE MONTHS</h1>
+    
+    <div class="summary" id="summary">
+      <h2>📊 Test Summary</h2>
+      <div class="loading">Running tests...</div>
+    </div>
+
+    <div id="results"></div>
+  </div>
+
+  <script>
+    const API_BASE_URL = window.location.hostname === 'localhost' 
+      ? 'http://localhost:5000' 
+      : '';
+
+    const monthsToTest = [
+      // 2024 - Months with YouTube events
+      { year: 2024, month: 0, name: 'Enero 2024', expectedTotal: 25, expectedYouTube: 18 },
+      { year: 2024, month: 1, name: 'Febrero 2024', expectedTotal: 20, expectedYouTube: 14 },
+      { year: 2024, month: 2, name: 'Marzo 2024', expectedTotal: 20, expectedYouTube: 14 },
+      { year: 2024, month: 3, name: 'Abril 2024', expectedTotal: 20, expectedYouTube: 15 },
+      { year: 2024, month: 4, name: 'Mayo 2024', expectedTotal: 26, expectedYouTube: 19 },
+      { year: 2024, month: 5, name: 'Junio 2024', expectedTotal: 27, expectedYouTube: 21 },
+      { year: 2024, month: 6, name: 'Julio 2024', expectedTotal: 14, expectedYouTube: 11 },
+      { year: 2024, month: 7, name: 'Agosto 2024', expectedTotal: 10, expectedYouTube: 6 },
+      { year: 2024, month: 8, name: 'Septiembre 2024', expectedTotal: 17, expectedYouTube: 13 },
+      { year: 2024, month: 9, name: 'Octubre 2024', expectedTotal: 13, expectedYouTube: 9 },
+      { year: 2024, month: 10, name: 'Noviembre 2024', expectedTotal: 7, expectedYouTube: 4 },
+      { year: 2024, month: 11, name: 'Diciembre 2024', expectedTotal: 12, expectedYouTube: 10 },
+      // 2025 - Months with YouTube events
+      { year: 2025, month: 0, name: 'Enero 2025', expectedTotal: 5, expectedYouTube: 1 },
+      { year: 2025, month: 1, name: 'Febrero 2025', expectedTotal: 16, expectedYouTube: 10 },
+      { year: 2025, month: 2, name: 'Marzo 2025', expectedTotal: 17, expectedYouTube: 8 },
+      { year: 2025, month: 3, name: 'Abril 2025', expectedTotal: 20, expectedYouTube: 20 },
+      { year: 2025, month: 4, name: 'Mayo 2025', expectedTotal: 28, expectedYouTube: 28 },
+      // 2025 - Months with Google Calendar events
+      { year: 2025, month: 5, name: 'Junio 2025', expectedTotal: 4, expectedYouTube: 0 },
+      { year: 2025, month: 6, name: 'Julio 2025', expectedTotal: 5, expectedYouTube: 0 },
+      { year: 2025, month: 7, name: 'Agosto 2025', expectedTotal: 6, expectedYouTube: 0 },
+      { year: 2025, month: 8, name: 'Septiembre 2025', expectedTotal: 4, expectedYouTube: 0 },
+      { year: 2025, month: 9, name: 'Octubre 2025', expectedTotal: 10, expectedYouTube: 0 },
+      { year: 2025, month: 10, name: 'Noviembre 2025', expectedTotal: 4, expectedYouTube: 0 }
+    ];
+
+    async function testMonth(monthData) {
+      const { year, month, name, expectedTotal, expectedYouTube } = monthData;
+      
+      try {
+        const apiUrl = `${API_BASE_URL}/api/calendar/events?calendarId=theblackroom.us@gmail.com&year=${year}&month=${month}`;
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const events = await response.json();
+        const youtubeEvents = events.filter(e => e.youtubeId && e.djs && e.djs.length > 0);
+        const googleEvents = events.filter(e => !e.youtubeId);
+        
+        // Extract DJs from all events
+        const allDJs = [];
+        events.forEach(event => {
+          if (event.djs && event.djs.length > 0) {
+            // YouTube events with djs field
+            allDJs.push(...event.djs.map(dj => ({
+              name: dj.name,
+              videoId: event.youtubeId,
+              eventTitle: event.summary
+            })));
+          } else if (event.description) {
+            // Google Calendar events - extract DJs from description
+            const djMatches = event.description.match(/([A-Z\s]+):/g);
+            if (djMatches) {
+              djMatches.forEach(match => {
+                const djName = match.replace(':', '').trim();
+                if (djName.length > 2) {
+                  allDJs.push({
+                    name: djName,
+                    videoId: null,
+                    eventTitle: event.summary
+                  });
+                }
+              });
+            }
+          }
+        });
+
+        const statusIcon = youtubeEvents.length > 0 ? '🎥' : googleEvents.length > 0 ? '📅' : '⚪';
+        const statusText = events.length === expectedTotal ? '✅ PASS' : `⚠️ ${events.length}/${expectedTotal}`;
+
+        return {
+          success: true,
+          name,
+          year,
+          month,
+          totalEvents: events.length,
+          youtubeEvents: youtubeEvents.length,
+          googleEvents: googleEvents.length,
+          expectedTotal,
+          expectedYouTube,
+          allDJs,
+          events: [...youtubeEvents, ...googleEvents],
+          status: `${statusIcon} ${statusText}`
+        };
+      } catch (error) {
+        return {
+          success: false,
+          name,
+          error: error.message
+        };
+      }
+    }
+
+    function renderMonthResults(result) {
+      if (!result.success) {
+        return `
+          <div class="month-section">
+            <div class="month-header">
+              <div class="month-title">❌ ${result.name}</div>
+            </div>
+            <div class="error">Error: ${result.error}</div>
+          </div>
+        `;
+      }
+
+      const eventsHTML = result.events.slice(0, 6).map(event => {
+        const hasVideo = !!event.youtubeId;
+        const djName = event.djs && event.djs[0] ? event.djs[0].name : 'DJ TBA';
+        const clickHandler = hasVideo ? `onclick="window.open('watch.html?id=${event.youtubeId}', '_blank')"` : '';
+        const cursorStyle = hasVideo ? 'pointer' : 'default';
+        const borderColor = hasVideo ? '#ff0000' : '#666';
+        
+        return `
+          <div class="event-card" ${clickHandler} style="cursor: ${cursorStyle}; border-left-color: ${borderColor};">
+            <div class="event-title">${event.summary.substring(0, 50)}...</div>
+            <div class="event-dj">🎧 ${djName.substring(0, 40)}</div>
+            <div class="event-footer">
+              ${hasVideo ? 
+                '<i class="fas fa-play-circle video-icon"></i><span class="video-label">VIDEO</span>' :
+                '<i class="fas fa-music" style="color: #666;"></i><span style="color: #666; font-size: 0.8rem;">AUDIO</span>'
+              }
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const moreCount = result.events.length > 6 ? result.events.length - 6 : 0;
+
+      return `
+        <div class="month-section">
+          <div class="month-header">
+            <div class="month-title">${result.status} ${result.name}</div>
+            <div class="month-stats">
+              ${result.totalEvents} events total | 🎥 ${result.youtubeEvents} YouTube | 📅 ${result.googleEvents} Google | 🎧 ${result.allDJs.length} DJs
+            </div>
+          </div>
+          <div class="events-grid">
+            ${eventsHTML}
+            ${moreCount > 0 ? `
+              <div class="event-card" style="opacity: 0.5; cursor: default;">
+                <div class="event-title">+ ${moreCount} more events</div>
+                <div class="event-dj">Click PREVIOUS/NEXT to view all</div>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    async function runAllTests() {
+      const resultsContainer = document.getElementById('results');
+      const summaryContainer = document.getElementById('summary');
+      
+      resultsContainer.innerHTML = '<div class="loading">Testing all months...</div>';
+
+      const results = [];
+      for (const monthData of monthsToTest) {
+        const result = await testMonth(monthData);
+        results.push(result);
+        
+        // Render incrementally
+        const html = results.map(renderMonthResults).join('');
+        resultsContainer.innerHTML = html;
+      }
+
+      // Calculate summary
+      const totalMonths = results.length;
+      const passedMonths = results.filter(r => r.success && r.youtubeEvents === r.expected).length;
+      const totalYouTubeEvents = results.filter(r => r.success).reduce((sum, r) => sum + r.youtubeEvents, 0);
+      const totalEvents = results.filter(r => r.success).reduce((sum, r) => sum + r.totalEvents, 0);
+
+      summaryContainer.innerHTML = `
+        <h2>📊 Test Summary</h2>
+        <div class="summary-stats">
+          <div class="stat-item">
+            <div class="stat-value">${totalMonths}</div>
+            <div class="stat-label">Months Tested</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${passedMonths}</div>
+            <div class="stat-label">Tests Passed</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${totalYouTubeEvents}</div>
+            <div class="stat-label">YouTube Events</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${totalEvents}</div>
+            <div class="stat-label">Total Events</div>
+          </div>
+        </div>
+      `;
+
+      console.log('🧪 TEST COMPLETED');
+      console.log('Results:', results);
+    }
+
+    // Run tests on page load
+    runAllTests();
+  </script>
+</body>
+</html>

@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Valentine's Rave Registration - Black Room</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      
+      :root {
+        --valentine-red: #c41e3a;
+        --valentine-dark: #8b0000;
+        --valentine-pink: #ff6b6b;
+        --valentine-glow: rgba(196, 30, 58, 0.4);
+      }
+      
+      body {
+        background: #000;
+        color: #fff;
+        font-family: "Inter", sans-serif;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        overflow-x: hidden;
+      }
+      
+      .valentine-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        background: 
+          radial-gradient(ellipse at 20% 30%, rgba(139, 0, 0, 0.15) 0%, transparent 50%),
+          radial-gradient(ellipse at 80% 70%, rgba(196, 30, 58, 0.1) 0%, transparent 50%),
+          radial-gradient(ellipse at 50% 50%, rgba(100, 0, 20, 0.08) 0%, transparent 70%),
+          #000;
+      }
+      
+      .floating-hearts {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      
+      .heart {
+        position: absolute;
+        font-size: 1.5rem;
+        color: var(--valentine-red);
+        opacity: 0.15;
+        animation: floatHeart 15s infinite linear;
+      }
+      
+      @keyframes floatHeart {
+        0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+        10% { opacity: 0.15; }
+        90% { opacity: 0.15; }
+        100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+      }
+
+      .logo {
+        position: relative;
+        z-index: 2;
+        width: 120px;
+        height: auto;
+        margin-bottom: 20px;
+        filter: brightness(1.2) contrast(1.1);
+        mix-blend-mode: screen;
+      }
+
+      .valentine-title {
+        position: relative;
+        z-index: 2;
+        font-family: 'Space Mono', monospace;
+        font-size: 1.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3em;
+        color: var(--valentine-red);
+        margin-bottom: 0.5rem;
+        text-shadow: 0 0 30px var(--valentine-glow);
+      }
+      
+      .valentine-subtitle {
+        position: relative;
+        z-index: 2;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        color: #888;
+        margin-bottom: 30px;
+      }
+
+      .application-card {
+        position: relative;
+        background: rgba(10, 10, 10, 0.95);
+        width: 100%;
+        max-width: 520px;
+        border: 1px solid rgba(196, 30, 58, 0.3);
+        z-index: 2;
+        backdrop-filter: blur(10px);
+      }
+
+      .application-card::before,
+      .application-card::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-color: var(--valentine-red);
+        border-style: solid;
+        z-index: 2;
+      }
+      .application-card::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+      .application-card::after { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+
+      .application-card .corner-bl,
+      .application-card .corner-br {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-color: var(--valentine-red);
+        border-style: solid;
+        z-index: 2;
+      }
+      .application-card .corner-bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+      .application-card .corner-br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid rgba(196, 30, 58, 0.2);
+        background: linear-gradient(135deg, rgba(139, 0, 0, 0.1) 0%, transparent 100%);
+      }
+      
+      .card-header h2 {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      
+      .card-header h2 i {
+        color: var(--valentine-red);
+      }
+
+      .card-header .status {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.65rem;
+        color: var(--valentine-red);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      
+      .card-header .status::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        background: var(--valentine-red);
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+      
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+      }
+
+      .card-body {
+        padding: 1.5rem;
+      }
+
+      .form-group {
+        margin-bottom: 1.25rem;
+      }
+
+      .form-group label {
+        display: block;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #ccc;
+        margin-bottom: 0.5rem;
+      }
+      
+      .form-group label .required {
+        color: var(--valentine-red);
+      }
+
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 0.85rem 1rem;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.9rem;
+        background: rgba(20, 20, 20, 0.8);
+        border: 1px solid rgba(196, 30, 58, 0.2);
+        color: #fff;
+        transition: all 0.3s ease;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus {
+        outline: none;
+        border-color: var(--valentine-red);
+        box-shadow: 0 0 20px rgba(196, 30, 58, 0.2);
+      }
+
+      .form-group input::placeholder {
+        color: #555;
+      }
+      
+      .form-group select {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23c41e3a' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        padding-right: 2.5rem;
+      }
+      
+      .form-group select option {
+        background: #111;
+        color: #fff;
+      }
+
+      .radio-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .radio-option {
+        flex: 1;
+        min-width: calc(50% - 0.25rem);
+      }
+
+      .radio-option input {
+        display: none;
+      }
+
+      .radio-option label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1rem;
+        background: rgba(20, 20, 20, 0.8);
+        border: 1px solid rgba(196, 30, 58, 0.2);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.8rem;
+        text-transform: none;
+        letter-spacing: 0;
+        color: #888;
+        text-align: center;
+      }
+
+      .radio-option input:checked + label {
+        background: rgba(196, 30, 58, 0.2);
+        border-color: var(--valentine-red);
+        color: #fff;
+      }
+
+      .radio-option label:hover {
+        border-color: var(--valentine-pink);
+        color: #fff;
+      }
+
+      .submit-btn {
+        width: 100%;
+        padding: 1rem;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        background: linear-gradient(135deg, var(--valentine-red) 0%, var(--valentine-dark) 100%);
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        margin-top: 1rem;
+      }
+
+      .submit-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s ease;
+      }
+
+      .submit-btn:hover::before {
+        left: 100%;
+      }
+
+      .submit-btn:hover {
+        box-shadow: 0 0 30px var(--valentine-glow);
+        transform: translateY(-2px);
+      }
+
+      .submit-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      
+      .submit-btn i {
+        margin-right: 0.5rem;
+      }
+
+      .success-message {
+        display: none;
+        text-align: center;
+        padding: 2rem;
+      }
+
+      .success-message i {
+        font-size: 3rem;
+        color: var(--valentine-red);
+        margin-bottom: 1rem;
+        animation: heartBeat 1.5s infinite;
+      }
+      
+      @keyframes heartBeat {
+        0%, 100% { transform: scale(1); }
+        25% { transform: scale(1.1); }
+        50% { transform: scale(1); }
+        75% { transform: scale(1.1); }
+      }
+
+      .success-message h3 {
+        font-family: 'Space Mono', monospace;
+        font-size: 1.2rem;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        margin-bottom: 0.5rem;
+        color: var(--valentine-red);
+      }
+
+      .success-message p {
+        color: #888;
+        font-size: 0.9rem;
+        line-height: 1.6;
+      }
+
+      .form-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(196, 30, 58, 0.3), transparent);
+        margin: 1.5rem 0;
+      }
+      
+      .section-label {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: var(--valentine-red);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      
+      .section-label::before,
+      .section-label::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, var(--valentine-red), transparent);
+      }
+      
+      .section-label::after {
+        background: linear-gradient(90deg, transparent, var(--valentine-red));
+      }
+
+      @media (max-width: 480px) {
+        .valentine-title { font-size: 1.4rem; letter-spacing: 0.2em; }
+        .radio-option { min-width: 100%; }
+        .card-body { padding: 1.25rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="valentine-bg"></div>
+    
+    <div class="floating-hearts" id="floatingHearts"></div>
+    
+    <img src="/images/br-logo-valentine.png" alt="Black Room" class="logo">
+    
+    <h1 class="valentine-title">Valentine's Rave</h1>
+    <p class="valentine-subtitle">Registration Form</p>
+
+    <div class="application-card">
+      <div class="corner-bl"></div>
+      <div class="corner-br"></div>
+      
+      <div class="card-header">
+        <h2><i class="fas fa-heart"></i> Sign Up</h2>
+        <div class="status">Open</div>
+      </div>
+      
+      <div class="card-body">
+        <form id="valentineForm">
+          <div class="section-label">Personal Info</div>
+          
+          <div class="form-group">
+            <label>Name <span class="required">*</span></label>
+            <input type="text" name="name" placeholder="Your name" required>
+          </div>
+
+          <div class="form-group">
+            <label>Age <span class="required">*</span></label>
+            <input type="number" name="age" placeholder="Your age" min="18" max="99" required>
+          </div>
+
+          <div class="form-group">
+            <label>Gender <span class="required">*</span></label>
+            <select name="gender" required>
+              <option value="">Select...</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="non-binary">Non-binary</option>
+              <option value="other">Other</option>
+              <option value="prefer-not">Prefer not to say</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Instagram @ <span class="required">*</span></label>
+            <input type="text" name="instagram" placeholder="@yourusername" required>
+          </div>
+
+          <div class="form-divider"></div>
+          <div class="section-label">Event Questions</div>
+
+          <div class="form-group">
+            <label>Are you attending the Valentine's Rave? <span class="required">*</span></label>
+            <div class="radio-group">
+              <div class="radio-option">
+                <input type="radio" name="attending" id="attending-yes" value="yes" required>
+                <label for="attending-yes"><i class="fas fa-check" style="margin-right:0.5rem;color:var(--valentine-red)"></i> Yes</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="attending" id="attending-planning" value="planning">
+                <label for="attending-planning"><i class="fas fa-clock" style="margin-right:0.5rem;color:var(--valentine-red)"></i> Not yet, but planning to</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Open to Valentine's activities during a specific time window? <span class="required">*</span></label>
+            <div class="radio-group">
+              <div class="radio-option">
+                <input type="radio" name="openToActivities" id="activities-yes" value="yes" required>
+                <label for="activities-yes">Yes</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="openToActivities" id="activities-maybe" value="maybe">
+                <label for="activities-maybe">Maybe</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="openToActivities" id="activities-no" value="no">
+                <label for="activities-no">No</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>What are you hoping to get out of this experience? <span class="required">*</span></label>
+            <div class="radio-group">
+              <div class="radio-option">
+                <input type="radio" name="hopingFor" id="hoping-meet" value="meet-people" required>
+                <label for="hoping-meet">Meet new people</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="hopingFor" id="hoping-flirt" value="flirt-fun">
+                <label for="hoping-flirt">Flirt & have fun</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="hopingFor" id="hoping-connection" value="real-connection">
+                <label for="hoping-connection">A real connection</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="hopingFor" id="hoping-experience" value="just-experience">
+                <label for="hoping-experience">Just the experience</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Comfortable being filmed or photographed? <span class="required">*</span></label>
+            <div class="radio-group">
+              <div class="radio-option">
+                <input type="radio" name="comfortableFilming" id="filming-yes" value="yes" required>
+                <label for="filming-yes">Yes</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="comfortableFilming" id="filming-no" value="no">
+                <label for="filming-no">No</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="comfortableFilming" id="filming-offcamera" value="off-camera">
+                <label for="filming-offcamera">Only off-camera</label>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn">
+            <i class="fas fa-heart"></i> Submit Registration
+          </button>
+        </form>
+
+        <div class="success-message" id="successMessage">
+          <i class="fas fa-heart"></i>
+          <h3>You're In!</h3>
+          <p>Thanks for signing up for the Valentine's Rave activities. We'll be in touch via Instagram with more details!</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Floating hearts animation
+      function createHearts() {
+        const container = document.getElementById('floatingHearts');
+        const hearts = ['♥', '♡', '❤', '💕'];
+        
+        for (let i = 0; i < 15; i++) {
+          const heart = document.createElement('div');
+          heart.className = 'heart';
+          heart.innerHTML = hearts[Math.floor(Math.random() * hearts.length)];
+          heart.style.left = Math.random() * 100 + '%';
+          heart.style.animationDelay = Math.random() * 15 + 's';
+          heart.style.animationDuration = (15 + Math.random() * 10) + 's';
+          heart.style.fontSize = (0.8 + Math.random() * 1.2) + 'rem';
+          container.appendChild(heart);
+        }
+      }
+      createHearts();
+
+      // Form submission
+      document.getElementById('valentineForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const form = e.target;
+        const submitBtn = form.querySelector('.submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+        const formData = {
+          name: form.name.value.trim(),
+          age: parseInt(form.age.value),
+          gender: form.gender.value,
+          instagram: form.instagram.value.trim(),
+          attending: form.attending.value,
+          openToActivities: form.openToActivities.value,
+          hopingFor: form.hopingFor.value,
+          comfortableFilming: form.comfortableFilming.value
+        };
+
+        try {
+          const response = await fetch('/api/valentine-registration', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+
+          if (response.ok) {
+            form.style.display = 'none';
+            document.getElementById('successMessage').style.display = 'block';
+          } else {
+            const data = await response.json();
+            alert(data.error || 'Error submitting form. Please try again.');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-heart"></i> Submit Registration';
+          }
+        } catch (error) {
+          alert('Error submitting form. Please try again.');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fas fa-heart"></i> Submit Registration';
+        }
+      });
+    </script>
+  </body>
+</html>

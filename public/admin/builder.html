@@ -1,0 +1,3823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bio Links Builder PRO - Black Room Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #0d0d0d;
+      --bg-card: #1a1a1a;
+      --bg-panel: #151515;
+      --bg-hover: #252525;
+      --bg-elevated: #1f1f1f;
+      --border: #2a2a2a;
+      --border-hover: #3a3a3a;
+      --border-subtle: #222;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --accent-light: rgba(99, 102, 241, 0.15);
+      --accent-glow: rgba(99, 102, 241, 0.3);
+      --text: #f5f5f5;
+      --text-muted: #888;
+      --text-dim: #555;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --glass: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.06);
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+      --shadow-phone: 0 25px 80px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255,255,255,0.08);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    .header {
+      background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-dark) 100%);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+    
+    .logo i { 
+      color: var(--accent); 
+      font-size: 20px;
+    }
+    
+    .logo-badge {
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      font-size: 9px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-left: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: white;
+    }
+    
+    .header-divider {
+      width: 1px;
+      height: 24px;
+      background: var(--border);
+    }
+    
+    .header-center {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 4px;
+    }
+    
+    .preview-toggle {
+      padding: 8px 14px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    
+    .preview-toggle:hover { 
+      color: var(--text); 
+      background: var(--glass);
+    }
+    .preview-toggle.active {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 2px 8px var(--accent-glow);
+    }
+    
+    .zoom-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 8px;
+      padding-left: 8px;
+      border-left: 1px solid var(--border-subtle);
+    }
+    
+    .zoom-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    
+    .zoom-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+    }
+    
+    .zoom-level {
+      font-size: 11px;
+      color: var(--text-dim);
+      min-width: 36px;
+      text-align: center;
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: white;
+      box-shadow: 0 2px 12px var(--accent-glow);
+    }
+    
+    .btn-primary:hover { 
+      transform: translateY(-1px); 
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    
+    .btn-secondary {
+      background: var(--bg-elevated);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    
+    .btn-secondary:hover { 
+      background: var(--bg-hover); 
+      border-color: var(--border-hover); 
+    }
+    
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+    }
+    
+    .btn-ghost:hover { color: var(--text); background: var(--bg-card); }
+    
+    .main-container {
+      display: grid;
+      grid-template-columns: 200px 1fr 340px;
+      min-height: calc(100vh - 56px);
+    }
+    
+    /* === LEFT SIDEBAR === */
+    .sidebar {
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border-subtle);
+      overflow-y: auto;
+      height: calc(100vh - 56px);
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 8px;
+      min-width: 200px;
+      width: 200px;
+    }
+    
+    .sidebar-category {
+      width: 100%;
+      padding: 8px 0;
+    }
+    
+    .sidebar-category-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+      text-align: center;
+      padding: 8px 0 4px;
+    }
+    
+    .sidebar-section {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    
+    .sidebar-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      letter-spacing: 1.2px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 600;
+    }
+    
+    .element-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 100%;
+      padding: 0 8px;
+    }
+    
+    .element-btn {
+      width: 56px;
+      height: 56px;
+      padding: 0;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    
+    .element-btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--border);
+    }
+    
+    .element-btn:hover .element-tooltip {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+    
+    .element-btn i {
+      font-size: 18px;
+      margin-bottom: 4px;
+      display: block;
+      transition: transform 0.2s;
+    }
+    
+    .element-btn:hover i {
+      transform: scale(1.1);
+    }
+    
+    .element-btn span {
+      font-size: 9px;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+    
+    .element-tooltip {
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%) translateX(-8px);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.2s ease;
+      margin-left: 8px;
+      box-shadow: var(--shadow-md);
+      z-index: 100;
+    }
+    
+    .element-btn.link i { color: #60a5fa; }
+    .element-btn.promo i { color: #f472b6; }
+    .element-btn.video i { color: #f87171; }
+    .element-btn.header i { color: #a78bfa; }
+    .element-btn.divider i { color: #6b7280; }
+    .element-btn.image i { color: #34d399; }
+    .element-btn.countdown i { color: #fbbf24; }
+    .element-btn.playlist i { color: #1db954; }
+    .element-btn.banner i { color: #c084fc; }
+    .element-btn.social i { color: #22d3ee; }
+    
+    .drag-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 12px;
+      padding: 0 8px;
+    }
+    .drag-hint i {
+      margin-right: 4px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    
+    /* Draggable elements from sidebar */
+    .element-btn[draggable="true"] {
+      cursor: grab;
+    }
+    .element-btn[draggable="true"]:active {
+      cursor: grabbing;
+    }
+    .element-btn.dragging {
+      opacity: 0.5;
+      transform: scale(0.95);
+    }
+    
+    /* Drop zones between elements */
+    .drop-zone {
+      height: 4px;
+      background: transparent;
+      margin: 2px 0;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+    .drop-zone.active {
+      height: 50px;
+      background: linear-gradient(135deg, rgba(255,23,68,0.2), rgba(255,23,68,0.1));
+      border: 2px dashed var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .drop-zone.active::after {
+      content: 'Drop here';
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    /* Banner element preview */
+    .element-banner {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      padding: 20px 16px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .element-banner.has-bg {
+      background-size: cover;
+      background-position: center;
+    }
+    .element-banner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.3);
+      pointer-events: none;
+    }
+    .element-banner-content {
+      position: relative;
+      z-index: 1;
+    }
+    .element-banner h4 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .element-banner p {
+      font-size: 12px;
+      opacity: 0.9;
+      margin-bottom: 12px;
+    }
+    .element-banner-cta {
+      display: inline-block;
+      padding: 8px 20px;
+      background: #fff;
+      color: #333;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Social row element */
+    .element-social-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      padding: 12px;
+      flex-wrap: wrap;
+    }
+    .social-icon-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: #fff;
+      transition: transform 0.2s;
+    }
+    .social-icon-btn:hover {
+      transform: scale(1.1);
+    }
+    .social-icon-btn.instagram { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+    .social-icon-btn.tiktok { background: #000; }
+    .social-icon-btn.youtube { background: #ff0000; }
+    .social-icon-btn.spotify { background: #1db954; }
+    .social-icon-btn.soundcloud { background: #ff5500; }
+    .social-icon-btn.twitter { background: #1da1f2; }
+    .social-icon-btn.facebook { background: #1877f2; }
+    .social-icon-btn.discord { background: #5865f2; }
+    
+    /* Social selector in modal */
+    .social-selector {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .social-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 13px;
+    }
+    .social-check:hover {
+      border-color: var(--accent);
+    }
+    .social-check input:checked + i {
+      color: var(--accent);
+    }
+    .social-check i {
+      font-size: 16px;
+      color: var(--text-muted);
+    }
+    
+    /* Form elements styling */
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: var(--text-muted);
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .form-textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+    
+    /* === CANVAS AREA === */
+    .canvas-area {
+      background: var(--bg-dark);
+      padding: 60px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow-y: auto;
+      height: calc(100vh - 56px);
+      position: relative;
+    }
+    
+    .canvas-bg-pattern {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        radial-gradient(circle at 1px 1px, var(--border-subtle) 1px, transparent 0);
+      background-size: 32px 32px;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+    
+    .phone-frame {
+      position: relative;
+      z-index: 1;
+      transform-origin: top center;
+      transition: transform 0.3s ease;
+    }
+    
+    .phone-device {
+      width: 340px;
+      background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+      border-radius: 48px;
+      padding: 14px;
+      box-shadow: var(--shadow-phone);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    
+    .phone-device::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 48px;
+      padding: 1px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.1), transparent);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+    
+    .phone-device.desktop-mode {
+      width: 680px;
+      border-radius: 16px;
+    }
+    
+    .phone-device.desktop-mode::before {
+      border-radius: 16px;
+    }
+    
+    .phone-screen {
+      background: var(--bg-dark);
+      border-radius: 38px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .phone-device.desktop-mode .phone-screen {
+      border-radius: 10px;
+    }
+    
+    .phone-notch {
+      width: 110px;
+      height: 30px;
+      background: linear-gradient(145deg, #1a1a1a, #222);
+      border-radius: 16px;
+      margin: 10px auto;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 16px;
+    }
+    
+    .phone-notch::before {
+      content: '';
+      width: 10px;
+      height: 10px;
+      background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+      border-radius: 50%;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
+    }
+    
+    .phone-device.desktop-mode .phone-notch {
+      display: none;
+    }
+    
+    .phone-content {
+      padding: 16px;
+      min-height: 580px;
+      max-height: 620px;
+      overflow-y: auto;
+    }
+    
+    .phone-content::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    .phone-content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .phone-content::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+    
+    .profile-section {
+      text-align: center;
+      margin-bottom: 20px;
+      cursor: pointer;
+      padding: 12px;
+      border-radius: 12px;
+      transition: all 0.2s;
+    }
+    
+    .profile-section:hover {
+      background: rgba(255,255,255,0.03);
+    }
+    
+    .profile-section.selected {
+      background: rgba(255,23,68,0.1);
+      outline: 2px solid var(--accent);
+    }
+    
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 0 auto 10px;
+      background: linear-gradient(135deg, #1a1a1a, #222);
+      border: 3px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .profile-avatar i {
+      font-size: 32px;
+      color: var(--text-muted);
+    }
+    
+    .profile-avatar .upload-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    
+    .profile-section:hover .upload-overlay {
+      opacity: 1;
+    }
+    
+    .profile-name {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    
+    .profile-bio {
+      font-size: 13px;
+      color: var(--text-muted);
+      max-width: 250px;
+      margin: 0 auto;
+    }
+    
+    .elements-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 200px;
+    }
+    
+    .element-item {
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .element-item::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border: 2px solid transparent;
+      border-radius: var(--radius-lg);
+      transition: all 0.2s ease;
+      pointer-events: none;
+    }
+    
+    .element-item:hover::before {
+      border-color: var(--accent-light);
+    }
+    
+    .element-item.selected::before {
+      border-color: var(--accent);
+      box-shadow: 0 0 24px var(--accent-glow);
+    }
+    
+    .element-item.inactive {
+      opacity: 0.35;
+    }
+    
+    .element-item.sortable-ghost {
+      opacity: 0.3;
+      transform: scale(0.98);
+    }
+    
+    .element-item.sortable-drag {
+      box-shadow: var(--shadow-lg);
+      z-index: 100;
+    }
+    
+    /* Drag guide line */
+    .element-item.sortable-chosen::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent);
+      border-radius: 3px;
+      opacity: 0;
+    }
+    
+    .element-drag-handle {
+      position: absolute;
+      left: -28px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 36px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      opacity: 0;
+      transition: all 0.2s ease;
+    }
+    
+    .element-item:hover .element-drag-handle {
+      opacity: 1;
+    }
+    
+    .element-drag-handle:hover {
+      background: var(--bg-hover);
+      border-color: var(--border-hover);
+    }
+    
+    .element-drag-handle i {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+    
+    .element-link {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      transition: all 0.2s ease;
+    }
+    
+    .element-link:hover {
+      background: var(--bg-hover);
+      transform: translateX(3px);
+      border-color: var(--border-hover);
+    }
+    
+    .element-link-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    
+    .element-link-text {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .element-link-text h4 {
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .element-link-text p {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .element-link .arrow {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    
+    .element-link.has-progress {
+      flex-wrap: wrap;
+      padding-bottom: 24px;
+      position: relative;
+    }
+    
+    .element-progress-wrapper {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 20px;
+      background: #000;
+      border-top: 1px solid #333;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      gap: 8px;
+      border-radius: 0 0 12px 12px;
+    }
+    
+    .element-progress-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #fff;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .element-progress-label::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      background: #fff;
+      animation: pulse-dot 1s ease-in-out infinite;
+    }
+    
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    
+    .element-progress-bar {
+      flex: 1;
+      height: 6px;
+      background: #111;
+      border: 1px solid #333;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .element-progress-bar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 9.5%,
+        #333 9.5%,
+        #333 10%
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+    
+    .element-progress-fill {
+      height: 100%;
+      background: linear-gradient(180deg, #fff 0%, #888 50%, #fff 100%);
+      transition: width 0.3s ease;
+      box-shadow: 0 0 8px rgba(255,255,255,0.3);
+    }
+    
+    .element-progress-percent {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      color: #666;
+      letter-spacing: 1px;
+      min-width: 28px;
+      text-align: right;
+    }
+    
+    .element-header {
+      text-align: center;
+      padding: 16px;
+    }
+    
+    .element-header h3 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    
+    .element-header p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    
+    .element-divider {
+      padding: 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .element-divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    
+    .element-divider-text {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .element-promo {
+      padding: 16px;
+      border-radius: 12px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .element-promo::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+    }
+    
+    .element-promo-badge {
+      display: inline-block;
+      background: rgba(0,0,0,0.4);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .element-promo h4 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    
+    .element-promo p {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+    
+    .element-promo-code {
+      display: inline-block;
+      background: rgba(0,0,0,0.5);
+      padding: 6px 16px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 8px;
+      border: 1px dashed rgba(255,255,255,0.3);
+    }
+    
+    .element-video {
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--bg-card);
+    }
+    
+    .element-video-thumb {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    
+    .element-video-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .element-video-play {
+      position: absolute;
+      width: 48px;
+      height: 48px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 4px 20px rgba(255,23,68,0.4);
+    }
+    
+    .element-video-info {
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .element-video-info i {
+      color: var(--accent);
+    }
+    
+    .element-video-info span {
+      font-size: 13px;
+      font-weight: 500;
+    }
+    
+    .element-image {
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    .element-image img {
+      width: 100%;
+      display: block;
+    }
+    
+    .element-image .placeholder {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: linear-gradient(135deg, #1a1a1a, #222);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 8px;
+      color: var(--text-muted);
+    }
+    
+    .element-countdown {
+      background: linear-gradient(135deg, #1a1a1a, #111);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    
+    .element-countdown-title {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .countdown-boxes {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .countdown-box {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      min-width: 50px;
+    }
+    
+    .countdown-box .number {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    
+    .countdown-box .label {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    
+    .element-playlist {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .playlist-icon {
+      width: 48px;
+      height: 48px;
+      background: #1db954;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+    
+    .playlist-info {
+      flex: 1;
+    }
+    
+    .playlist-info h4 {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .playlist-info p {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    
+    /* === INSPECTOR PANEL (RIGHT) === */
+    .sidebar-right {
+      background: var(--bg-panel);
+      border-left: 1px solid var(--border-subtle);
+      overflow-y: auto;
+      height: calc(100vh - 56px);
+    }
+    
+    .settings-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-card);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    .settings-header h3 {
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: -0.2px;
+    }
+    
+    .settings-header h3 i { 
+      color: var(--accent); 
+      font-size: 14px;
+    }
+    
+    .settings-content {
+      padding: 20px;
+    }
+    
+    .inspector-section {
+      margin-bottom: 24px;
+    }
+    
+    .inspector-section-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    
+    .no-selection {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--text-muted);
+    }
+    
+    .no-selection i {
+      font-size: 56px;
+      margin-bottom: 20px;
+      opacity: 0.15;
+      color: var(--text);
+    }
+    
+    .no-selection p {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    
+    .no-selection small {
+      display: block;
+      margin-top: 8px;
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+    
+    .form-group {
+      margin-bottom: 18px;
+    }
+    
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 500;
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text);
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+    
+    .form-group input:hover,
+    .form-group textarea:hover,
+    .form-group select:hover {
+      border-color: var(--border-hover);
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    
+    .form-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 16px 0;
+    }
+    
+    .form-group label input[type="checkbox"] {
+      margin-right: 8px;
+    }
+    
+    .icon-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+      padding: 8px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    
+    .icon-option {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-card);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 2px solid transparent;
+      font-size: 14px;
+    }
+    
+    .icon-option:hover {
+      background: var(--bg-hover);
+    }
+    
+    .icon-option.selected {
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+    
+    .color-input {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .color-input input[type="color"] {
+      width: 44px;
+      height: 38px;
+      padding: 2px;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    
+    .color-input input[type="text"] {
+      flex: 1;
+    }
+    
+    .color-presets {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    
+    .color-preset {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    
+    .color-preset:hover {
+      transform: scale(1.1);
+    }
+    
+    .color-preset.selected {
+      border-color: white;
+    }
+    
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .toggle-row label {
+      margin: 0;
+      font-size: 13px;
+      color: var(--text);
+    }
+    
+    .toggle {
+      width: 44px;
+      height: 24px;
+      background: #333;
+      border-radius: 12px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .toggle.active {
+      background: var(--accent);
+    }
+    
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: all 0.2s;
+    }
+    
+    .toggle.active::after {
+      left: 22px;
+    }
+    
+    .button-style-picker {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    
+    .style-option {
+      padding: 12px 8px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    
+    .style-option:hover {
+      border-color: var(--border-hover);
+    }
+    
+    .style-option.selected {
+      border-color: var(--accent);
+      background: rgba(255,23,68,0.1);
+    }
+    
+    .style-option span {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    
+    .style-preview {
+      height: 24px;
+      margin-bottom: 6px;
+      border-radius: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+    }
+    
+    .style-preview.filled {
+      background: var(--accent);
+      border: none;
+    }
+    
+    .style-preview.outline {
+      background: transparent;
+      border: 2px solid var(--accent);
+    }
+    
+    .style-preview.soft {
+      background: rgba(255,23,68,0.2);
+      border: none;
+    }
+    
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      margin-top: 16px;
+    }
+    
+    .form-actions .btn {
+      flex: 1;
+    }
+    
+    .btn-danger {
+      background: #d32f2f;
+      color: white;
+    }
+    
+    .btn-danger:hover { background: #b71c1c; }
+    
+    .floating-toolbar {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a1a1a;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px;
+      display: flex;
+      gap: 4px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      z-index: 100;
+    }
+    
+    .toolbar-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    
+    .toolbar-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+    }
+    
+    .toolbar-btn.active {
+      background: var(--accent);
+      color: white;
+    }
+    
+    .toolbar-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    
+    .toolbar-divider {
+      width: 1px;
+      height: 24px;
+      background: var(--border);
+      margin: 8px 4px;
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      right: 24px;
+      background: #1a1a1a;
+      color: var(--text);
+      padding: 12px 20px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 1000;
+      animation: slideUp 0.3s ease;
+      border: 1px solid var(--border);
+    }
+    
+    .toast.success { border-left: 3px solid var(--success); }
+    .toast.error { border-left: 3px solid var(--accent); }
+    
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+    
+    .modal-overlay.active { display: flex; }
+    
+    .modal {
+      background: #111;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      width: 420px;
+      max-width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: modalIn 0.2s ease;
+    }
+    
+    @keyframes modalIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    
+    .modal-header h3 {
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .modal-header h3 i { color: var(--accent); }
+    
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-dark);
+      border: none;
+      border-radius: 8px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    
+    .modal-close:hover { color: var(--text); }
+    
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .modal-actions .btn { flex: 1; }
+    
+    .qr-modal .modal {
+      text-align: center;
+    }
+    
+    .qr-container {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      display: inline-block;
+      margin: 20px 0;
+    }
+    
+    .qr-container canvas {
+      display: block;
+    }
+    
+    .stats-mini {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 12px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+    
+    .stat-item {
+      text-align: center;
+    }
+    
+    .stat-item .value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    
+    .stat-item .label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .upload-zone:hover {
+      border-color: var(--accent);
+      background: rgba(255,23,68,0.05);
+    }
+    
+    .upload-zone i {
+      font-size: 32px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    
+    .upload-zone p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    
+    .upload-zone input {
+      display: none;
+    }
+    
+    .history-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .history-item {
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    
+    .history-item:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+    }
+    
+    .history-item i {
+      font-size: 10px;
+    }
+    
+    /* Tablet landscape */
+    @media (max-width: 1200px) {
+      .main-container {
+        grid-template-columns: 240px 1fr 280px;
+      }
+      .sidebar, .sidebar-right {
+        width: 100%;
+      }
+      .phone-frame {
+        transform: scale(0.85);
+      }
+    }
+    
+    /* Tablet portrait */
+    @media (max-width: 1024px) {
+      .main-container {
+        grid-template-columns: 1fr;
+        position: relative;
+      }
+      
+      .sidebar {
+        position: fixed;
+        left: -280px;
+        top: 61px;
+        width: 280px;
+        height: calc(100vh - 61px);
+        z-index: 90;
+        transition: left 0.3s ease;
+      }
+      
+      .sidebar.open {
+        left: 0;
+        box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+      }
+      
+      .sidebar-right {
+        position: fixed;
+        right: -320px;
+        top: 61px;
+        width: 320px;
+        height: calc(100vh - 61px);
+        z-index: 90;
+        transition: right 0.3s ease;
+      }
+      
+      .sidebar-right.open {
+        right: 0;
+        box-shadow: -4px 0 20px rgba(0,0,0,0.5);
+      }
+      
+      .canvas-area {
+        height: auto;
+        min-height: calc(100vh - 61px);
+        padding: 20px;
+      }
+      
+      .phone-frame {
+        transform: scale(0.9);
+      }
+      
+      .header-center {
+        display: none;
+      }
+      
+      .mobile-menu-toggle {
+        display: flex !important;
+      }
+    }
+    
+    /* Mobile */
+    @media (max-width: 768px) {
+      .header {
+        padding: 10px 12px;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      
+      .header-left {
+        flex: 1;
+      }
+      
+      .logo {
+        font-size: 14px;
+      }
+      
+      .logo span {
+        font-size: 9px;
+        padding: 2px 6px;
+      }
+      
+      .header-actions {
+        order: 3;
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      
+      .header-actions .btn {
+        flex: 1;
+        min-width: auto;
+        padding: 8px 10px;
+        font-size: 11px;
+        justify-content: center;
+      }
+      
+      .header-actions .btn-icon {
+        flex: 0;
+        width: 36px;
+        height: 36px;
+      }
+      
+      .canvas-area {
+        padding: 15px 10px;
+      }
+      
+      .phone-frame {
+        transform: scale(0.75);
+        margin: -40px 0;
+      }
+      
+      .floating-toolbar {
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        padding: 8px;
+        gap: 4px;
+        justify-content: space-around;
+      }
+      
+      .floating-toolbar button {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+      }
+      
+      .sidebar {
+        width: 100%;
+        left: -100%;
+      }
+      
+      .sidebar.open {
+        left: 0;
+      }
+      
+      .sidebar-right {
+        width: 100%;
+        right: -100%;
+      }
+      
+      .sidebar-right.open {
+        right: 0;
+      }
+      
+      .element-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      
+      .element-btn {
+        padding: 10px 6px;
+      }
+      
+      .element-btn i {
+        font-size: 18px;
+        margin-bottom: 4px;
+      }
+      
+      .element-btn span {
+        font-size: 9px;
+      }
+      
+      .stats-mini {
+        flex-wrap: nowrap;
+      }
+      
+      .stat-item .value {
+        font-size: 18px;
+      }
+      
+      .stat-item .label {
+        font-size: 9px;
+      }
+      
+      .modal-content {
+        width: 95%;
+        max-width: none;
+        margin: 10px;
+        max-height: 90vh;
+      }
+      
+      .modal-header {
+        padding: 15px;
+      }
+      
+      .modal-body {
+        padding: 15px;
+      }
+      
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+      
+      .icon-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 6px;
+      }
+      
+      .icon-option {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+      }
+    }
+    
+    /* Small mobile */
+    @media (max-width: 480px) {
+      .header {
+        padding: 8px 10px;
+      }
+      
+      .logo {
+        font-size: 12px;
+        gap: 6px;
+      }
+      
+      .logo i {
+        font-size: 16px;
+      }
+      
+      .logo span {
+        font-size: 8px;
+        padding: 2px 4px;
+        margin-left: 4px;
+      }
+      
+      .header-actions .btn {
+        padding: 6px 8px;
+        font-size: 10px;
+      }
+      
+      .header-actions .btn i {
+        font-size: 12px;
+      }
+      
+      .phone-frame {
+        transform: scale(0.65);
+        margin: -60px 0;
+      }
+      
+      .element-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+      }
+      
+      .element-btn {
+        padding: 8px 4px;
+        border-radius: 8px;
+      }
+      
+      .element-btn i {
+        font-size: 16px;
+        margin-bottom: 2px;
+      }
+      
+      .element-btn span {
+        font-size: 8px;
+      }
+      
+      .floating-toolbar {
+        padding: 6px;
+      }
+      
+      .floating-toolbar button {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+      }
+      
+      .modal-header h3 {
+        font-size: 16px;
+      }
+      
+      .form-label {
+        font-size: 11px;
+      }
+      
+      .form-input, .form-select, .form-textarea {
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+    }
+    
+    /* Mobile menu toggle button */
+    .mobile-menu-toggle {
+      display: none;
+      width: 38px;
+      height: 38px;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 16px;
+    }
+    
+    .mobile-menu-toggle:hover {
+      background: var(--bg-hover);
+      border-color: var(--border-hover);
+    }
+    
+    /* Mobile overlay */
+    .mobile-overlay {
+      display: none;
+      position: fixed;
+      top: 61px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 85;
+    }
+    
+    .mobile-overlay.active {
+      display: block;
+    }
+    
+    @media (max-width: 1024px) {
+      .mobile-menu-toggle {
+        display: flex;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <button class="mobile-menu-toggle" onclick="toggleSidebar()" title="Add Elements">
+        <i class="fas fa-plus"></i>
+      </button>
+      <div class="logo">
+        <i class="fas fa-wand-magic-sparkles"></i>
+        Link Editor
+        <span class="logo-badge">PRO</span>
+      </div>
+      <div class="header-divider"></div>
+      <a href="/profile.html" class="btn btn-ghost" style="font-size: 12px;">
+        <i class="fas fa-arrow-left"></i> Back
+      </a>
+    </div>
+    
+    <div class="header-center">
+      <button class="preview-toggle active" data-mode="mobile" onclick="setPreviewMode('mobile')">
+        <i class="fas fa-mobile-alt"></i> Mobile
+      </button>
+      <button class="preview-toggle" data-mode="desktop" onclick="setPreviewMode('desktop')">
+        <i class="fas fa-desktop"></i> Desktop
+      </button>
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out">
+          <i class="fas fa-minus"></i>
+        </button>
+        <span class="zoom-level" id="zoomLevel">100%</span>
+        <button class="zoom-btn" onclick="zoomIn()" title="Zoom In">
+          <i class="fas fa-plus"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div class="header-actions">
+      <button class="mobile-menu-toggle" onclick="toggleSidebarRight()" title="Settings">
+        <i class="fas fa-cog"></i>
+      </button>
+      <button class="btn btn-icon btn-ghost" onclick="openQRModal()" title="QR Code">
+        <i class="fas fa-qrcode"></i>
+      </button>
+      <a href="/links.html" target="_blank" class="btn btn-secondary">
+        <i class="fas fa-eye"></i> Preview
+      </a>
+      <a href="/admin/link-stats.html" class="btn btn-secondary">
+        <i class="fas fa-chart-line"></i> Analytics
+      </a>
+      <button class="btn btn-primary" onclick="saveAllChanges()">
+        <i class="fas fa-cloud-arrow-up"></i> Save All
+      </button>
+    </div>
+  </div>
+  
+  <div class="mobile-overlay" id="mobileOverlay" onclick="closeSidebars()"></div>
+  
+  <div class="main-container">
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">Content Blocks</div>
+        <div class="element-grid">
+          <div class="element-btn link" onclick="addElement('link')">
+            <i class="fas fa-link"></i>
+            <span>Link</span>
+          </div>
+          <div class="element-btn promo" onclick="addElement('promo')">
+            <i class="fas fa-tag"></i>
+            <span>Promo</span>
+          </div>
+          <div class="element-btn video" onclick="addElement('video')">
+            <i class="fas fa-play-circle"></i>
+            <span>Video</span>
+          </div>
+          <div class="element-btn header" onclick="addElement('header')">
+            <i class="fas fa-heading"></i>
+            <span>Header</span>
+          </div>
+          <div class="element-btn divider" onclick="addElement('divider')">
+            <i class="fas fa-minus"></i>
+            <span>Divider</span>
+          </div>
+          <div class="element-btn image" onclick="addElement('image')">
+            <i class="fas fa-image"></i>
+            <span>Image</span>
+          </div>
+          <div class="element-btn countdown" onclick="addElement('countdown')">
+            <i class="fas fa-clock"></i>
+            <span>Countdown</span>
+          </div>
+          <div class="element-btn playlist" onclick="addElement('playlist')">
+            <i class="fab fa-spotify"></i>
+            <span>Playlist</span>
+          </div>
+          <div class="element-btn banner" onclick="addElement('banner')">
+            <i class="fas fa-bullhorn"></i>
+            <span>Banner</span>
+          </div>
+          <div class="element-btn social" onclick="addElement('social')">
+            <i class="fas fa-share-alt"></i>
+            <span>Social Row</span>
+          </div>
+        </div>
+        <p class="drag-hint"><i class="fas fa-hand-pointer"></i> Click to add or drag to position</p>
+      </div>
+      
+      <div class="sidebar-section">
+        <div class="sidebar-title">Quick Stats</div>
+        <div class="stats-mini">
+          <div class="stat-item">
+            <div class="value" id="totalClicks">0</div>
+            <div class="label">Clicks</div>
+          </div>
+          <div class="stat-item">
+            <div class="value" id="totalViews">0</div>
+            <div class="label">Views</div>
+          </div>
+          <div class="stat-item">
+            <div class="value" id="ctr">0%</div>
+            <div class="label">CTR</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="sidebar-section">
+        <div class="sidebar-title">Page Settings</div>
+        <div class="form-group">
+          <label>Background Style</label>
+          <select id="pageBgStyle" onchange="updatePageSetting('bgStyle', this.value)">
+            <option value="solid">Solid Color</option>
+            <option value="gradient">Gradient</option>
+            <option value="image">Image</option>
+          </select>
+        </div>
+        <div class="form-group" id="bgColorGroup">
+          <label>Background Color</label>
+          <div class="color-input">
+            <input type="color" id="pageBgColor" value="#000000" onchange="updatePageSetting('bgColor', this.value)">
+            <input type="text" id="pageBgColorText" value="#000000" onchange="updatePageSetting('bgColor', this.value)">
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="canvas-area">
+      <div class="canvas-bg-pattern"></div>
+      <div class="phone-frame">
+        <div class="phone-device" id="phoneDevice">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="phone-content" id="phoneContent">
+              <div class="profile-section" id="profileSection" onclick="selectProfile()">
+                <div class="profile-avatar" id="profileAvatar">
+                  <img src="/images/logo.png" alt="Profile" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                  <i class="fas fa-user" style="display:none;"></i>
+                  <div class="upload-overlay">
+                    <i class="fas fa-camera"></i>
+                  </div>
+                </div>
+                <div class="profile-name" id="profileName">BLACK ROOM</div>
+                <div class="profile-bio" id="profileBio">Techno Raves and Radio</div>
+              </div>
+              <div class="elements-list" id="elementsList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="sidebar-right">
+      <div class="settings-header">
+        <h3><i class="fas fa-sliders-h"></i> Settings</h3>
+        <button class="btn btn-icon btn-ghost" id="duplicateBtn" onclick="duplicateElement()" title="Duplicate" style="display:none;">
+          <i class="fas fa-copy"></i>
+        </button>
+      </div>
+      <div class="settings-content" id="settingsPanel">
+        <div class="no-selection">
+          <i class="fas fa-mouse-pointer"></i>
+          <p>Select an element or profile to edit</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="floating-toolbar">
+    <button class="toolbar-btn" onclick="undo()" title="Undo" id="undoBtn" disabled>
+      <i class="fas fa-undo"></i>
+    </button>
+    <button class="toolbar-btn" onclick="redo()" title="Redo" id="redoBtn" disabled>
+      <i class="fas fa-redo"></i>
+    </button>
+    <div class="toolbar-divider"></div>
+    <button class="toolbar-btn" onclick="duplicateElement()" title="Duplicate" id="toolbarDuplicate" disabled>
+      <i class="fas fa-copy"></i>
+    </button>
+    <button class="toolbar-btn" onclick="deleteElement()" title="Delete" id="toolbarDelete" disabled>
+      <i class="fas fa-trash"></i>
+    </button>
+    <div class="toolbar-divider"></div>
+    <button class="toolbar-btn" onclick="moveElement(-1)" title="Move Up" id="toolbarUp" disabled>
+      <i class="fas fa-arrow-up"></i>
+    </button>
+    <button class="toolbar-btn" onclick="moveElement(1)" title="Move Down" id="toolbarDown" disabled>
+      <i class="fas fa-arrow-down"></i>
+    </button>
+  </div>
+  
+  <div class="modal-overlay" id="linkModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-link"></i> Add Link</h3>
+        <button class="modal-close" onclick="closeModal('linkModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" id="newLinkTitle" placeholder="Link title">
+      </div>
+      <div class="form-group">
+        <label>Subtitle (optional)</label>
+        <input type="text" id="newLinkSubtitle" placeholder="Brief description">
+      </div>
+      <div class="form-group">
+        <label>URL</label>
+        <input type="url" id="newLinkUrl" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label>Icon</label>
+        <div class="icon-grid" id="newLinkIconGrid"></div>
+      </div>
+      <div class="form-group">
+        <label>Button Style</label>
+        <div class="button-style-picker">
+          <div class="style-option selected" data-style="filled" onclick="selectStyle(this, 'newLinkStyle')">
+            <div class="style-preview filled"></div>
+            <span>Filled</span>
+          </div>
+          <div class="style-option" data-style="outline" onclick="selectStyle(this, 'newLinkStyle')">
+            <div class="style-preview outline"></div>
+            <span>Outline</span>
+          </div>
+          <div class="style-option" data-style="soft" onclick="selectStyle(this, 'newLinkStyle')">
+            <div class="style-preview soft"></div>
+            <span>Soft</span>
+          </div>
+        </div>
+        <input type="hidden" id="newLinkStyle" value="filled">
+      </div>
+      <div class="form-group">
+        <label>Button Color</label>
+        <div class="color-input">
+          <input type="color" id="newLinkColor" value="#1a1a1a">
+          <input type="text" id="newLinkColorText" value="#1a1a1a">
+        </div>
+        <div class="color-presets">
+          <div class="color-preset" style="background:#1a1a1a" onclick="setPresetColor('#1a1a1a', 'newLinkColor')"></div>
+          <div class="color-preset" style="background:#ff1744" onclick="setPresetColor('#ff1744', 'newLinkColor')"></div>
+          <div class="color-preset" style="background:#00bcd4" onclick="setPresetColor('#00bcd4', 'newLinkColor')"></div>
+          <div class="color-preset" style="background:#4caf50" onclick="setPresetColor('#4caf50', 'newLinkColor')"></div>
+          <div class="color-preset" style="background:#9c27b0" onclick="setPresetColor('#9c27b0', 'newLinkColor')"></div>
+          <div class="color-preset" style="background:#ff9800" onclick="setPresetColor('#ff9800', 'newLinkColor')"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('linkModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="createLink()">Add Link</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal-overlay" id="promoModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-tag"></i> Add Promo Banner</h3>
+        <button class="modal-close" onclick="closeModal('promoModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="form-group">
+        <label>Promo Title</label>
+        <input type="text" id="newPromoTitle" placeholder="e.g. BLACK FRIDAY SALE">
+      </div>
+      <div class="form-group">
+        <label>Discount Label</label>
+        <input type="text" id="newPromoDiscount" placeholder="e.g. 30% OFF">
+      </div>
+      <div class="form-group">
+        <label>Promo Code</label>
+        <input type="text" id="newPromoCode" placeholder="e.g. BLACKFRIDAY30">
+      </div>
+      <div class="form-group">
+        <label>Link URL</label>
+        <input type="url" id="newPromoUrl" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label>Background Color</label>
+        <div class="color-input">
+          <input type="color" id="newPromoBgColor" value="#ff1744">
+          <input type="text" id="newPromoBgColorText" value="#ff1744">
+        </div>
+        <div class="color-presets">
+          <div class="color-preset" style="background:#ff1744" onclick="setPresetColor('#ff1744', 'newPromoBgColor')"></div>
+          <div class="color-preset" style="background:#e91e63" onclick="setPresetColor('#e91e63', 'newPromoBgColor')"></div>
+          <div class="color-preset" style="background:#9c27b0" onclick="setPresetColor('#9c27b0', 'newPromoBgColor')"></div>
+          <div class="color-preset" style="background:#673ab7" onclick="setPresetColor('#673ab7', 'newPromoBgColor')"></div>
+          <div class="color-preset" style="background:#3f51b5" onclick="setPresetColor('#3f51b5', 'newPromoBgColor')"></div>
+          <div class="color-preset" style="background:#00bcd4" onclick="setPresetColor('#00bcd4', 'newPromoBgColor')"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('promoModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="createPromo()">Add Banner</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal-overlay" id="videoModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-play-circle"></i> Add Video</h3>
+        <button class="modal-close" onclick="closeModal('videoModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="form-group">
+        <label>Video Title</label>
+        <input type="text" id="newVideoTitle" placeholder="e.g. BLACK ROOM NYE 2024">
+      </div>
+      <div class="form-group">
+        <label>Platform</label>
+        <select id="newVideoPlatform">
+          <option value="youtube">YouTube</option>
+          <option value="vimeo">Vimeo</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Video ID or URL</label>
+        <input type="text" id="newVideoId" placeholder="Paste YouTube/Vimeo URL or ID">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('videoModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="createVideo()">Add Video</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal-overlay" id="headerModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-heading"></i> Add Header</h3>
+        <button class="modal-close" onclick="closeModal('headerModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="form-group">
+        <label>Header Text</label>
+        <input type="text" id="newHeaderTitle" placeholder="e.g. SOCIAL MEDIA">
+      </div>
+      <div class="form-group">
+        <label>Subtitle (optional)</label>
+        <input type="text" id="newHeaderSubtitle" placeholder="e.g. Follow us everywhere">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('headerModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="createHeader()">Add Header</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal-overlay" id="dividerModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-minus"></i> Add Divider</h3>
+        <button class="modal-close" onclick="closeModal('dividerModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="form-group">
+        <label>Divider Style</label>
+        <select id="newDividerStyle">
+          <option value="line">Simple Line</option>
+          <option value="text">With Text</option>
+          <option value="dots">Dots</option>
+        </select>
+      </div>
+      <div class="form-group" id="dividerTextGroup">
+        <label>Divider Text</label>
+        <input type="text" id="newDividerText" placeholder="e.g. MORE LINKS">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('dividerModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="createDivider()">Add Divider</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal-overlay" id="imageModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-image"></i> Add Image Banner</h3>
+        <button class="modal-close" onclick="closeModal('imageModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="form-group">
+        <label>Image URL</label>
+        <input type="url" id="newImageUrl" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label>Link URL (optional)</label>
+        <input type="url" id="newImageLink" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label>Alt Text</label>
+        <input type="text" id="newImageAlt" placeholder="Image description">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('imageModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="createImage()">Add Image</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal-overlay" id="countdownModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-clock"></i> Add Countdown</h3>
+        <button class="modal-close" onclick="closeModal('countdownModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="form-group">
+        <label>Event Name</label>
+        <input type="text" id="newCountdownTitle" placeholder="e.g. NYE 2025 PARTY">
+      </div>
+      <div class="form-group">
+        <label>Target Date & Time</label>
+        <input type="datetime-local" id="newCountdownDate">
+      </div>
+      <div class="form-group">
+        <label>Link URL (optional)</label>
+        <input type="url" id="newCountdownUrl" placeholder="https://...">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('countdownModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="createCountdown()">Add Countdown</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal-overlay" id="playlistModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fab fa-spotify"></i> Add Playlist</h3>
+        <button class="modal-close" onclick="closeModal('playlistModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="form-group">
+        <label>Platform</label>
+        <select id="newPlaylistPlatform">
+          <option value="spotify">Spotify</option>
+          <option value="soundcloud">SoundCloud</option>
+          <option value="apple">Apple Music</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Playlist Title</label>
+        <input type="text" id="newPlaylistTitle" placeholder="e.g. Black Room Techno Mix">
+      </div>
+      <div class="form-group">
+        <label>Playlist URL</label>
+        <input type="url" id="newPlaylistUrl" placeholder="https://open.spotify.com/playlist/...">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('playlistModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="createPlaylist()">Add Playlist</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Banner Modal -->
+  <div class="modal-overlay" id="bannerModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-bullhorn"></i> Add Banner</h3>
+        <button class="modal-close" onclick="closeModal('bannerModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Headline</label>
+        <input type="text" class="form-input" id="newBannerTitle" placeholder="e.g. NEXT RAVE">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-textarea" id="newBannerDesc" rows="2" placeholder="e.g. December 12, 2025 - Secret Location"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Button Text</label>
+        <input type="text" class="form-input" id="newBannerCta" placeholder="e.g. GET TICKETS">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Button URL</label>
+        <input type="url" class="form-input" id="newBannerUrl" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Background Image URL (optional)</label>
+        <input type="url" class="form-input" id="newBannerBgImage" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Banner Style</label>
+        <select class="form-select" id="newBannerStyle">
+          <option value="gradient-purple">Purple Gradient</option>
+          <option value="gradient-red">Red Gradient</option>
+          <option value="gradient-blue">Blue Gradient</option>
+          <option value="gradient-gold">Gold Gradient</option>
+          <option value="dark">Dark Minimal</option>
+          <option value="neon">Neon Glow</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('bannerModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="createBanner()">Add Banner</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Social Row Modal -->
+  <div class="modal-overlay" id="socialModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-share-alt"></i> Add Social Links Row</h3>
+        <button class="modal-close" onclick="closeModal('socialModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Select Social Networks</label>
+        <div class="social-selector" id="socialSelector">
+          <label class="social-check"><input type="checkbox" value="instagram" checked><i class="fab fa-instagram"></i> Instagram</label>
+          <label class="social-check"><input type="checkbox" value="tiktok" checked><i class="fab fa-tiktok"></i> TikTok</label>
+          <label class="social-check"><input type="checkbox" value="youtube"><i class="fab fa-youtube"></i> YouTube</label>
+          <label class="social-check"><input type="checkbox" value="spotify" checked><i class="fab fa-spotify"></i> Spotify</label>
+          <label class="social-check"><input type="checkbox" value="soundcloud" checked><i class="fab fa-soundcloud"></i> SoundCloud</label>
+          <label class="social-check"><input type="checkbox" value="twitter"><i class="fab fa-twitter"></i> Twitter</label>
+          <label class="social-check"><input type="checkbox" value="facebook"><i class="fab fa-facebook"></i> Facebook</label>
+          <label class="social-check"><input type="checkbox" value="discord"><i class="fab fa-discord"></i> Discord</label>
+        </div>
+      </div>
+      <div class="form-group" id="socialUrlsContainer">
+        <!-- URLs will be populated dynamically -->
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('socialModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="createSocialRow()">Add Social Row</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay qr-modal" id="qrModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-qrcode"></i> QR Code</h3>
+        <button class="modal-close" onclick="closeModal('qrModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">Scan to visit your links page</p>
+      <div class="qr-container" id="qrContainer"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="downloadQR()">
+          <i class="fas fa-download"></i> Download
+        </button>
+        <button class="btn btn-primary" onclick="closeModal('qrModal')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ICONS = [
+      'link', 'globe', 'external-link-alt',
+      'shopping-bag', 'store', 'credit-card',
+      'ticket-alt', 'calendar', 'star',
+      'graduation-cap', 'book', 'certificate',
+      'comments', 'envelope', 'phone',
+      'map-marker-alt', 'home', 'building',
+      'music', 'headphones', 'microphone',
+      'camera', 'video', 'film',
+      'heart', 'thumbs-up', 'gift',
+      'bolt', 'fire', 'crown'
+    ];
+    
+    const BRAND_ICONS = [
+      'instagram', 'tiktok', 'youtube', 'spotify',
+      'twitter', 'facebook', 'discord', 'twitch',
+      'soundcloud', 'apple', 'whatsapp', 'telegram',
+      'linkedin', 'pinterest', 'snapchat', 'reddit',
+      'patreon', 'paypal', 'github', 'dribbble',
+      'behance', 'medium', 'vimeo', 'mixcloud'
+    ];
+    
+    let elements = [];
+    let selectedElement = null;
+    let profileSelected = false;
+    let sortable = null;
+    let history = [];
+    let historyIndex = -1;
+    let pageSettings = {
+      name: 'BLACK ROOM',
+      bio: 'Techno Raves and Radio',
+      avatar: '/images/logo.png',
+      bgStyle: 'solid',
+      bgColor: '#000000'
+    };
+    
+    async function loadElements() {
+      try {
+        const res = await fetch('/api/admin/bio-elements', { credentials: 'include' });
+        elements = await res.json();
+        saveHistory();
+        renderElements();
+        loadStats();
+      } catch (err) {
+        showToast('Error loading elements', 'error');
+      }
+    }
+    
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/admin/link-stats', { credentials: 'include' });
+        const stats = await res.json();
+        document.getElementById('totalClicks').textContent = stats.totalClicks || 0;
+        document.getElementById('totalViews').textContent = stats.totalViews || 0;
+        const ctr = stats.totalViews > 0 ? ((stats.totalClicks / stats.totalViews) * 100).toFixed(1) : 0;
+        document.getElementById('ctr').textContent = ctr + '%';
+      } catch (err) {}
+    }
+    
+    function saveHistory() {
+      history = history.slice(0, historyIndex + 1);
+      history.push(JSON.parse(JSON.stringify(elements)));
+      historyIndex++;
+      if (history.length > 50) {
+        history.shift();
+        historyIndex--;
+      }
+      updateHistoryButtons();
+    }
+    
+    function updateHistoryButtons() {
+      document.getElementById('undoBtn').disabled = historyIndex <= 0;
+      document.getElementById('redoBtn').disabled = historyIndex >= history.length - 1;
+    }
+    
+    function undo() {
+      if (historyIndex > 0) {
+        historyIndex--;
+        elements = JSON.parse(JSON.stringify(history[historyIndex]));
+        renderElements();
+        showToast('Undone', 'success');
+      }
+    }
+    
+    function redo() {
+      if (historyIndex < history.length - 1) {
+        historyIndex++;
+        elements = JSON.parse(JSON.stringify(history[historyIndex]));
+        renderElements();
+        showToast('Redone', 'success');
+      }
+    }
+    
+    function renderElements() {
+      const list = document.getElementById('elementsList');
+      
+      if (elements.length === 0) {
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);"><i class="fas fa-plus-circle" style="font-size:32px;margin-bottom:12px;display:block;opacity:0.3;"></i><p style="font-size:12px;">Add elements from the left panel</p></div>';
+        return;
+      }
+      
+      list.innerHTML = elements.map(el => {
+        const isSelected = selectedElement && selectedElement.id === el.id;
+        return `<div class="element-item ${isSelected ? 'selected' : ''} ${!el.is_active ? 'inactive' : ''}" data-id="${el.id}" onclick="selectElement(${el.id})">
+          <div class="element-drag-handle"><i class="fas fa-grip-vertical"></i></div>
+          ${renderElementContent(el)}
+        </div>`;
+      }).join('');
+      
+      if (sortable) sortable.destroy();
+      sortable = new Sortable(list, {
+        animation: 200,
+        handle: '.element-drag-handle',
+        ghostClass: 'sortable-ghost',
+        onEnd: handleReorder
+      });
+    }
+    
+    function renderElementContent(el) {
+      const type = el.element_type;
+      const meta = el.metadata || {};
+      
+      if (type === 'link') {
+        const iconColor = meta.color || '#1a1a1a';
+        const style = meta.style || 'filled';
+        let bgStyle = '';
+        if (style === 'filled') bgStyle = `background:${iconColor};`;
+        else if (style === 'outline') bgStyle = `background:transparent;border:2px solid ${iconColor};`;
+        else if (style === 'soft') bgStyle = `background:${iconColor}22;`;
+        
+        const progressPercent = meta.progress_percent || 0;
+        const progressLabel = meta.progress_label || '';
+        const progressBar = meta.show_progress ? `
+          <div class="element-progress-wrapper">
+            ${progressLabel ? `<span class="element-progress-label">${progressLabel}</span>` : ''}
+            <div class="element-progress-bar">
+              <div class="element-progress-fill" style="width:${progressPercent}%"></div>
+            </div>
+            <span class="element-progress-percent">${progressPercent}%</span>
+          </div>
+        ` : '';
+        
+        return `<div class="element-link ${meta.show_progress ? 'has-progress' : ''}" style="${bgStyle}border-radius:12px;">
+          <div class="element-link-icon" style="background:${style === 'filled' ? 'rgba(255,255,255,0.1)' : iconColor}22;">
+            <i class="${el.icon && BRAND_ICONS.includes(el.icon) ? 'fab' : 'fas'} fa-${el.icon || 'link'}"></i>
+          </div>
+          <div class="element-link-text">
+            <h4>${el.title || 'Untitled'}</h4>
+            ${el.subtitle ? `<p>${el.subtitle}</p>` : ''}
+          </div>
+          <i class="fas fa-chevron-right arrow"></i>
+          ${progressBar}
+        </div>`;
+      }
+      
+      if (type === 'header') {
+        return `<div class="element-header">
+          <h3>${el.title || 'Header'}</h3>
+          ${el.subtitle ? `<p>${el.subtitle}</p>` : ''}
+        </div>`;
+      }
+      
+      if (type === 'divider') {
+        const style = meta.divider_style || 'line';
+        if (style === 'text') {
+          return `<div class="element-divider">
+            <div class="element-divider-line"></div>
+            <span class="element-divider-text">${meta.divider_text || ''}</span>
+            <div class="element-divider-line"></div>
+          </div>`;
+        } else if (style === 'dots') {
+          return `<div class="element-divider" style="justify-content:center;gap:8px;">
+            <span style="width:6px;height:6px;background:var(--text-muted);border-radius:50%;"></span>
+            <span style="width:6px;height:6px;background:var(--text-muted);border-radius:50%;"></span>
+            <span style="width:6px;height:6px;background:var(--text-muted);border-radius:50%;"></span>
+          </div>`;
+        }
+        return `<div class="element-divider"><div class="element-divider-line" style="flex:1;"></div></div>`;
+      }
+      
+      if (type === 'promo') {
+        const bgColor = meta.promo_bg_color || '#ff1744';
+        return `<div class="element-promo" style="background:linear-gradient(135deg, ${bgColor}, ${adjustColor(bgColor, -20)});">
+          ${meta.discount_label ? `<div class="element-promo-badge">${meta.discount_label}</div>` : ''}
+          <h4>${el.title || 'Promo'}</h4>
+          ${meta.promo_code ? `<div class="element-promo-code">${meta.promo_code}</div>` : ''}
+        </div>`;
+      }
+      
+      if (type === 'video') {
+        const platform = meta.video_platform || 'youtube';
+        const videoId = meta.video_id || '';
+        let thumb = meta.video_thumbnail;
+        if (!thumb && platform === 'youtube' && videoId) {
+          thumb = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+        }
+        return `<div class="element-video">
+          <div class="element-video-thumb">
+            ${thumb ? `<img src="${thumb}" alt="">` : '<i class="fas fa-video" style="font-size:32px;color:var(--text-muted);"></i>'}
+            <div class="element-video-play"><i class="fas fa-play"></i></div>
+          </div>
+          <div class="element-video-info">
+            <i class="fab fa-${platform}"></i>
+            <span>${el.title || 'Video'}</span>
+          </div>
+        </div>`;
+      }
+      
+      if (type === 'image') {
+        const imgUrl = meta.image_url;
+        return `<div class="element-image">
+          ${imgUrl ? `<img src="${imgUrl}" alt="${meta.image_alt || ''}">` : `<div class="placeholder"><i class="fas fa-image"></i><span>No image</span></div>`}
+        </div>`;
+      }
+      
+      if (type === 'countdown') {
+        const targetDate = meta.countdown_date ? new Date(meta.countdown_date) : null;
+        return `<div class="element-countdown">
+          <div class="element-countdown-title">${el.title || 'Countdown'}</div>
+          <div class="countdown-boxes">
+            <div class="countdown-box"><div class="number">--</div><div class="label">Days</div></div>
+            <div class="countdown-box"><div class="number">--</div><div class="label">Hrs</div></div>
+            <div class="countdown-box"><div class="number">--</div><div class="label">Min</div></div>
+            <div class="countdown-box"><div class="number">--</div><div class="label">Sec</div></div>
+          </div>
+        </div>`;
+      }
+      
+      if (type === 'playlist') {
+        const platform = meta.playlist_platform || 'spotify';
+        const icons = { spotify: 'fab fa-spotify', soundcloud: 'fab fa-soundcloud', apple: 'fab fa-apple' };
+        const colors = { spotify: '#1db954', soundcloud: '#ff5500', apple: '#fc3c44' };
+        return `<div class="element-playlist">
+          <div class="playlist-icon" style="background:${colors[platform]};">
+            <i class="${icons[platform]}"></i>
+          </div>
+          <div class="playlist-info">
+            <h4>${el.title || 'Playlist'}</h4>
+            <p>${platform.charAt(0).toUpperCase() + platform.slice(1)} Playlist</p>
+          </div>
+          <i class="fas fa-external-link-alt" style="color:var(--text-muted);"></i>
+        </div>`;
+      }
+      
+      if (type === 'banner') {
+        const style = meta.banner_style || 'gradient-purple';
+        const bgImage = meta.banner_bg_image;
+        let bgStyle = '';
+        
+        const gradients = {
+          'gradient-purple': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          'gradient-red': 'linear-gradient(135deg, #ff1744 0%, #d50000 100%)',
+          'gradient-blue': 'linear-gradient(135deg, #00bcd4 0%, #0097a7 100%)',
+          'gradient-gold': 'linear-gradient(135deg, #ffc107 0%, #ff8f00 100%)',
+          'dark': 'linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)',
+          'neon': 'linear-gradient(135deg, #7c4dff 0%, #00e5ff 100%)'
+        };
+        
+        if (bgImage) {
+          bgStyle = `background-image: url('${bgImage}');`;
+        } else {
+          bgStyle = `background: ${gradients[style] || gradients['gradient-purple']};`;
+        }
+        
+        return `<div class="element-banner ${bgImage ? 'has-bg' : ''}" style="${bgStyle}">
+          <div class="element-banner-content">
+            <h4>${el.title || 'Banner'}</h4>
+            ${meta.banner_desc ? `<p>${meta.banner_desc}</p>` : ''}
+            ${meta.banner_cta ? `<span class="element-banner-cta">${meta.banner_cta}</span>` : ''}
+          </div>
+        </div>`;
+      }
+      
+      if (type === 'social') {
+        const links = meta.social_links || {};
+        const networks = Object.keys(links);
+        
+        return `<div class="element-social-row">
+          ${networks.map(network => `
+            <div class="social-icon-btn ${network}">
+              <i class="fab fa-${network}"></i>
+            </div>
+          `).join('')}
+        </div>`;
+      }
+      
+      return `<div class="element-link"><span>${el.title || 'Element'}</span></div>`;
+    }
+    
+    function adjustColor(color, amount) {
+      const hex = color.replace('#', '');
+      const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
+      const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
+      const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount));
+      return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+    }
+    
+    function selectElement(id) {
+      selectedElement = elements.find(e => e.id === id);
+      profileSelected = false;
+      document.getElementById('profileSection').classList.remove('selected');
+      renderElements();
+      renderSettingsPanel();
+      updateToolbar();
+    }
+    
+    function selectProfile() {
+      selectedElement = null;
+      profileSelected = true;
+      document.querySelectorAll('.element-item').forEach(el => el.classList.remove('selected'));
+      document.getElementById('profileSection').classList.add('selected');
+      renderProfileSettings();
+      updateToolbar();
+    }
+    
+    function updateToolbar() {
+      const hasSelection = selectedElement !== null;
+      document.getElementById('toolbarDuplicate').disabled = !hasSelection;
+      document.getElementById('toolbarDelete').disabled = !hasSelection;
+      document.getElementById('toolbarUp').disabled = !hasSelection;
+      document.getElementById('toolbarDown').disabled = !hasSelection;
+      document.getElementById('duplicateBtn').style.display = hasSelection ? 'flex' : 'none';
+    }
+    
+    function renderProfileSettings() {
+      const panel = document.getElementById('settingsPanel');
+      panel.innerHTML = `
+        <div class="form-group">
+          <label>Profile Name</label>
+          <input type="text" value="${pageSettings.name}" onchange="updatePageSetting('name', this.value)">
+        </div>
+        <div class="form-group">
+          <label>Bio / Tagline</label>
+          <textarea rows="2" onchange="updatePageSetting('bio', this.value)">${pageSettings.bio}</textarea>
+        </div>
+        <div class="form-group">
+          <label>Profile Image URL</label>
+          <input type="url" value="${pageSettings.avatar}" onchange="updatePageSetting('avatar', this.value)" placeholder="https://...">
+        </div>
+      `;
+    }
+    
+    function updatePageSetting(key, value) {
+      pageSettings[key] = value;
+      if (key === 'name') document.getElementById('profileName').textContent = value;
+      if (key === 'bio') document.getElementById('profileBio').textContent = value;
+      if (key === 'avatar') {
+        const img = document.querySelector('#profileAvatar img');
+        if (img) img.src = value;
+      }
+    }
+    
+    function renderSettingsPanel() {
+      if (!selectedElement) {
+        document.getElementById('settingsPanel').innerHTML = `
+          <div class="no-selection">
+            <i class="fas fa-mouse-pointer"></i>
+            <p>Select an element to edit</p>
+          </div>
+        `;
+        return;
+      }
+      
+      const el = selectedElement;
+      const meta = el.metadata || {};
+      const panel = document.getElementById('settingsPanel');
+      
+      let html = '';
+      
+      if (el.element_type === 'link') {
+        html = `
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" value="${el.title || ''}" onchange="updateField('title', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Subtitle</label>
+            <input type="text" value="${el.subtitle || ''}" onchange="updateField('subtitle', this.value)">
+          </div>
+          <div class="form-group">
+            <label>URL</label>
+            <input type="url" value="${el.url || ''}" onchange="updateField('url', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Icon</label>
+            <div class="icon-grid">${generateIconGrid(el.icon)}</div>
+          </div>
+          <div class="form-group">
+            <label>Button Style</label>
+            <div class="button-style-picker">
+              <div class="style-option ${meta.style === 'filled' || !meta.style ? 'selected' : ''}" onclick="updateMeta('style', 'filled')">
+                <div class="style-preview filled"></div>
+                <span>Filled</span>
+              </div>
+              <div class="style-option ${meta.style === 'outline' ? 'selected' : ''}" onclick="updateMeta('style', 'outline')">
+                <div class="style-preview outline"></div>
+                <span>Outline</span>
+              </div>
+              <div class="style-option ${meta.style === 'soft' ? 'selected' : ''}" onclick="updateMeta('style', 'soft')">
+                <div class="style-preview soft"></div>
+                <span>Soft</span>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Button Color</label>
+            <div class="color-input">
+              <input type="color" value="${meta.color || '#1a1a1a'}" onchange="updateMeta('color', this.value)">
+              <input type="text" value="${meta.color || '#1a1a1a'}" onchange="updateMeta('color', this.value)">
+            </div>
+          </div>
+          <div class="form-divider"></div>
+          <div class="toggle-row">
+            <label>Progress Bar</label>
+            <div class="toggle ${meta.show_progress ? 'active' : ''}" onclick="this.classList.toggle('active'); updateMeta('show_progress', this.classList.contains('active'))"></div>
+          </div>
+          ${meta.show_progress ? `
+          <div class="form-group">
+            <label>Percentage (0-100)</label>
+            <input type="range" min="0" max="100" value="${meta.progress_percent || 0}" oninput="this.nextElementSibling.textContent = this.value + '%'; updateMeta('progress_percent', parseInt(this.value))" style="width:100%">
+            <span style="color:#888; font-size:12px">${meta.progress_percent || 0}%</span>
+          </div>
+          <div class="form-group">
+            <label>Label</label>
+            <input type="text" value="${meta.progress_label || ''}" onchange="updateMeta('progress_label', this.value)" placeholder="e.g. SOLD OUT, LIMITED">
+          </div>
+          ` : ''}
+        `;
+      } else if (el.element_type === 'header') {
+        html = `
+          <div class="form-group">
+            <label>Header Text</label>
+            <input type="text" value="${el.title || ''}" onchange="updateField('title', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Subtitle</label>
+            <input type="text" value="${el.subtitle || ''}" onchange="updateField('subtitle', this.value)">
+          </div>
+        `;
+      } else if (el.element_type === 'divider') {
+        html = `
+          <div class="form-group">
+            <label>Divider Style</label>
+            <select onchange="updateMeta('divider_style', this.value)">
+              <option value="line" ${meta.divider_style === 'line' ? 'selected' : ''}>Simple Line</option>
+              <option value="text" ${meta.divider_style === 'text' ? 'selected' : ''}>With Text</option>
+              <option value="dots" ${meta.divider_style === 'dots' ? 'selected' : ''}>Dots</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Divider Text</label>
+            <input type="text" value="${meta.divider_text || ''}" onchange="updateMeta('divider_text', this.value)">
+          </div>
+        `;
+      } else if (el.element_type === 'promo') {
+        html = `
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" value="${el.title || ''}" onchange="updateField('title', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Discount Label</label>
+            <input type="text" value="${meta.discount_label || ''}" onchange="updateMeta('discount_label', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Promo Code</label>
+            <input type="text" value="${meta.promo_code || ''}" onchange="updateMeta('promo_code', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Link URL</label>
+            <input type="url" value="${el.url || ''}" onchange="updateField('url', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Background Color</label>
+            <div class="color-input">
+              <input type="color" value="${meta.promo_bg_color || '#ff1744'}" onchange="updateMeta('promo_bg_color', this.value)">
+              <input type="text" value="${meta.promo_bg_color || '#ff1744'}" onchange="updateMeta('promo_bg_color', this.value)">
+            </div>
+          </div>
+        `;
+      } else if (el.element_type === 'video') {
+        html = `
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" value="${el.title || ''}" onchange="updateField('title', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Platform</label>
+            <select onchange="updateMeta('video_platform', this.value)">
+              <option value="youtube" ${meta.video_platform === 'youtube' ? 'selected' : ''}>YouTube</option>
+              <option value="vimeo" ${meta.video_platform === 'vimeo' ? 'selected' : ''}>Vimeo</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Video ID</label>
+            <input type="text" value="${meta.video_id || ''}" onchange="updateMeta('video_id', this.value)">
+          </div>
+        `;
+      } else if (el.element_type === 'image') {
+        html = `
+          <div class="form-group">
+            <label>Image URL</label>
+            <input type="url" value="${meta.image_url || ''}" onchange="updateMeta('image_url', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Link URL</label>
+            <input type="url" value="${el.url || ''}" onchange="updateField('url', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Alt Text</label>
+            <input type="text" value="${meta.image_alt || ''}" onchange="updateMeta('image_alt', this.value)">
+          </div>
+        `;
+      } else if (el.element_type === 'countdown') {
+        html = `
+          <div class="form-group">
+            <label>Event Name</label>
+            <input type="text" value="${el.title || ''}" onchange="updateField('title', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Target Date</label>
+            <input type="datetime-local" value="${meta.countdown_date || ''}" onchange="updateMeta('countdown_date', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Link URL</label>
+            <input type="url" value="${el.url || ''}" onchange="updateField('url', this.value)">
+          </div>
+        `;
+      } else if (el.element_type === 'playlist') {
+        html = `
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" value="${el.title || ''}" onchange="updateField('title', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Platform</label>
+            <select onchange="updateMeta('playlist_platform', this.value)">
+              <option value="spotify" ${meta.playlist_platform === 'spotify' ? 'selected' : ''}>Spotify</option>
+              <option value="soundcloud" ${meta.playlist_platform === 'soundcloud' ? 'selected' : ''}>SoundCloud</option>
+              <option value="apple" ${meta.playlist_platform === 'apple' ? 'selected' : ''}>Apple Music</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Playlist URL</label>
+            <input type="url" value="${el.url || ''}" onchange="updateField('url', this.value)">
+          </div>
+        `;
+      } else if (el.element_type === 'banner') {
+        html = `
+          <div class="form-group">
+            <label>Headline</label>
+            <input type="text" value="${el.title || ''}" onchange="updateField('title', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea rows="2" onchange="updateMeta('banner_desc', this.value)">${meta.banner_desc || ''}</textarea>
+          </div>
+          <div class="form-group">
+            <label>Button Text</label>
+            <input type="text" value="${meta.banner_cta || ''}" onchange="updateMeta('banner_cta', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Button URL</label>
+            <input type="url" value="${el.url || ''}" onchange="updateField('url', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Background Image URL</label>
+            <input type="url" value="${meta.banner_bg_image || ''}" onchange="updateMeta('banner_bg_image', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Banner Style</label>
+            <select onchange="updateMeta('banner_style', this.value)">
+              <option value="gradient-purple" ${meta.banner_style === 'gradient-purple' ? 'selected' : ''}>Purple Gradient</option>
+              <option value="gradient-red" ${meta.banner_style === 'gradient-red' ? 'selected' : ''}>Red Gradient</option>
+              <option value="gradient-blue" ${meta.banner_style === 'gradient-blue' ? 'selected' : ''}>Blue Gradient</option>
+              <option value="gradient-gold" ${meta.banner_style === 'gradient-gold' ? 'selected' : ''}>Gold Gradient</option>
+              <option value="dark" ${meta.banner_style === 'dark' ? 'selected' : ''}>Dark Minimal</option>
+              <option value="neon" ${meta.banner_style === 'neon' ? 'selected' : ''}>Neon Glow</option>
+            </select>
+          </div>
+        `;
+      } else if (el.element_type === 'social') {
+        const links = meta.social_links || {};
+        html = `
+          <div class="form-group">
+            <label>Social Links</label>
+            <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Edit URLs for each network</p>
+            ${Object.keys(links).map(network => `
+              <div style="margin-bottom:8px;">
+                <label style="font-size:11px;text-transform:capitalize;color:var(--text-muted);">${network}</label>
+                <input type="url" value="${links[network]}" onchange="updateSocialLink('${network}', this.value)" style="width:100%;padding:8px;background:var(--bg-dark);border:1px solid var(--border);border-radius:6px;color:var(--text);">
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+      
+      html += `
+        <div class="toggle-row">
+          <label>Active</label>
+          <div class="toggle ${el.is_active ? 'active' : ''}" onclick="toggleActive()"></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-secondary" onclick="duplicateElement()"><i class="fas fa-copy"></i> Duplicate</button>
+          <button class="btn btn-danger" onclick="deleteElement()"><i class="fas fa-trash"></i> Delete</button>
+        </div>
+      `;
+      
+      panel.innerHTML = html;
+    }
+    
+    function generateIconGrid(selected) {
+      const allIcons = [...ICONS, ...BRAND_ICONS];
+      return allIcons.map(icon => {
+        const isBrand = BRAND_ICONS.includes(icon);
+        return `<div class="icon-option ${selected === icon ? 'selected' : ''}" onclick="updateField('icon', '${icon}')">
+          <i class="${isBrand ? 'fab' : 'fas'} fa-${icon}"></i>
+        </div>`;
+      }).join('');
+    }
+    
+    function updateField(field, value) {
+      if (!selectedElement) return;
+      selectedElement[field] = value;
+      renderElements();
+    }
+    
+    function updateMeta(key, value) {
+      if (!selectedElement) return;
+      if (!selectedElement.metadata) selectedElement.metadata = {};
+      selectedElement.metadata[key] = value;
+      renderElements();
+      renderSettingsPanel();
+    }
+    
+    function updateSocialLink(network, value) {
+      if (!selectedElement) return;
+      if (!selectedElement.metadata) selectedElement.metadata = {};
+      if (!selectedElement.metadata.social_links) selectedElement.metadata.social_links = {};
+      selectedElement.metadata.social_links[network] = value;
+      renderElements();
+    }
+    
+    function toggleActive() {
+      if (!selectedElement) return;
+      selectedElement.is_active = !selectedElement.is_active;
+      renderElements();
+      renderSettingsPanel();
+    }
+    
+    async function duplicateElement() {
+      if (!selectedElement) return;
+      
+      const newEl = { ...selectedElement };
+      delete newEl.id;
+      newEl.title = (newEl.title || 'Element') + ' (copy)';
+      newEl.position = elements.length + 1;
+      
+      try {
+        const res = await fetch('/api/admin/bio-elements', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(newEl)
+        });
+        const created = await res.json();
+        elements.push(created);
+        saveHistory();
+        renderElements();
+        showToast('Element duplicated!', 'success');
+      } catch (err) {
+        showToast('Error duplicating', 'error');
+      }
+    }
+    
+    async function deleteElement() {
+      if (!selectedElement) return;
+      if (!confirm('Delete this element?')) return;
+      
+      try {
+        await fetch(`/api/admin/bio-elements/${selectedElement.id}`, { method: 'DELETE' });
+        elements = elements.filter(e => e.id !== selectedElement.id);
+        selectedElement = null;
+        saveHistory();
+        renderElements();
+        renderSettingsPanel();
+        updateToolbar();
+        showToast('Element deleted', 'success');
+      } catch (err) {
+        showToast('Error deleting', 'error');
+      }
+    }
+    
+    function moveElement(direction) {
+      if (!selectedElement) return;
+      const idx = elements.findIndex(e => e.id === selectedElement.id);
+      const newIdx = idx + direction;
+      if (newIdx < 0 || newIdx >= elements.length) return;
+      
+      [elements[idx], elements[newIdx]] = [elements[newIdx], elements[idx]];
+      elements.forEach((el, i) => el.position = i + 1);
+      saveHistory();
+      renderElements();
+      handleReorder();
+    }
+    
+    async function handleReorder() {
+      const order = elements.map((el, idx) => ({ id: el.id, position: idx + 1 }));
+      try {
+        await fetch('/api/admin/bio-elements/reorder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ order })
+        });
+      } catch (err) {}
+    }
+    
+    async function saveAllChanges() {
+      try {
+        for (const el of elements) {
+          await fetch(`/api/admin/bio-elements/${el.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(el)
+          });
+        }
+        showToast('All changes saved!', 'success');
+      } catch (err) {
+        showToast('Error saving', 'error');
+      }
+    }
+    
+    function addElement(type) {
+      const modalMap = {
+        link: 'linkModal',
+        promo: 'promoModal',
+        video: 'videoModal',
+        header: 'headerModal',
+        divider: 'dividerModal',
+        image: 'imageModal',
+        countdown: 'countdownModal',
+        playlist: 'playlistModal',
+        banner: 'bannerModal',
+        social: 'socialModal'
+      };
+      openModal(modalMap[type]);
+      
+      if (type === 'link') {
+        document.getElementById('newLinkIconGrid').innerHTML = generateIconGrid('link');
+      }
+      if (type === 'social') {
+        updateSocialUrls();
+      }
+    }
+    
+    function updateSocialUrls() {
+      const checked = document.querySelectorAll('#socialSelector input:checked');
+      const container = document.getElementById('socialUrlsContainer');
+      container.innerHTML = Array.from(checked).map(input => {
+        const name = input.value.charAt(0).toUpperCase() + input.value.slice(1);
+        return `<div class="form-group">
+          <label class="form-label">${name} URL</label>
+          <input type="url" class="form-input social-url-input" data-network="${input.value}" placeholder="https://${input.value}.com/...">
+        </div>`;
+      }).join('');
+    }
+    
+    // Add event listeners for social checkboxes
+    document.getElementById('socialSelector')?.addEventListener('change', updateSocialUrls);
+    
+    function openModal(id) {
+      document.getElementById(id).classList.add('active');
+    }
+    
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+    
+    function selectStyle(el, inputId) {
+      el.parentElement.querySelectorAll('.style-option').forEach(opt => opt.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById(inputId).value = el.dataset.style;
+    }
+    
+    function setPresetColor(color, inputId) {
+      document.getElementById(inputId).value = color;
+      document.getElementById(inputId + 'Text').value = color;
+    }
+    
+    async function createLink() {
+      const iconGrid = document.getElementById('newLinkIconGrid');
+      const selectedIcon = iconGrid.querySelector('.icon-option.selected');
+      
+      const data = {
+        element_type: 'link',
+        title: document.getElementById('newLinkTitle').value,
+        subtitle: document.getElementById('newLinkSubtitle').value,
+        url: document.getElementById('newLinkUrl').value,
+        icon: selectedIcon ? selectedIcon.querySelector('i').className.split('fa-')[1] : 'link',
+        metadata: {
+          style: document.getElementById('newLinkStyle').value,
+          color: document.getElementById('newLinkColor').value
+        }
+      };
+      
+      if (!data.title) {
+        showToast('Please enter a title', 'error');
+        return;
+      }
+      
+      await createElementAPI(data, 'linkModal');
+    }
+    
+    async function createPromo() {
+      const data = {
+        element_type: 'promo',
+        title: document.getElementById('newPromoTitle').value,
+        url: document.getElementById('newPromoUrl').value,
+        metadata: {
+          discount_label: document.getElementById('newPromoDiscount').value,
+          promo_code: document.getElementById('newPromoCode').value,
+          promo_bg_color: document.getElementById('newPromoBgColor').value
+        }
+      };
+      
+      if (!data.title) {
+        showToast('Please enter a title', 'error');
+        return;
+      }
+      
+      await createElementAPI(data, 'promoModal');
+    }
+    
+    async function createVideo() {
+      let videoId = document.getElementById('newVideoId').value;
+      const platform = document.getElementById('newVideoPlatform').value;
+      
+      if (platform === 'youtube' && videoId.includes('youtube.com')) {
+        const match = videoId.match(/[?&]v=([^&]+)/);
+        if (match) videoId = match[1];
+      } else if (platform === 'youtube' && videoId.includes('youtu.be')) {
+        videoId = videoId.split('/').pop().split('?')[0];
+      }
+      
+      const data = {
+        element_type: 'video',
+        title: document.getElementById('newVideoTitle').value,
+        metadata: {
+          video_platform: platform,
+          video_id: videoId
+        }
+      };
+      
+      if (!data.title || !videoId) {
+        showToast('Please enter title and video ID', 'error');
+        return;
+      }
+      
+      await createElementAPI(data, 'videoModal');
+    }
+    
+    async function createHeader() {
+      const data = {
+        element_type: 'header',
+        title: document.getElementById('newHeaderTitle').value,
+        subtitle: document.getElementById('newHeaderSubtitle').value
+      };
+      
+      if (!data.title) {
+        showToast('Please enter header text', 'error');
+        return;
+      }
+      
+      await createElementAPI(data, 'headerModal');
+    }
+    
+    async function createDivider() {
+      const data = {
+        element_type: 'divider',
+        title: 'Divider',
+        metadata: {
+          divider_style: document.getElementById('newDividerStyle').value,
+          divider_text: document.getElementById('newDividerText').value
+        }
+      };
+      
+      await createElementAPI(data, 'dividerModal');
+    }
+    
+    async function createImage() {
+      const data = {
+        element_type: 'image',
+        title: 'Image',
+        url: document.getElementById('newImageLink').value,
+        metadata: {
+          image_url: document.getElementById('newImageUrl').value,
+          image_alt: document.getElementById('newImageAlt').value
+        }
+      };
+      
+      if (!data.metadata.image_url) {
+        showToast('Please enter image URL', 'error');
+        return;
+      }
+      
+      await createElementAPI(data, 'imageModal');
+    }
+    
+    async function createCountdown() {
+      const data = {
+        element_type: 'countdown',
+        title: document.getElementById('newCountdownTitle').value,
+        url: document.getElementById('newCountdownUrl').value,
+        metadata: {
+          countdown_date: document.getElementById('newCountdownDate').value
+        }
+      };
+      
+      if (!data.title || !data.metadata.countdown_date) {
+        showToast('Please enter event name and date', 'error');
+        return;
+      }
+      
+      await createElementAPI(data, 'countdownModal');
+    }
+    
+    async function createPlaylist() {
+      const data = {
+        element_type: 'playlist',
+        title: document.getElementById('newPlaylistTitle').value,
+        url: document.getElementById('newPlaylistUrl').value,
+        metadata: {
+          playlist_platform: document.getElementById('newPlaylistPlatform').value
+        }
+      };
+      
+      if (!data.title || !data.url) {
+        showToast('Please enter title and URL', 'error');
+        return;
+      }
+      
+      await createElementAPI(data, 'playlistModal');
+    }
+    
+    async function createBanner() {
+      const data = {
+        element_type: 'banner',
+        title: document.getElementById('newBannerTitle').value,
+        url: document.getElementById('newBannerUrl').value,
+        metadata: {
+          banner_desc: document.getElementById('newBannerDesc').value,
+          banner_cta: document.getElementById('newBannerCta').value,
+          banner_bg_image: document.getElementById('newBannerBgImage').value,
+          banner_style: document.getElementById('newBannerStyle').value
+        }
+      };
+      
+      if (!data.title) {
+        showToast('Please enter a headline', 'error');
+        return;
+      }
+      
+      await createElementAPI(data, 'bannerModal');
+    }
+    
+    async function createSocialRow() {
+      const socialUrls = {};
+      document.querySelectorAll('.social-url-input').forEach(input => {
+        if (input.value) {
+          socialUrls[input.dataset.network] = input.value;
+        }
+      });
+      
+      const networks = Object.keys(socialUrls);
+      if (networks.length === 0) {
+        showToast('Please add at least one social URL', 'error');
+        return;
+      }
+      
+      const data = {
+        element_type: 'social',
+        title: 'Social Links',
+        metadata: {
+          social_links: socialUrls
+        }
+      };
+      
+      await createElementAPI(data, 'socialModal');
+    }
+    
+    async function createElementAPI(data, modalId) {
+      try {
+        const res = await fetch('/api/admin/bio-elements', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(data)
+        });
+        const newEl = await res.json();
+        elements.push(newEl);
+        saveHistory();
+        renderElements();
+        closeModal(modalId);
+        showToast('Element added!', 'success');
+      } catch (err) {
+        showToast('Error adding element', 'error');
+      }
+    }
+    
+    function setPreviewMode(mode) {
+      document.querySelectorAll('.preview-toggle').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
+      document.getElementById('phoneDevice').classList.toggle('desktop-mode', mode === 'desktop');
+    }
+    
+    // Zoom functionality
+    let currentZoom = 100;
+    const minZoom = 50;
+    const maxZoom = 150;
+    
+    function zoomIn() {
+      if (currentZoom < maxZoom) {
+        currentZoom += 10;
+        applyZoom();
+      }
+    }
+    
+    function zoomOut() {
+      if (currentZoom > minZoom) {
+        currentZoom -= 10;
+        applyZoom();
+      }
+    }
+    
+    function applyZoom() {
+      const phoneFrame = document.querySelector('.phone-frame');
+      phoneFrame.style.transform = `scale(${currentZoom / 100})`;
+      document.getElementById('zoomLevel').textContent = `${currentZoom}%`;
+    }
+    
+    function openQRModal() {
+      openModal('qrModal');
+      const container = document.getElementById('qrContainer');
+      container.innerHTML = '';
+      const canvas = document.createElement('canvas');
+      container.appendChild(canvas);
+      
+      const url = window.location.origin + '/links.html';
+      QRCode.toCanvas(canvas, url, {
+        width: 200,
+        margin: 0,
+        color: { dark: '#000', light: '#fff' }
+      });
+    }
+    
+    function downloadQR() {
+      const canvas = document.querySelector('#qrContainer canvas');
+      const link = document.createElement('a');
+      link.download = 'blackroom-links-qr.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+    
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+    
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+      modal.addEventListener('click', e => {
+        if (e.target === modal) modal.classList.remove('active');
+      });
+    });
+    
+    document.getElementById('newDividerStyle').addEventListener('change', function() {
+      document.getElementById('dividerTextGroup').style.display = this.value === 'text' ? 'block' : 'none';
+    });
+    
+    ['newLinkColor', 'newPromoBgColor'].forEach(id => {
+      const colorInput = document.getElementById(id);
+      const textInput = document.getElementById(id + 'Text');
+      if (colorInput && textInput) {
+        colorInput.addEventListener('input', () => textInput.value = colorInput.value);
+        textInput.addEventListener('input', () => colorInput.value = textInput.value);
+      }
+    });
+    
+    // Mobile sidebar toggle functions
+    function toggleSidebar() {
+      const sidebar = document.querySelector('.sidebar');
+      const overlay = document.getElementById('mobileOverlay');
+      const sidebarRight = document.querySelector('.sidebar-right');
+      
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('active', sidebar.classList.contains('open'));
+      sidebarRight.classList.remove('open');
+    }
+    
+    function toggleSidebarRight() {
+      const sidebarRight = document.querySelector('.sidebar-right');
+      const overlay = document.getElementById('mobileOverlay');
+      const sidebar = document.querySelector('.sidebar');
+      
+      sidebarRight.classList.toggle('open');
+      overlay.classList.toggle('active', sidebarRight.classList.contains('open'));
+      sidebar.classList.remove('open');
+    }
+    
+    function closeSidebars() {
+      document.querySelector('.sidebar').classList.remove('open');
+      document.querySelector('.sidebar-right').classList.remove('open');
+      document.getElementById('mobileOverlay').classList.remove('active');
+    }
+    
+    // Close sidebars when pressing Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeSidebars();
+      }
+    });
+    
+    // Close sidebars after adding element on mobile
+    const originalAddElement = addElement;
+    addElement = function(type) {
+      originalAddElement(type);
+      if (window.innerWidth <= 1024) {
+        closeSidebars();
+      }
+    };
+    
+    loadElements();
+  </script>
+</body>
+</html>

@@ -1,0 +1,3864 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Videos – Black Room</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link rel="stylesheet" href="/css/main.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"
+      defer
+    ></script>
+    <script src="music-genre-analyzer.js"></script>
+    <style>
+      :root {
+        --bg-primary: transparent;
+        --bg-secondary: rgba(10, 10, 10, 0.85);
+        --bg-tertiary: #111111;
+        --header-bg: rgba(0, 0, 0, 0.9);
+        --text-color: #ffffff;
+        --text-accent: #888888;
+        --accent-primary: #fff;
+        --accent-secondary: #ccc;
+        --border-color: #222222;
+        --input-bg: #111;
+        --input-border: #333;
+        --input-text: #fff;
+        --button-bg: #222;
+        --button-hover-bg: #333;
+        --error-color: #e63946;
+        --shadow-dark: 0 4px 20px rgba(0, 0, 0, 0.6);
+        --shadow-card: 0 5px 15px rgba(0, 0, 0, 0.4);
+        --shadow-card-hover: 0 10px 25px rgba(0, 0, 0, 0.6);
+        --gap-between-cards: 1.5rem;
+        --shadow-modal: 0 8px 40px rgba(0, 0, 0, 0.9);
+        --like-color-active: #e63946;
+        --border-soft: rgba(255, 255, 255, 0.08);
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--bg-primary);
+        color: var(--text-color);
+        font-family: "Inter", sans-serif;
+        line-height: 1.6;
+        overflow-x: hidden;
+        min-height: 100vh;
+      }
+      a,
+      button {
+        background: none;
+        border: none;
+        color: var(--text-color);
+        text-decoration: none;
+        cursor: pointer;
+        transition:
+          color 0.3s ease,
+          background 0.3s ease,
+          transform 0.2s ease;
+      }
+      a:hover,
+      button:hover {
+        color: var(--text-accent);
+      }
+
+      main {
+        padding: 3rem;
+        padding-top: 100px;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      main h2 {
+        font-family: 'Space Mono', monospace;
+        font-size: 2rem;
+        text-transform: uppercase;
+        margin: 1.5rem 0 1rem;
+        text-align: left;
+        color: #fff;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+      }
+      main h2.playlist-title-clickable {
+        cursor: pointer;
+        transition: color 0.3s ease;
+      }
+      main h2.playlist-title-clickable:hover {
+        color: var(--accent-primary);
+      }
+      /* ===== TELETECH INDUSTRIAL FILTER STYLES ===== */
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+        justify-content: flex-start;
+        align-items: center;
+        padding: 1.5rem;
+        background: #0a0a0a;
+        border: 1px solid #222;
+        position: relative;
+      }
+      
+      /* Corner brackets for controls container */
+      .controls::before,
+      .controls::after {
+        content: '';
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-color: #444;
+        border-style: solid;
+        transition: border-color 0.3s ease;
+      }
+      .controls::before {
+        top: -1px;
+        left: -1px;
+        border-width: 2px 0 0 2px;
+      }
+      .controls::after {
+        top: -1px;
+        right: -1px;
+        border-width: 2px 2px 0 0;
+      }
+      .controls:hover::before,
+      .controls:hover::after {
+        border-color: #fff;
+      }
+      
+      /* Filter wrapper for bottom corners */
+      .filter-wrapper {
+        position: relative;
+        display: inline-block;
+      }
+      .filter-wrapper::before,
+      .filter-wrapper::after {
+        content: '';
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-color: #333;
+        border-style: solid;
+        transition: border-color 0.3s ease;
+        pointer-events: none;
+      }
+      .filter-wrapper::before {
+        bottom: 0;
+        left: 0;
+        border-width: 0 0 1px 1px;
+      }
+      .filter-wrapper::after {
+        bottom: 0;
+        right: 0;
+        border-width: 0 1px 1px 0;
+      }
+      .filter-wrapper:hover::before,
+      .filter-wrapper:hover::after {
+        border-color: #fff;
+      }
+      
+      .controls input,
+      .controls select {
+        background: #111;
+        border: 1px solid #333;
+        border-radius: 0;
+        padding: 0.9rem 1.2rem;
+        font-size: 0.85rem;
+        font-family: 'Space Mono', monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        min-width: 180px;
+        color: #fff;
+        transition: all 0.3s ease;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        cursor: pointer;
+      }
+      
+      .controls select {
+        background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2210%22%20height%3D%226%22%3E%3Cpath%20fill%3D%22%23888%22%20d%3D%22M0%200l5%206%205-6z%22%2F%3E%3C%2Fsvg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 10px 6px;
+        padding-right: 2.5rem;
+      }
+      
+      .controls input {
+        min-width: 250px;
+        background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%3E%3Ccircle%20cx%3D%2211%22%20cy%3D%2211%22%20r%3D%228%22%2F%3E%3Cpath%20d%3D%22m21%2021-4.35-4.35%22%2F%3E%3C%2Fsvg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 16px;
+        padding-right: 2.5rem;
+      }
+      
+      .controls input::placeholder {
+        color: #666;
+        font-family: 'Space Mono', monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .controls input:hover,
+      .controls select:hover {
+        border-color: #555;
+        background-color: #151515;
+      }
+      
+      .controls input:focus,
+      .controls select:focus {
+        outline: none;
+        border-color: #fff;
+        background-color: #181818;
+      }
+      
+      /* Search button - Teletech style */
+      #search-button {
+        background: transparent !important;
+        color: #fff !important;
+        border: 1px solid #444 !important;
+        padding: 0.9rem 1.5rem !important;
+        font-family: 'Space Mono', monospace !important;
+        font-size: 0.85rem !important;
+        font-weight: 400 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+        position: relative !important;
+        border-radius: 0 !important;
+      }
+      
+      #search-button::before,
+      #search-button::after {
+        content: '';
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-color: #444;
+        border-style: solid;
+        transition: border-color 0.3s ease;
+      }
+      #search-button::before {
+        top: -1px;
+        left: -1px;
+        border-width: 1px 0 0 1px;
+      }
+      #search-button::after {
+        bottom: -1px;
+        right: -1px;
+        border-width: 0 1px 1px 0;
+      }
+      
+      #search-button:hover {
+        background: #fff !important;
+        color: #000 !important;
+        border-color: #fff !important;
+      }
+      #search-button:hover::before,
+      #search-button:hover::after {
+        border-color: #fff;
+      }
+      
+      /* Filter label styling */
+      .filter-label {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #666;
+        margin-bottom: 0.3rem;
+        display: block;
+      }
+      .carousel-wrapper {
+        position: relative;
+        margin-bottom: 2.5rem;
+      }
+      .carousel {
+        display: flex;
+        gap: var(--gap-between-cards);
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        padding-bottom: 1.5rem;
+        scrollbar-width: none;
+      }
+      .carousel::-webkit-scrollbar {
+        display: none;
+      }
+      .carousel .carousel-card {
+        flex: 0 0 calc(25% - var(--gap-between-cards) * 3 / 4);
+      }
+      #full-playlist-view {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+        gap: var(--gap-between-cards);
+        margin-top: 2rem;
+      }
+
+      /* Estilo específico para videos filtrados más pequeños */
+      #search-results-view {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+
+      #search-results-view .carousel-card {
+        width: 100%;
+        flex: none;
+      }
+
+      #search-results-view .media {
+        padding-top: 56.25%; /* 16:9 aspect ratio */
+        position: relative;
+        background: #000;
+        border-radius: 8px;
+        box-shadow: var(--shadow-card);
+        transition: box-shadow 0.3s ease, border-color 0.3s ease;
+      }
+
+      #search-results-view .details h3 {
+        font-size: 0.85rem;
+        line-height: 1.3;
+        margin-bottom: 0.5rem;
+        white-space: normal;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+
+      #search-results-view .like-btn {
+        font-size: 1.2rem;
+        padding: 0.3rem;
+      }
+      .back-button-container {
+        text-align: left;
+        margin: 2rem 0;
+      }
+      .back-button {
+        padding: 0.8rem 1.5rem;
+        background-color: var(--button-bg);
+        color: var(--accent-primary);
+        border-radius: 8px;
+        font-weight: 600;
+        transition:
+          background-color 0.3s ease,
+          transform 0.2s ease;
+      }
+      .back-button:hover {
+        background-color: var(--button-hover-bg);
+        transform: translateY(-2px);
+      }
+      .arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(255, 255, 255, 0.1);
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 10;
+        font-size: 2rem;
+        color: var(--accent-primary);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+        transition:
+          background 0.3s ease,
+          transform 0.2s ease,
+          box-shadow 0.3s ease;
+      }
+      .arrow:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-50%) scale(1.05);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+      }
+      .arrow.prev {
+        left: 0.5rem;
+      }
+      .arrow.next {
+        right: 0.5rem;
+      }
+      /* ===== TELETECH STYLE VIDEO CARDS ===== */
+      .carousel-card {
+        width: 100%;
+        overflow: visible;
+        cursor: pointer;
+        background: none;
+        box-shadow: none;
+        transition: transform 0.3s ease;
+        border: none;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .video-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 0 0.5rem 0;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+      }
+
+      .video-card-type {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-accent);
+      }
+
+      .video-card-duration {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.7rem;
+        color: var(--text-accent);
+      }
+
+      .video-card-duration::before {
+        content: '';
+        display: block;
+        width: 6px;
+        height: 6px;
+        background: #fff;
+      }
+
+      .media {
+        width: 100%;
+        padding-top: 56.25%;
+        position: relative;
+        background: #000;
+        margin: 0.5rem 0;
+        transition: transform 0.5s ease;
+      }
+
+      .carousel-card:hover .media {
+        transform: scale(1.02);
+      }
+
+      /* Corner brackets on video */
+      .media::before,
+      .media::after {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-color: rgba(255,255,255,0.4);
+        border-style: solid;
+        z-index: 2;
+        transition: border-color 0.3s ease;
+      }
+
+      .media::before {
+        top: 6px;
+        left: 6px;
+        border-width: 1px 0 0 1px;
+      }
+
+      .media::after {
+        top: 6px;
+        right: 6px;
+        border-width: 1px 1px 0 0;
+      }
+
+      .media .corner-bl,
+      .media .corner-br {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-color: rgba(255,255,255,0.4);
+        border-style: solid;
+        z-index: 2;
+        transition: border-color 0.3s ease;
+      }
+
+      .media .corner-bl {
+        bottom: 6px;
+        left: 6px;
+        border-width: 0 0 1px 1px;
+      }
+
+      .media .corner-br {
+        bottom: 6px;
+        right: 6px;
+        border-width: 0 1px 1px 0;
+      }
+
+      .carousel-card:hover .media::before,
+      .carousel-card:hover .media::after,
+      .carousel-card:hover .media .corner-bl,
+      .carousel-card:hover .media .corner-br {
+        border-color: rgba(255,255,255,0.9);
+      }
+
+      .media img,
+      .media iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border: none;
+      }
+
+      /* Play icon - HIDDEN for clean look */
+      .video-play-icon {
+        display: none !important;
+      }
+
+      /* Video Preview on Hover */
+      .media {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .media img {
+        transition: opacity 0.3s ease;
+      }
+
+      .media .hover-preview {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 2;
+        pointer-events: none;
+      }
+
+      .media .hover-preview iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        object-fit: cover;
+      }
+
+      .carousel-card:hover .media img {
+        opacity: 0;
+      }
+
+      .carousel-card:hover .media .hover-preview {
+        opacity: 1;
+      }
+
+      .details {
+        background: none;
+        padding: 0.5rem 0 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        min-height: 50px;
+        border-top: 1px solid rgba(255,255,255,0.1);
+      }
+
+      .details-left {
+        flex: 1;
+      }
+
+      .details h3 {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        line-height: 1.3;
+        white-space: normal;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        color: #fff;
+        margin-bottom: 0.25rem;
+      }
+
+      .video-views {
+        font-size: 0.7rem;
+        color: var(--text-accent);
+      }
+
+      .watch-btn {
+        position: relative;
+        padding: 0.4rem 1rem;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-accent);
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        transition: color 0.3s ease;
+        white-space: nowrap;
+        margin-top: 0.25rem;
+      }
+
+      .watch-btn::before,
+      .watch-btn::after {
+        content: '';
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border-color: rgba(255,255,255,0.4);
+        border-style: solid;
+        transition: border-color 0.3s ease;
+      }
+
+      .watch-btn::before {
+        top: 0;
+        left: 0;
+        border-width: 1px 0 0 1px;
+      }
+
+      .watch-btn::after {
+        top: 0;
+        right: 0;
+        border-width: 1px 1px 0 0;
+      }
+
+      .watch-btn .corner-bl,
+      .watch-btn .corner-br {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border-color: rgba(255,255,255,0.4);
+        border-style: solid;
+        transition: border-color 0.3s ease;
+      }
+
+      .watch-btn .corner-bl {
+        bottom: 0;
+        left: 0;
+        border-width: 0 0 1px 1px;
+      }
+
+      .watch-btn .corner-br {
+        bottom: 0;
+        right: 0;
+        border-width: 0 1px 1px 0;
+      }
+
+      .carousel-card:hover .watch-btn {
+        color: #fff;
+      }
+
+      .carousel-card:hover .watch-btn::before,
+      .carousel-card:hover .watch-btn::after,
+      .carousel-card:hover .watch-btn .corner-bl,
+      .carousel-card:hover .watch-btn .corner-br {
+        border-color: rgba(255,255,255,1);
+      }
+
+      .like-btn {
+        font-size: 1.5rem;
+        padding: 0.3rem;
+        color: var(--text-accent);
+        transition:
+          color 0.25s ease,
+          transform 0.2s ease;
+        background: none;
+        border: none;
+        margin-left: 0.5rem;
+      }
+      .like-btn.liked,
+      .like-btn:hover {
+        color: var(--error-color);
+        transform: scale(1.1);
+      }
+
+      .details-right {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+      }
+
+      /* Playlist Button Styles */
+      .playlist-btn {
+        position: absolute;
+        top: 10px;
+        right: 50px; /* Adjusted position */
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        border: none;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        z-index: 5; /* Ensure it's above the image */
+      }
+
+      .playlist-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.1);
+      }
+
+      .carousel-card:hover .playlist-btn {
+        opacity: 1;
+      }
+      /* End Playlist Button Styles */
+
+      /* Styles for the "Add to Playlist" Modal */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1001;
+        transition: opacity 0.3s ease;
+        opacity: 0;
+      }
+      .modal-overlay.visible {
+        display: block;
+        opacity: 1;
+      }
+      /* End Modal Overlay */
+
+      /* Playlist Modal Styles */
+      .playlist-modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 80vh;
+        overflow-y: auto;
+        z-index: 1002; /* Increased z-index */
+        border: 1px solid var(--border-color);
+        opacity: 0; /* Initial state for fade-in */
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      }
+
+      .playlist-modal.visible {
+        display: block;
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.02); /* Slight scale effect */
+      }
+
+      .playlist-modal .modal-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .playlist-modal .modal-body {
+        padding: 1.5rem;
+      }
+
+      .current-video-info {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: var(--bg-tertiary);
+        border-radius: 8px;
+      }
+
+      .playlist-section, .create-playlist-section {
+        margin-bottom: 1.5rem;
+      }
+
+      .playlist-section h4, .create-playlist-section h4 {
+        margin-bottom: 1rem;
+        color: var(--accent-primary);
+      }
+
+      .playlist-list {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.5rem;
+      }
+
+      .playlist-item {
+        padding: 0.75rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        border-bottom: 1px solid var(--border-soft); /* Using a soft border */
+      }
+
+      .playlist-item:hover {
+        background: var(--bg-tertiary);
+      }
+
+      .playlist-item:last-child {
+        border-bottom: none;
+      }
+
+      .playlist-item-name {
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .playlist-item-info {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
+      }
+
+      #new-playlist-name, #new-playlist-description {
+        width: 100%;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--text-primary);
+      }
+
+      #new-playlist-description {
+        min-height: 80px;
+        resize: vertical;
+      }
+
+      .btn-primary {
+        background: var(--accent-primary);
+        color: var(--bg-primary);
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .btn-primary:hover {
+        background: var(--accent-secondary);
+      }
+
+      .loading, .no-playlists {
+        text-align: center;
+        color: var(--text-secondary);
+        padding: 1rem;
+        font-style: italic;
+      }
+      /* End Playlist Modal Styles */
+
+      /* ===== CALENDAR MODAL STYLES ===== */
+      #calendar-modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 95%;
+        max-width: 800px;
+        height: 90vh;
+        max-height: 700px;
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        box-shadow: var(--shadow-modal);
+        z-index: 1002;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        opacity: 0;
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        transform: translate(-50%, -45%) scale(0.9);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        flex-direction: column;
+      }
+      #calendar-modal.visible {
+        display: flex;
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      .program-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--bg-primary);
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+      }
+      h2#currentMonthYearDisplay {
+        font-size: 1.4rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: var(--accent-primary);
+      }
+      .program-nav button {
+        background: var(--button-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .program-nav button:hover {
+        background: var(--button-hover-bg);
+        border-color: var(--accent-primary);
+      }
+      .program-container {
+        flex-grow: 1;
+        padding: 1.5rem 2rem;
+        overflow-y: auto;
+        background: var(--bg-secondary);
+      }
+      .daily-events-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+      }
+      .day-card-header {
+        display: flex;
+        align-items: baseline;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1rem;
+      }
+      .day-card-header h3 {
+        font-size: 1.2rem;
+        text-transform: uppercase;
+        color: var(--accent-primary);
+      }
+      .day-card-header .date-info {
+        color: var(--text-accent);
+      }
+      .main-event-title-header {
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 1rem 0 0.5rem 0;
+      }
+      a.event-item-detailed-link {
+        display: block;
+        border-radius: 8px;
+        transition: background-color 0.2s ease;
+        margin: 0 -1rem;
+        padding: 0 1rem;
+        text-decoration: none;
+        color: inherit;
+      }
+      a.event-item-detailed-link:hover {
+        background: var(--bg-tertiary);
+      }
+      .event-item-detailed,
+      .event-info-line {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      a.event-item-detailed-link:last-of-type .event-info-line {
+        border-bottom: none;
+      }
+      .event-info-line .time {
+        font-weight: 600;
+        color: var(--text-accent);
+        width: 80px;
+        flex-shrink: 0;
+      }
+      .event-info-line .title {
+        color: var(--text-color);
+        flex-grow: 1;
+      }
+      .event-info-line .link-icon {
+        font-size: 1.1rem;
+        color: var(--text-accent);
+      }
+      a.event-item-detailed-link:hover .link-icon {
+        color: var(--accent-primary);
+      }
+      .event-description {
+        font-size: 0.9rem;
+        color: var(--text-accent);
+        padding: 0.5rem 0 1rem 0;
+        margin-left: 96px;
+      }
+      .no-data {
+        text-align: center;
+        color: var(--text-accent);
+        padding: 2rem;
+        font-style: italic;
+      }
+      .close-btn {
+        font-size: 1.5rem;
+        color: var(--text-accent);
+        background: none;
+        border: none;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .close-btn:hover {
+        color: var(--accent-primary);
+        transform: rotate(90deg);
+      }
+
+      @media (max-width: 1400px) {
+        .carousel .carousel-card {
+          flex: 0 0 calc(33.333% - var(--gap-between-cards) * 2 / 3);
+        }
+        #full-playlist-view {
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        }
+
+        /* Videos filtrados en pantallas grandes */
+        #search-results-view {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+      @media (max-width: 1024px) {
+        .carousel .carousel-card {
+          flex: 0 0 calc(50% - var(--gap-between-cards) / 2);
+        }
+        #full-playlist-view {
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+
+        /* Videos filtrados en tablets */
+        #search-results-view {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .details h3 {
+          font-size: 0.9rem;
+        }
+        
+        /* Títulos de playlist más pequeños en tablets */
+        main h2, 
+        .playlist-title-clickable,
+        #full-playlist-title {
+          font-size: 2.2rem !important;
+        }
+      }
+      @media (max-width: 768px) {
+        header {
+          padding: 0.8rem 1.2rem;
+          min-height: 70px;
+        }
+        .logo img {
+          height: 48px;
+        }
+        .nav-left,
+        .nav-right {
+          gap: 1rem;
+        }
+        nav a,
+        nav button {
+          font-size: 0.85rem;
+        }
+        body {
+          padding-top: 75px;
+        }
+        main {
+          padding: 2rem 1.5rem;
+        }
+        /* Títulos de playlist más pequeños en móviles */
+        main h2, 
+        .playlist-title-clickable,
+        #full-playlist-title {
+          font-size: 1.8rem !important;
+          margin: 1rem 0 1rem;
+        }
+        .controls {
+          gap: 0.8rem;
+          margin-bottom: 1.5rem;
+          padding: 1rem;
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .controls input,
+        .controls select {
+          min-width: 100%;
+          width: 100%;
+          padding: 0.8rem 1rem;
+          font-size: 0.8rem;
+        }
+        #search-button {
+          width: 100%;
+          justify-content: center;
+        }
+        .carousel .carousel-card {
+          flex: 0 0 100%;
+        }
+        #full-playlist-view {
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        /* Videos filtrados en móviles */
+        #search-results-view {
+          grid-template-columns: repeat(1, 1fr);
+        }
+
+        .arrow {
+          width: 40px;
+          height: 40px;
+          font-size: 1.5rem;
+        }
+        .carousel-wrapper {
+          margin-bottom: 2rem;
+        }
+      }
+      @media (max-width: 480px) {
+        header {
+          padding: 0.5rem 0.8rem;
+          min-height: 60px;
+          height: auto;
+          flex-wrap: wrap;
+        }
+        .header-left {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          flex: 1;
+          min-width: 0;
+          order: 1;
+        }
+        .logo img {
+          height: 35px;
+        }
+        .nav-left {
+          display: flex !important;
+          margin-left: 0.3rem;
+          overflow-x: auto;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          flex: 1;
+          min-width: 0;
+        }
+        .nav-left::-webkit-scrollbar {
+          display: none;
+        }
+        .nav-left ul {
+          display: flex;
+          gap: 0.4rem;
+          align-items: center;
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          white-space: nowrap;
+        }
+        .nav-left ul li a {
+          font-size: 0.65rem;
+          padding: 0.3rem 0.2rem;
+          color: var(--accent-primary);
+          text-transform: uppercase;
+          letter-spacing: 0.2px;
+          font-weight: 600;
+          white-space: nowrap;
+        }
+        .nav-right {
+          display: flex;
+          align-items: center;
+          flex-shrink: 0;
+          order: 2;
+        }
+        .nav-right ul {
+          gap: 0.4rem;
+          align-items: center;
+          flex-wrap: nowrap;
+          display: flex;
+          margin: 0;
+          padding: 0;
+        }
+        .nav-right ul li span {
+          font-size: 0.6rem;
+          max-width: 60px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        nav a,
+        nav button {
+          font-size: 0.65rem;
+          padding: 0.3rem 0.2rem;
+          white-space: nowrap;
+          display: flex;
+          align-items: center;
+          min-height: 35px;
+          text-transform: uppercase;
+          letter-spacing: 0.2px;
+        }
+        #cart-btn-nav i,
+        #search-btn-nav i,
+        .calendar-nav-link i {
+          font-size: 1rem;
+        }
+        body {
+          padding-top: 65px;
+        }
+        main {
+          padding: 1.5rem 1rem;
+          margin-top: 0;
+        }
+        /* Títulos de playlist más pequeños para móviles pequeños */
+        main h2, 
+        .playlist-title-clickable,
+        #full-playlist-title {
+          font-size: 1.5rem !important;
+          margin-bottom: 1rem;
+          text-align: center;
+        }
+        .controls {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 1rem;
+        }
+        .controls input,
+        .controls select {
+          min-width: unset;
+          width: 100%;
+          padding: 0.8rem;
+          font-size: 1rem;
+        }
+        #full-playlist-view {
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+
+        /* Videos filtrados en pantallas muy pequeñas */
+        #search-results-view {
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+
+        .carousel .carousel-card {
+          flex: 0 0 100%;
+          width: 100%;
+        }
+        .arrow {
+          display: none;
+        }
+        .details h3 {
+          font-size: 0.9rem;
+          white-space: normal;
+          overflow: visible;
+          text-overflow: unset;
+        }
+        .media {
+          border-radius: 8px;
+        }
+        .carousel-wrapper {
+          margin-bottom: 1.5rem;
+        }
+      }
+      @media (max-width: 360px) {
+        header {
+          padding: 0.5rem 0.8rem;
+        }
+        .logo img {
+          height: 40px;
+        }
+        nav a,
+        nav button {
+          font-size: 0.7rem;
+        }
+        .nav-left,
+        .nav-right {
+          gap: 0.6rem;
+        }
+        body {
+          padding-top: 75px;
+        }
+        
+        /* Títulos de playlist aún más pequeños para pantallas muy pequeñas */
+        main h2, 
+        .playlist-title-clickable,
+        #full-playlist-title {
+          font-size: 1.3rem !important;
+        }
+      }
+
+      /* ===== MINIMAL IMMEDIATE ANIMATIONS ===== */
+      @keyframes fadeInUp {
+        0% {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeIn {
+        0% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      /* Apply animations immediately - ensure visibility */
+      main h2 {
+        opacity: 1;
+        animation: fadeInUp 0.6s ease-out forwards;
+        animation-delay: 0s;
+      }
+
+      .carousel-card {
+        opacity: 1;
+        animation: fadeInUp 0.5s ease-out forwards;
+      }
+
+      .carousel-card:nth-child(1) { animation-delay: 0s; }
+      .carousel-card:nth-child(2) { animation-delay: 0.05s; }
+      .carousel-card:nth-child(3) { animation-delay: 0.1s; }
+      .carousel-card:nth-child(4) { animation-delay: 0.15s; }
+      .carousel-card:nth-child(5) { animation-delay: 0.2s; }
+      .carousel-card:nth-child(6) { animation-delay: 0.25s; }
+
+      .controls {
+        opacity: 1;
+        animation: fadeInUp 0.5s ease-out forwards;
+        animation-delay: 0s;
+      }
+
+      .carousel-wrapper {
+        opacity: 1;
+        animation: fadeInUp 0.6s ease-out forwards;
+        animation-delay: 0s;
+      }
+
+      header {
+        opacity: 1;
+        animation: fadeIn 0.4s ease-out forwards;
+      }
+
+
+      /* Global liquid distortion background */
+      #global-liquid-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+        background-image: url('/images/black-room-tour-map.png');
+        background-size: cover;
+        background-position: center;
+        filter: brightness(0.5) saturate(0.8);
+      }
+      
+      /* Mobile: focus on South America */
+      @media (max-width: 768px) {
+        #global-liquid-bg {
+          background-size: 250% auto;
+          background-position: 80% 70%;
+        }
+      }
+
+    </style>
+    <script src="https://unpkg.com/@barba/core@2.9.7/dist/barba.umd.js"></script>
+  </head>
+  <body data-barba="wrapper">
+    <!-- Global Liquid Distortion Background -->
+    <div id="global-liquid-bg"></div>
+    
+    <!-- Header HTML -->
+
+    <!-- Scripts -->
+    <script src="/js/global-header.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+
+    <div id="modal-overlay" class="modal-overlay"></div>
+
+    <!-- Modal para agregar a playlist -->
+    <div id="playlist-modal-overlay" class="modal-overlay" onclick="closePlaylistModal()"></div>
+    <div id="playlist-modal" class="playlist-modal">
+      <div class="modal-header">
+        <h3>Agregar a Playlist</h3>
+        <button onclick="closePlaylistModal()" class="close-btn">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="current-video-info">
+          <p><strong>Video:</strong> <span id="modal-video-title"></span></p>
+        </div>
+
+        <div class="playlist-section">
+          <h4>Seleccionar Playlist Existente:</h4>
+          <div id="playlist-list" class="playlist-list">
+            <p class="loading">Cargando playlists...</p>
+          </div>
+        </div>
+
+        <div class="create-playlist-section">
+          <h4>Crear Nueva Playlist:</h4>
+          <input type="text" id="new-playlist-name" placeholder="Nombre de la playlist" maxlength="50">
+          <textarea id="new-playlist-description" placeholder="Descripción (opcional)" maxlength="200"></textarea>
+          <button onclick="createNewPlaylist()" class="btn-primary">Crear Playlist</button>
+        </div>
+      </div>
+    </div>
+
+    <main data-barba="container" data-barba-namespace="videos">
+      <div class="controls" id="controls">
+        <input id="search-box" type="text" placeholder="Buscar videos…" />
+        <select id="genre-filter">
+          <option value="all">ALL GENRES</option>
+          <option value="hard techno">HARD TECHNO</option>
+          <option value="hard groove">HARD GROOVE</option>
+          <option value="peak time">PEAK TIME</option>
+          <option value="industrial">INDUSTRIAL</option>
+          <option value="hypnotic">HYPNOTIC</option>
+        </select>
+        <select id="city-filter">
+          <option value="all">ALL CITIES</option>
+          <option value="miami">MIAMI</option>
+          <option value="new york">NEW YORK</option>
+          <option value="los angeles">LOS ANGELES</option>
+          <option value="bogota">BOGOTA</option>
+          <option value="medellin">MEDELLIN</option>
+          <option value="lima">LIMA</option>
+          <option value="ciudad de méxico">CIUDAD DE MÉXICO</option>
+          <option value="santiago">SANTIAGO</option>
+          <option value="la paz">LA PAZ</option>
+        </select>
+        <select id="sort-filter">
+          <option value="newest">NEWEST</option>
+          <option value="oldest">OLDEST</option>
+          <option value="views">MOST VIEWED</option>
+          <option value="likes">MOST LIKED</option>
+        </select>
+        <button id="search-button" style="background: var(--accent-primary); color: #000; padding: 0.8rem 1.2rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; min-width: 100px; transition: all 0.3s ease;">
+          <i class="fas fa-search"></i> Buscar
+        </button>
+      </div>
+
+      <!-- Latest Videos section moved to the top -->
+      <section id="last-videos-section" style="margin-bottom: 3rem;">
+        <h2 class="playlist-title-clickable" onclick="showLastVideosView()" style="font-size: 2.8rem; text-transform: uppercase; margin: 1.5rem 0 1rem; text-align: left; color: #fff; font-weight: 700; letter-spacing: 1px;">Latest Videos</h2>
+        <div class="carousel-wrapper">
+          <button class="arrow prev" data-target="last-videos-carousel">‹</button>
+          <div id="last-videos-carousel" class="carousel"></div>
+          <button class="arrow next" data-target="last-videos-carousel">›</button>
+        </div>
+      </section>
+
+      <div id="playlists-container"></div>
+      <section id="full-playlist-section" style="display: none">
+        <div class="back-button-container">
+          <button class="back-button" onclick="showAllPlaylists()">
+            ← Back to Playlists
+          </button>
+        </div>
+        <h2 id="full-playlist-title"></h2>
+        <div id="full-playlist-view"></div>
+      </section>
+    </main>
+
+    <script>
+      // Global error handlers
+      window.addEventListener('unhandledrejection', event => {
+        console.warn('⚠️ Unhandled promise rejection:', event.reason);
+        event.preventDefault(); // Prevent the default browser behavior
+        
+        // Always load fallback content when there are promise rejections
+        console.log('🔄 Loading fallback video content due to API error...');
+        loadFallbackVideos();
+      });
+
+      window.addEventListener('error', event => {
+        console.error('❌ Global error:', event.error);
+        event.preventDefault(); // Prevent page crash
+        loadFallbackVideos();
+      });
+
+      /* ---------- CONST & HELPERS & GLOBAL VARS ---------- */
+      const API_KEY = "AIzaSyBQeCjv948kI1CJDd9fzK6WYyLCbyMwHG8";
+      // Géneros iniciales - se actualizarán automáticamente
+      let GENRES = [
+        "hard techno",
+        "hard groove",
+        "peak time",
+        "industrial",
+        "hypnotic",
+      ];
+
+      // Inicializar analizador de géneros
+      let genreAnalyzer;
+      try {
+        genreAnalyzer = new MusicGenreAnalyzer();
+      } catch (error) {
+        console.warn('MusicGenreAnalyzer not available, using fallback');
+        genreAnalyzer = {
+          analyzeTitle: () => ['all'],
+          analyzeVideoCollection: () => ({ recommendedFilters: [], totalGenres: 0 }),
+          generateReport: () => ({ totalGenres: 0, totalVideosAnalyzed: 0 }),
+          genreStats: {}
+        };
+      }
+      const CITIES = [
+        "miami",
+        "new york",
+        "los angeles",
+        "bogota",
+        "medellin",
+        "lima",
+        "ciudad de méxico",
+        "santiago",
+        "la paz",
+      ];
+      let allVideos = [],
+        playlistsData = [],
+        carIdx = 0,
+        preview = null;
+      const norm = (s) =>
+        String(s || "")
+          .toLowerCase()
+          .trim();
+
+      const getJSON = async (url) => {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            const errorText = await response.text();
+            let errorMessage = `HTTP error! Status: ${response.status} - ${response.statusText}`;
+            try {
+              const errorJson = JSON.parse(errorText);
+              if (errorJson && errorJson.error && errorJson.error.message) {
+                errorMessage = `API Error: ${errorJson.error.message}`;
+
+                // Handle quota exceeded specifically
+                if (errorJson.error.message.includes('quota') || response.status === 403) {
+                  errorMessage = "YouTube API quota exceeded. Loading fallback content.";
+                  // Trigger fallback loading
+                  setTimeout(() => loadFallbackVideos(), 100);
+                }
+              }
+            } catch (parseError) {
+              if (response.status === 403) {
+                errorMessage = "YouTube API quota exceeded. Loading fallback content.";
+                setTimeout(() => loadFallbackVideos(), 100);
+              }
+            }
+            console.warn(`⚠️ API Error: ${errorMessage}`);
+            return null; // Return null instead of throwing
+          }
+          const data = await response.json();
+          return data;
+        } catch (error) {
+          console.warn(`⚠️ Request failed for URL ${url}:`, error.message);
+          // Trigger fallback on any network error
+          setTimeout(() => loadFallbackVideos(), 100);
+          return null; // Return null instead of throwing to prevent unhandled promises
+        }
+      };
+
+      // Fallback video data for when API fails
+      const fallbackVideos = [
+        {
+          snippet: {
+            title: "Black Room - Hard Techno Mix 2024",
+            thumbnails: { medium: { url: "/images/logo.png" } },
+            resourceId: { videoId: "rAX-0BQUzDc" }
+          },
+          id: "rAX-0BQUzDc",
+          views: 0,
+          likes: 0,
+          date: new Date().toISOString(),
+          genre: "hard techno",
+          city: "all"
+        },
+        {
+          snippet: {
+            title: "Black Room - Peak Time Sessions",
+            thumbnails: { medium: { url: "/images/logo.png" } },
+            resourceId: { videoId: "dQw4w9WgXcQ" }
+          },
+          id: "dQw4w9WgXcQ",
+          views: 0,
+          likes: 0,
+          date: new Date().toISOString(),
+          genre: "peak time",
+          city: "all"
+        }
+      ];
+
+      // Function to load fallback videos when API fails
+      async function loadFallbackVideos() {
+        console.log("🔄 Loading fallback videos due to API issues...");
+        
+        try {
+          // Try to load from local data first
+          const localResponse = await fetch('/data/videos.json');
+          if (localResponse.ok) {
+            const localData = await localResponse.json();
+            const convertedVideos = localData.map(video => ({
+              snippet: {
+                title: video.title,
+                thumbnails: { medium: { url: video.thumbnail } },
+                resourceId: { videoId: video.id }
+              },
+              id: video.id,
+              views: Math.floor(Math.random() * 10000),
+              likes: Math.floor(Math.random() * 500),
+              date: new Date().toISOString(),
+              genre: "all",
+              city: "all"
+            }));
+            
+            allVideos = convertedVideos;
+            console.log(`✅ Loaded ${convertedVideos.length} videos from local data`);
+            
+            // Render videos in both carousels
+            const lastVideosCarousel = document.getElementById("last-videos-carousel");
+            if (lastVideosCarousel) {
+              renderVideos(convertedVideos.slice(0, 20), lastVideosCarousel, true);
+            }
+            
+            // Also populate playlists section
+            const playlistsContainer = document.getElementById("playlists-container");
+            if (playlistsContainer) {
+              playlistsContainer.innerHTML = `
+                <section class="playlist-section">
+                  <h2>All Black Room Videos</h2>
+                  <div class="carousel-wrapper">
+                    <div id="all-videos-carousel" class="carousel"></div>
+                  </div>
+                </section>
+              `;
+              
+              const allVideosCarousel = document.getElementById("all-videos-carousel");
+              if (allVideosCarousel) {
+                renderVideos(convertedVideos, allVideosCarousel, true);
+              }
+            }
+            
+            return;
+          }
+        } catch (error) {
+          console.warn("⚠️ Could not load local video data:", error);
+        }
+        
+        // Use hardcoded fallback as last resort
+        allVideos = fallbackVideos;
+        console.log(`✅ Using ${fallbackVideos.length} hardcoded fallback videos`);
+        
+        const lastVideosCarousel = document.getElementById("last-videos-carousel");
+        if (lastVideosCarousel) {
+          renderVideos(fallbackVideos, lastVideosCarousel, true);
+        }
+      }
+
+      // Variables calendarVisible y modalOverlay se mantienen por si el carrito u otro modal las usan,
+      // pero la funcionalidad del calendario en sí se ha eliminado.
+      let calendarVisible = false;
+      let cartVisible = false;
+      const modalOverlay = document.getElementById("modal-overlay");
+
+      /* ---------- NAV ---------- */
+      async function syncUserLikes() {
+        try {
+          const response = await fetch(`${window.location.origin}/api/like`, {
+            credentials: "include",
+          });
+
+          if (response.ok) {
+            const likes = await response.json();
+            const likedVideoIds = likes.map(like => like.videoId);
+            localStorage.setItem("likedVideos", JSON.stringify(likedVideoIds));
+          }
+        } catch (error) {
+          console.error("Error syncing likes:", error);
+        }
+      }
+
+      function loadNav() {
+        try {
+          const navRight = document.getElementById("nav-right");
+          if (!navRight) {
+            console.warn("⚠️ nav-right element not found, navigation will not load");
+            return;
+          }
+
+          const userName = localStorage.getItem("userName");
+          const fullName = localStorage.getItem("fullName") || userName || "Usuario";
+
+          let navHtml = `
+            <li><button id="cart-btn-videos-nav" title="Carrito"><i class="fas fa-shopping-cart"></i></button></li>
+            <li><button id="calendar-btn-videos-nav" class="calendar-icon-link" title="Calendario"><i class="fas fa-calendar"></i></button></li>
+          `;
+
+          if (userName) {
+            navHtml += `<li><button onclick="location.href='profile.html'" title="Profile"><i class="fas fa-user" style="color: var(--accent-primary);"></i></button></li>
+                        <li><span style="color: var(--accent-primary); font-weight: 600;">Hola, ${fullName}</span></li>
+                        <li><button id="logout-btn-videos" title="Logout" style="color: var(--accent-primary);"><i class="fas fa-sign-out-alt"></i></button></li>`;
+          } else {
+            navHtml += `<li><a href="login.html" style="color: var(--accent-primary);">Login</a></li>
+                        <li><a href="register.html" style="color: var(--accent-primary);">Register</a></li>`;
+          }
+          
+          navRight.innerHTML = navHtml;
+
+          // Configurar event listeners de forma segura
+          setTimeout(() => {
+            const cartBtn = document.getElementById("cart-btn-videos-nav");
+            if (cartBtn) {
+              cartBtn.onclick = () => {
+                alert("Funcionalidad del carrito no implementada en esta página.");
+              };
+            }
+
+            const calendarBtn = document.getElementById("calendar-btn-videos-nav");
+            if (calendarBtn) {
+              calendarBtn.onclick = () => window.location.href = 'calendar.html';
+            }
+
+            if (userName) {
+              const logoutBtn = document.getElementById("logout-btn-videos");
+              if (logoutBtn) {
+                logoutBtn.onclick = async () => {
+                  localStorage.clear();
+                  try {
+                    await fetch(`${window.location.origin}/api/logout`, {
+                      method: "POST",
+                      credentials: "include",
+                    });
+                  } catch (e) {
+                    console.error("Logout failed", e);
+                  }
+                  window.location.reload();
+                };
+              }
+            }
+          }, 100);
+
+          console.log("✅ Navigation loaded successfully");
+          
+        } catch (error) {
+          console.error("❌ Error loading navigation:", error);
+        }
+      }
+
+      // Calendario redirige a calendar.html
+
+      /* ---------- YOUTUBE API CALLS & Video Display Logic ---------- */
+      async function getChannel() {
+        try {
+          const response = await getJSON(
+            `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=blackroom_us&maxResults=1&key=${API_KEY}`,
+          );
+          return response.items && response.items.length > 0
+            ? response.items[0].id.channelId
+            : (console.error("Channel 'blackroom_us' not found."), null);
+        } catch (error) {
+          return console.error("Error fetching channel:", error), null;
+        }
+      }
+      async function getPlaylists(channelId) {
+        if (!channelId) return [];
+        try {
+          const response = await getJSON(
+            `https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=${channelId}&maxResults=50&key=${API_KEY}`,
+          );
+          return response.items || [];
+        } catch (error) {
+          return console.error("Error fetching playlists:", error), [];
+        }
+      }
+
+      // Función mejorada para obtener playlists con paginación completa
+      async function getPlaylistsWithPagination(channelId) {
+        if (!channelId) return [];
+        
+        console.log("🔄 Enhanced playlist fetching with complete pagination...");
+        let allPlaylists = [];
+        let nextPageToken = '';
+        let pageCount = 0;
+        
+        try {
+          do {
+            pageCount++;
+            console.log(`📄 Enhanced loading playlist page ${pageCount}...`);
+            
+            const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&channelId=${channelId}&maxResults=50&key=${API_KEY}${nextPageToken ? `&pageToken=${nextPageToken}` : ''}`;
+            
+            const response = await getJSON(url);
+            
+            if (!response || !response.items) {
+              console.warn("⚠️ No response or items from YouTube API");
+              break;
+            }
+            
+            // Ser MUY INCLUSIVO - mostrar TODOS los playlists del canal
+            const validPlaylists = response.items.filter(playlist => {
+              const title = playlist.snippet?.title || '';
+              
+              // Solo excluir playlists claramente automáticas, permitir TODO lo demás
+              const isValid = !title.includes('Watch Later') && 
+                             !title.includes('Liked videos') && 
+                             !title.startsWith('Uploads from');
+              
+              if (isValid) {
+                console.log(`✅ Enhanced: Valid playlist found: "${title}"`);
+              } else {
+                console.log(`❌ Enhanced: Excluded playlist: "${title}"`);
+              }
+              
+              return isValid;
+            });
+            
+            allPlaylists.push(...validPlaylists);
+            nextPageToken = response.nextPageToken;
+            
+            console.log(`📊 Enhanced page ${pageCount}: Added ${validPlaylists.length} playlists (${allPlaylists.length} total)`);
+            
+            // Pausa para evitar rate limiting
+            if (nextPageToken) {
+              await new Promise(resolve => setTimeout(resolve, 150));
+            }
+            
+          } while (nextPageToken && pageCount < 100); // Aumentado límite
+          
+          console.log(`🎉 ENHANCED COMPLETE: Found ${allPlaylists.length} total playlists from ${pageCount} pages`);
+          
+          return allPlaylists;
+          
+        } catch (error) {
+          console.error("❌ Enhanced playlist fetch error:", error);
+          return [];
+        }
+      }
+
+      // Nueva función para obtener TODAS las playlists con paginación
+      async function getAllPlaylists(channelId) {
+        if (!channelId) return [];
+        
+        console.log("🔄 Fetching ALL playlists from channel (with pagination)...");
+        let allPlaylists = [];
+        let nextPageToken = '';
+        let pageCount = 0;
+        
+        try {
+          do {
+            pageCount++;
+            console.log(`📄 Loading playlist page ${pageCount}...`);
+            
+            const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&channelId=${channelId}&maxResults=50&key=${API_KEY}${nextPageToken ? `&pageToken=${nextPageToken}` : ''}`;
+            
+            const response = await getJSON(url);
+            
+            if (!response || !response.items) {
+              console.warn("⚠️ No response or items from YouTube API");
+              break;
+            }
+            
+            // Filtrar playlists válidas - MÁS PERMISIVO para incluir más playlists
+            const validPlaylists = response.items.filter(playlist => {
+              const title = playlist.snippet?.title || '';
+              const itemCount = playlist.contentDetails?.itemCount || 0;
+              
+              // Solo excluir playlists claramente automáticas, permitir más contenido
+              const isValid = !title.includes('Watch Later') && 
+                             !title.includes('Liked videos') && 
+                             !title.startsWith('Uploads from') &&
+                             itemCount >= 0; // Permitir incluso playlists vacíos temporalmente
+              
+              if (isValid) {
+                console.log(`✅ Valid playlist: "${title}" (${itemCount} videos)`);
+              } else {
+                console.log(`❌ Excluded playlist: "${title}" (${itemCount} videos)`);
+              }
+              
+              return isValid;
+            });
+            
+            allPlaylists.push(...validPlaylists);
+            nextPageToken = response.nextPageToken;
+            
+            console.log(`📊 Page ${pageCount}: Added ${validPlaylists.length} playlists (${allPlaylists.length} total so far)`);
+            
+            // Pequeña pausa para evitar rate limiting
+            if (nextPageToken) {
+              await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+          } while (nextPageToken && pageCount < 50); // Aumentado a 50 páginas para obtener TODOS
+          
+          console.log(`🎉 COMPLETED: Found ${allPlaylists.length} total valid playlists from ${pageCount} pages`);
+          
+          // Ordenar por número de videos (más contenido primero) y luego por fecha
+          allPlaylists.sort((a, b) => {
+            const itemCountA = a.contentDetails?.itemCount || 0;
+            const itemCountB = b.contentDetails?.itemCount || 0;
+            
+            // Primero por número de videos (descendente)
+            if (itemCountB !== itemCountA) {
+              return itemCountB - itemCountA;
+            }
+            
+            // Luego por fecha (más recientes primero)
+            const dateA = new Date(a.snippet?.publishedAt || 0);
+            const dateB = new Date(b.snippet?.publishedAt || 0);
+            return dateB - dateA;
+          });
+          
+          // Mostrar resumen completo de playlists encontradas
+          console.group("📋 TODAS LAS PLAYLISTS ENCONTRADAS (ORDENADAS POR CONTENIDO):");
+          allPlaylists.forEach((playlist, index) => {
+            const title = playlist.snippet?.title || 'Sin título';
+            const itemCount = playlist.contentDetails?.itemCount || 0;
+            const publishedAt = playlist.snippet?.publishedAt || 'Fecha desconocida';
+            console.log(`${index + 1}. "${title}" - ${itemCount} videos (${publishedAt.substring(0, 10)})`);
+          });
+          console.groupEnd();
+          
+          return allPlaylists;
+          
+        } catch (error) {
+          console.error("❌ Error fetching ALL playlists:", error);
+          
+          // Fallback: intentar con método simple si falla
+          console.log("🔄 Trying fallback method...");
+          try {
+            const fallbackPlaylists = await getPlaylists(channelId);
+            console.log(`🔄 Fallback method returned ${fallbackPlaylists.length} playlists`);
+            return fallbackPlaylists;
+          } catch (fallbackError) {
+            console.error("❌ Fallback method also failed:", fallbackError);
+            return [];
+          }
+        }
+      }
+      // Function to get all playlists from the channel
+      async function getAllChannelPlaylists() {
+        try {
+          console.log("📺 NUEVO METODO: Fetching all playlists from channel...");
+          const url = `${window.location.origin}/api/youtube/playlists?t=${Date.now()}`;
+          console.log("📺 URL:", url);
+          
+          const response = await fetch(url, {
+            cache: 'no-cache',
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          });
+          console.log("📺 Response status:", response.status);
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log("📺 NUEVO METODO Response data:", data);
+            console.log(`✅ NUEVO METODO: Found ${data.playlists.length} playlists from channel`);
+            return data.playlists;
+          } else {
+            console.error("NUEVO METODO: Failed to fetch channel playlists, status:", response.status);
+            return [];
+          }
+        } catch (error) {
+          console.error("NUEVO METODO: Error fetching channel playlists:", error);
+          return [];
+        }
+      }
+
+      async function getVideosFromPlaylist(playlistId) {
+        try {
+          console.log(`📊 Cargando videos con estadísticas desde playlist: ${playlistId}`);
+
+          const playlistResponse = await getJSON(
+              `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${API_KEY}`,
+            );
+          const videos = playlistResponse.items.map((item) => item.snippet);
+          const videoIds = videos
+              .map((video) => video.resourceId.videoId)
+              .filter((id) => id)
+              .join(",");
+          if (!videoIds) return [];
+
+          // Obtener estadísticas completas incluyendo vistas
+          const statsResponse = await getJSON(
+              `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${videoIds}&key=${API_KEY}`,
+            );
+          const statsMap = {};
+          statsResponse.items.forEach(
+              (video) => {
+                const viewCount = +video.statistics.viewCount || 0;
+                const likeCount = +video.statistics.likeCount || 0;
+
+                statsMap[video.id] = {
+                  views: viewCount,
+                  likes: likeCount,
+                  date: video.snippet.publishedAt,
+                };
+
+                console.log(`📈 Video ${video.id}: ${viewCount.toLocaleString()} vistas, ${likeCount} likes`);
+              }
+            );
+
+          return videos.map((video) => {
+            const title = norm(video.title || "");
+            const stats = statsMap[video.resourceId.videoId] || { views: 0, likes: 0, date: video.publishedAt };
+
+            return {
+              snippet: video,
+              ...stats,
+              genre: GENRES.find((genre) => title.includes(genre.toLowerCase())) || "all",
+              city: CITIES.find((city) => title.includes(city.toLowerCase())) || "all",
+              playlistId: playlistId,
+            };
+          });
+        } catch (error) {
+          console.error(`Error fetching videos with stats for playlist ${playlistId}:`, error);
+          return [];
+        }
+      }
+      const likes = () =>
+          JSON.parse(localStorage.getItem("likedVideos") || "[]"),
+        saveLikes = (t) =>
+          localStorage.setItem("likedVideos", JSON.stringify(t));
+
+      async function toggleLike(videoId, button, index) {
+        const cardElement = button.closest('.carousel-card');
+        const titleElement = cardElement.querySelector('h3');
+        const title = titleElement ? titleElement.textContent : 'Video Sin Título';
+
+        console.log(`🎵 Toggling like for video: ${videoId} - ${title}`);
+
+        try {
+          const response = await fetch(`${window.location.origin}/api/like`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ videoId, title }),
+          });
+
+          if (response.status === 401) {
+            alert("Debes iniciar sesión para dar like a los videos");
+            return;
+          }
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`✅ Like response:`, data);
+
+            if (data.liked) {
+              button.classList.add("liked");
+              // Actualizar localStorage para persistencia
+              const likedVideos = JSON.parse(localStorage.getItem("likedVideos") || "[]");
+              if (!likedVideos.includes(videoId)) {
+                likedVideos.push(videoId);
+                localStorage.setItem("likedVideos", JSON.stringify(likedVideos));
+              }
+              console.log(`❤️ Video ${videoId} agregado a likes`);
+            } else {
+              button.classList.remove("liked");
+              // Remover de localStorage
+              const likedVideos = JSON.parse(localStorage.getItem("likedVideos") || "[]");
+              const updatedLikes = likedVideos.filter(id => id !== videoId);
+              localStorage.setItem("likedVideos", JSON.stringify(updatedLikes));
+              console.log(`💔 Video ${videoId} removido de likes`);
+            }
+
+            // Actualizar todos los botones de este video en la página
+            updateAllLikeButtons(videoId, data.liked);
+          } else {
+            console.error("Error response:", response.status, response.statusText);
+            alert("Error al procesar like. Intenta de nuevo.");
+          }
+        } catch (error) {
+          console.error("Error al dar like:", error);
+          alert("Error de conexión. Intenta de nuevo.");
+        }
+      }
+
+      // Función para actualizar todos los botones de like de un video específico
+      function updateAllLikeButtons(videoId, isLiked) {
+        // Buscar todos los botones de like en la página para este video
+        const allCards = document.querySelectorAll('.carousel-card');
+
+        allCards.forEach(card => {
+          const onclick = card.getAttribute('onclick');
+          if (onclick && onclick.includes(`watchVideo('${videoId}')`)) {
+            const likeButton = card.querySelector('.like-btn');
+            if (likeButton) {
+              if (isLiked) {
+                likeButton.classList.add('liked');
+              } else {
+                likeButton.classList.remove('liked');
+              }
+            }
+          }
+        });
+      }
+      /* ---------- SEARCH & FILTER ---------- */
+      // Función para actualizar filtros de género dinámicamente (solo agregar nuevos)
+      const updateGenreFilters = (genreData) => {
+        const genreSelect = document.getElementById("genre-filter");
+        if (!genreSelect || !genreData.recommendedFilters) return;
+
+        // Obtener opciones existentes
+        const existingOptions = [...genreSelect.options].map(opt => opt.value);
+
+        // Solo agregar géneros nuevos que no sean genéricos
+        const newGenres = genreData.recommendedFilters.filter(filter => 
+          filter.value !== 'all' && 
+          !existingOptions.includes(filter.value) &&
+          filter.count >= 5 // Solo géneros con al menos 5 videos
+        );
+
+        // Agregar solo géneros nuevos relevantes
+        newGenres.forEach(filter => {
+          const option = document.createElement('option');
+          option.value = filter.value;
+          option.textContent = filter.label;
+          genreSelect.appendChild(option);
+        });
+
+        if (newGenres.length > 0) {
+          console.log(`✅ Agregados ${newGenres.length} nuevos filtros de género relevantes`);
+        }
+      };
+
+      const searchVideos = async () => {
+        const query = norm(document.getElementById("search-box").value),
+          genre = document.getElementById("genre-filter").value,
+          city = document.getElementById("city-filter").value,
+          sort = document.getElementById("sort-filter").value;
+
+        // Solo ejecutar búsqueda si hay filtros activos
+        const hasActiveFilters = query !== "" || genre !== "all" || city !== "all" || sort !== "newest";
+
+        if (!hasActiveFilters) {
+          console.log("🚫 No active filters, skipping search");
+          return;
+        }
+
+        console.log(`🔍 Filtering videos: query="${query}", genre="${genre}", city="${city}", sort="${sort}"`);
+
+        // Cargar todos los videos del canal cuando hay filtros activos
+        if (allVideos.length < 100) {
+          console.log("🔄 Loading complete video database for filtering...");
+          await loadAllChannelVideos();
+        }
+
+        console.log(`📊 Total videos available for filtering: ${allVideos.length}`);
+
+        let results = allVideos.filter((v) => {
+          const title = norm(v.snippet?.title || "");
+          const description = norm(v.snippet?.description || "");
+          const channelTitle = norm(v.snippet?.channelTitle || "");
+
+          // 1. Buscar en todos los campos (título, descripción, canal)
+          let matchesQuery = true;
+          if (query !== "") {
+            matchesQuery = title.includes(query) || 
+                          description.includes(query) || 
+                          channelTitle.includes(query);
+          }
+
+          // 2. Usar analizador automático para detectar géneros (con sinónimos)
+          const detectedGenres = genreAnalyzer.analyzeTitle(title);
+          const matchesGenre = genre === "all" || detectedGenres.includes(genre);
+
+          // 3. Extraer ciudad del título en tiempo real
+          const detectedCity = CITIES.find(c => title.includes(c.toLowerCase())) || "";
+          const matchesCity = city === "all" || (detectedCity && city === detectedCity);
+
+          const passes = matchesQuery && matchesGenre && matchesCity;
+
+          // Log para debugging cuando hay filtros específicos
+          if (passes && (genre !== "all" || city !== "all" || query !== "")) {
+            console.log(`✅ Video matches filters: "${v.snippet?.title.substring(0, 50)}..." - Genres: [${detectedGenres.join(', ')}], City: ${detectedCity || 'none'}`);
+          }
+
+          return passes;
+        });
+
+        console.log(`📊 Filtered results: ${results.length} videos (from ${allVideos.length} total)`);
+
+        // Mostrar estadísticas del filtro por género si está activo
+        if (genre !== "all") {
+          const genreCount = results.length;
+          console.log(`🎵 Genre "${genre}" filter: found ${genreCount} matching videos`);
+        }
+
+        results = sortVideos(results, sort);
+        showSearchResults(results);
+      };
+      const sortVideos = (videos, sort) => {
+        const sortedVideos = [...videos];
+
+        if (sort === "newest") {
+          return sortedVideos.sort((a, b) => {
+            const dateA = new Date(a.date || a.snippet?.publishedAt || 0);
+            const dateB = new Date(b.date || b.snippet?.publishedAt || 0);
+            return dateB.getTime() - dateA.getTime();
+          });
+        }
+
+        if (sort === "oldest") {
+          return sortedVideos.sort((a, b) => {
+            const dateA = new Date(a.date || a.snippet?.publishedAt || 0);
+            const dateB = new Date(b.date || b.snippet?.publishedAt || 0);
+            return dateA.getTime() - dateB.getTime();
+          });
+        }
+
+        if (sort === "views") {
+          return sortedVideos.sort((a, b) => (b.views || 0) - (a.views || 0));
+        }
+
+        if (sort === "likes") {
+          return sortedVideos.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+        }
+
+        return sortedVideos;
+      };
+
+      /* ---------- SEARCH RESULTS ---------- */
+      const showSearchResults = (results) => {
+        // Ocultar todas las secciones
+        document.getElementById("last-videos-section").style.display = "none";
+        document.getElementById("playlists-container").style.display = "none";
+        document.getElementById("full-playlist-section").style.display = "none";
+
+        // Mostrar sección de resultados
+        let searchSection = document.getElementById("search-results-section");
+        if (!searchSection) {
+          searchSection = document.createElement("section");
+          searchSection.id = "search-results-section";
+          searchSection.innerHTML = `
+            <div class="back-button-container">
+              <button class="back-button" onclick="clearSearch()">
+                ← Clear Filters
+              </button>
+            </div>
+            <h2 id="search-results-title">Search Results</h2>
+            <div id="search-results-view"></div>
+          `;
+          document.querySelector("main").appendChild(searchSection);
+        }
+
+        searchSection.style.display = "block";
+        document.getElementById("search-results-title").textContent = `Search Results (${results.length} videos)`;
+
+        const resultsContainer = document.getElementById("search-results-view");
+        renderVideos(results, resultsContainer, false);
+      };
+
+      // Función para cargar todos los videos del canal
+      async function loadAllChannelVideos() {
+        console.log("🎬 Loading ALL CHANNEL VIDEOS for filtering...");
+
+        try {
+          let allChannelVideos = [];
+          const videoIds = new Set(); // Para evitar duplicados
+
+          // 1. Obtener videos más recientes del canal (hasta 200)
+          console.log("📺 Fetching latest uploads from channel...");
+          try {
+            const latestResponse = await fetch(`${window.location.origin}/api/youtube/latest`);
+            if (latestResponse.ok) {
+              const latestVideos = await latestResponse.json();
+              console.log(`Found ${latestVideos.length} latest uploads from API`);
+
+              latestVideos.forEach(video => {
+                const videoId = video.id?.videoId || video.id;
+                if (videoId && !videoIds.has(videoId)) {
+                  videoIds.add(videoId);
+                  const title = norm(video.snippet?.title || "");
+
+                  allChannelVideos.push({
+                    snippet: {
+                      ...video.snippet,
+                      resourceId: { videoId: videoId }
+                    },
+                    id: videoId,
+                    views: 0,
+                    likes: 0,
+                    date: video.snippet?.publishedAt,
+                    genre: "all", // Se analizará después
+                    city: "all"   // Se analizará después
+                  });
+                }
+              });
+            }
+          } catch (error) {
+            console.warn("Error fetching latest uploads:", error);
+          }
+
+          // 2. Obtener videos de TODAS las playlists del canal
+          console.log("📚 Fetching videos from ALL playlists...");
+          const channelId = await getChannel();
+          if (channelId) {
+            const playlists = await getPlaylists(channelId);
+            console.log(`Found ${playlists.length} playlists to process`);
+
+            for (const playlist of playlists) {
+              try {
+                console.log(`Processing playlist: ${playlist.snippet.title} (${playlist.id})`);
+                const playlistVideos = await getVideosFromPlaylist(playlist.id);
+
+                playlistVideos.forEach(video => {
+                  const videoId = video.snippet?.resourceId?.videoId;
+                  if (videoId && !videoIds.has(videoId)) {
+                    videoIds.add(videoId);
+                    allChannelVideos.push(video);
+                  }
+                });
+
+                console.log(`✅ Added ${playlistVideos.length} videos from ${playlist.snippet.title}`);
+              } catch (error) {
+                console.warn(`❌ Error fetching playlist ${playlist.snippet.title}:`, error);
+              }
+            }
+          }
+
+          // 3. Analizar géneros automáticamente para TODOS los videos
+          console.log(`🎵 Analyzing genres for ${allChannelVideos.length} total videos...`);
+          const genreAnalysis = genreAnalyzer.analyzeVideoCollection(allChannelVideos);
+
+          // 4. Actualizar filtros con análisis completo
+          updateGenreFilters(genreAnalysis);
+
+          // 5. Actualizar lista global de géneros
+          GENRES = genreAnalysis.recommendedFilters
+            .filter(f => f.value !== 'all')
+            .map(f => f.value);
+
+          // 6. Actualizar allVideos con todos los videos del canal
+          allVideos = allChannelVideos;
+
+          console.log(`✅ LOADED ${allVideos.length} TOTAL VIDEOS from entire channel`);
+          console.log(`📊 Found ${genreAnalysis.recommendedFilters.length - 1} unique genres`);
+          console.log(`🏆 Top genres:`, Object.entries(genreAnalyzer.genreStats)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 5)
+            .map(([genre, count]) => `${genre}: ${count}`)
+          );
+
+        } catch (error) {
+          console.error("❌ Error loading all channel videos:", error);
+        }
+      }
+
+      const clearSearch = () => {
+        // Limpiar campos de búsqueda
+        document.getElementById("search-box").value = "";
+        document.getElementById("genre-filter").value = "all";
+        document.getElementById("city-filter").value = "all";
+        document.getElementById("sort-filter").value = "newest";
+
+        // Ocultar resultados de búsqueda
+        const searchSection = document.getElementById("search-results-section");
+        if (searchSection) {
+          searchSection.style.display = "none";
+        }
+
+        // Mostrar secciones originales
+        document.getElementById("last-videos-section").style.display = "block";
+        document.getElementById("playlists-container").style.display = "block";
+      };
+
+      /* ---------- RENDER VIDEOS & PLAYLISTS ---------- */
+      const renderVideos = (videos, container, isCarousel = true) => {
+        if (!container) {
+          return;
+        }
+
+        if (!videos || videos.length === 0) {
+          container.innerHTML =
+            "<p style='color: var(--text-accent); text-align:center; padding: 2rem;'>No videos disponibles en este momento.</p>";
+          return;
+        }
+
+        const validVideos = videos.filter(video => {
+          const videoId = video.snippet?.resourceId?.videoId || video.id?.videoId || video.id || '';
+          return videoId && videoId.length > 0;
+        });
+
+        if (validVideos.length === 0) {
+          container.innerHTML =
+            "<p style='color: var(--error-color); text-align:center; padding: 2rem;'>No se encontraron videos válidos.</p>";
+          return;
+        }
+
+        // Obtener likes actuales del localStorage
+        const currentLikes = JSON.parse(localStorage.getItem("likedVideos") || "[]");
+
+        container.innerHTML = validVideos
+          .map((video, index) => {
+            const videoId = video.snippet?.resourceId?.videoId || video.id?.videoId || video.id || '';
+            const title = (video.snippet?.title || 'Untitled').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+            const thumbnail = video.snippet?.thumbnails?.medium?.url || 
+                            video.snippet?.thumbnails?.high?.url || 
+                            video.snippet?.thumbnails?.default?.url || 
+                            'images/logo.png';
+
+            const isLiked = currentLikes.includes(videoId);
+            const viewCount = video.views || 0;
+            const formattedViews = viewCount > 0 ? `${viewCount.toLocaleString()} views` : '';
+            const shortTitle = title.length > 40 ? title.substring(0, 40) + '...' : title;
+            const videoType = title.toLowerCase().includes('radio') ? 'RADIO' : 'LIVE';
+
+            return `<div class="carousel-card" onclick="watchVideo('${videoId}')" style="display: block !important; visibility: visible !important;">
+              <div class="video-card-header">
+                <div class="video-card-type">${videoType}</div>
+                <div class="video-card-duration">45:00</div>
+              </div>
+              <div class="media" style="display: block !important; visibility: visible !important;" data-video-id="${videoId}">
+                <img src="${thumbnail}" 
+                     alt="${title}" 
+                     loading="lazy" 
+                     onerror="this.src='images/logo.png'; console.log('Error loading thumbnail for: ${title}');"
+                     style="width: 100%; height: 100%; object-fit: cover; display: block !important;"/>
+                <div class="hover-preview"></div>
+                <div class="corner-bl"></div>
+                <div class="corner-br"></div>
+              </div>
+              <div class="details">
+                <div class="details-left">
+                  <h3 title="${title}">${shortTitle}</h3>
+                  ${formattedViews ? `<div class="video-views">${formattedViews}</div>` : ''}
+                </div>
+                <div class="details-right">
+                  <div class="watch-btn">
+                    WATCH
+                    <span class="corner-bl"></span>
+                    <span class="corner-br"></span>
+                  </div>
+                  <button class="like-btn ${isLiked ? "liked" : ""}" 
+                          onclick="event.stopPropagation(); toggleLike('${videoId}', this, ${index})"
+                          title="Like this video"
+                          data-video-id="${videoId}">
+                    <i class="fas fa-heart"></i>
+                  </button>
+                </div>
+              </div>
+              <button class="playlist-btn" onclick="event.stopPropagation(); showPlaylistModal('${videoId}', '${title}')" title="Add to Playlist">
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>`;
+          })
+          .join("");
+
+        // Force visibility and setup like buttons after rendering
+        setTimeout(() => {
+          const cards = container.querySelectorAll('.carousel-card');
+          const media = container.querySelectorAll('.media');
+
+          cards.forEach(card => {
+            card.style.display = 'block';
+            card.style.visibility = 'visible';
+          });
+
+          media.forEach(m => {
+            m.style.display = 'block';
+            m.style.visibility = 'visible';
+          });
+
+          // Setup hover preview for each video card
+          setupHoverPreviews(container);
+
+          // Verificar y actualizar estado de likes desde el servidor para usuarios logueados
+          if (localStorage.getItem("userName")) {
+            syncLikesFromServer(container);
+          }
+
+          console.log(`🎬 Videos: Videos: ${validVideos.length} videos renderizados con botones de like funcionales`);
+        }, 50);
+      };
+
+      // Video Preview on Hover - Creates YouTube embed on mouseenter
+      function setupHoverPreviews(container) {
+        const mediaElements = container.querySelectorAll('.media[data-video-id]');
+        
+        mediaElements.forEach(media => {
+          const videoId = media.dataset.videoId;
+          const hoverPreview = media.querySelector('.hover-preview');
+          let hoverTimeout = null;
+          
+          media.addEventListener('mouseenter', () => {
+            // Immediate load - no delay for fastest preview
+            if (!hoverPreview.querySelector('iframe')) {
+              const iframe = document.createElement('iframe');
+              iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&start=15`;
+              iframe.allow = 'autoplay; encrypted-media';
+              iframe.setAttribute('frameborder', '0');
+              iframe.setAttribute('allowfullscreen', '');
+              iframe.loading = 'eager';
+              hoverPreview.appendChild(iframe);
+            }
+          });
+          
+          media.addEventListener('mouseleave', () => {
+            // Clear timeout if mouse leaves before delay
+            if (hoverTimeout) {
+              clearTimeout(hoverTimeout);
+              hoverTimeout = null;
+            }
+            // Remove iframe to stop playback
+            const iframe = hoverPreview.querySelector('iframe');
+            if (iframe) {
+              iframe.remove();
+            }
+          });
+        });
+        
+        console.log(`🎥 Hover previews enabled for ${mediaElements.length} videos`);
+      }
+
+      // Función para sincronizar likes desde el servidor
+      async function syncLikesFromServer(container) {
+        try {
+          const response = await fetch(`${window.location.origin}/api/like`, {
+            credentials: "include",
+          });
+
+          if (response.ok) {
+            const serverLikes = await response.json();
+            const likedVideoIds = serverLikes.map(like => like.videoId);
+
+            // Actualizar localStorage
+            localStorage.setItem("likedVideos", JSON.stringify(likedVideoIds));
+
+            // Actualizar botones en el container específico
+            if (container) {
+              container.querySelectorAll('.like-btn').forEach(btn => {
+                const videoId = btn.getAttribute('data-video-id');
+                if (videoId) {
+                  if (likedVideoIds.includes(videoId)) {
+                    btn.classList.add('liked');
+                  } else {
+                    btn.classList.remove('liked');
+                  }
+                }
+              });
+            }
+
+            console.log(`✅ Sincronizados ${likedVideoIds.length} likes desde el servidor`);
+          }
+        } catch (error) {
+          console.error("Error sincronizando likes:", error);
+        }
+      }
+      const renderPlaylists = (playlists, target) => {
+        if (!target)
+          return console.warn("renderPlaylists: playlists-container missing");
+        if (!playlists || !playlists.length)
+          return (target.innerHTML = "<p>No playlists found.</p>");
+        
+        console.log(`🎬 Rendering ${playlists.length} playlists...`);
+        
+        // Filtrar y organizar playlists
+        const validPlaylists = playlists.filter(playlist => {
+          const title = playlist.snippet?.title || '';
+          const itemCount = playlist.contentDetails?.itemCount || 0;
+          
+          // Excluir playlists automáticas y vacías
+          return !title.includes('Watch Later') && 
+                 !title.includes('Liked videos') && 
+                 !title.includes('Uploads from') &&
+                 itemCount > 0;
+        });
+
+        // Ordenar por fecha de creación (más recientes primero)
+        validPlaylists.sort((a, b) => {
+          const dateA = new Date(a.snippet?.publishedAt || 0);
+          const dateB = new Date(b.snippet?.publishedAt || 0);
+          return dateB - dateA;
+        });
+        
+        let html = `<div style="margin-bottom: 2rem; text-align: center;">
+                      <p style="color: var(--text-accent); font-size: 1.1rem;">
+                        📚 Mostrando ${validPlaylists.length} playlists del canal Black Room
+                      </p>
+                    </div>`;
+        
+        validPlaylists.forEach((playlist, index) => {
+          const title = playlist.snippet?.title || 'Playlist sin título';
+          const itemCount = playlist.contentDetails?.itemCount || 0;
+          const publishedAt = playlist.snippet?.publishedAt || '';
+          const publishedDate = publishedAt ? new Date(publishedAt).toLocaleDateString() : '';
+          const description = playlist.snippet?.description || '';
+          
+          // Mostrar descripción truncada si existe
+          const shortDescription = description.length > 100 ? 
+            description.substring(0, 100) + '...' : description;
+          
+          html += `<section class="playlist-section" style="margin-bottom: 3rem; padding: 1.5rem; background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color);">
+                      <div style="margin-bottom: 1.5rem;">
+                        <h2 class="playlist-title-clickable" onclick="showPlaylist('${playlist.id}')" style="margin-bottom: 0.5rem; cursor: pointer; transition: color 0.3s ease;">
+                          ${title}
+                          <span style="font-size: 0.6em; color: var(--text-accent); font-weight: 400; margin-left: 1rem;">
+                            ${itemCount} videos${publishedDate ? ` • ${publishedDate}` : ''}
+                          </span>
+                        </h2>
+                        ${shortDescription ? `<p style="color: var(--text-accent); font-size: 0.9rem; margin-top: 0.5rem;">${shortDescription}</p>` : ''}
+                      </div>
+                      <div class="carousel-wrapper">
+                          <button class="arrow prev" data-target="playlist-carousel-${playlist.id}">‹</button>
+                          <div id="playlist-carousel-${playlist.id}" class="carousel">
+                            <div style="padding: 2rem; text-align: center; color: var(--text-accent);">
+                              <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+                              <p>Cargando videos...</p>
+                            </div>
+                          </div>
+                          <button class="arrow next" data-target="playlist-carousel-${playlist.id}">›</button>
+                      </div>
+                      <div style="text-align: center; margin-top: 1rem;">
+                        <button onclick="showPlaylist('${playlist.id}')" style="background: var(--accent-primary); color: #000; padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: transform 0.2s ease;">
+                          Ver toda la playlist →
+                        </button>
+                      </div>
+                  </section>`;
+        });
+        
+        target.innerHTML = html;
+        
+        console.log(`✅ ${validPlaylists.length} playlists organizadas y renderizadas`);
+        console.log(`📊 Playlists más recientes mostradas primero`);
+      };
+      /* ---------- LOAD DATA & Manage Views ---------- */
+      async function loadLastVideos() {
+        try {
+          console.log("🔄 Loading ONLY latest videos from the channel...");
+          
+          // Obtener videos más recientes del canal directamente (SIN mezclar playlists)
+          const latestResponse = await fetch(`${window.location.origin}/api/youtube/latest`);
+          if (!latestResponse || !latestResponse.ok) {
+            console.warn("⚠️ API response not OK, using fallback...");
+            await loadFallbackVideos();
+            return;
+          }
+
+          const latestVideos = await latestResponse.json();
+          console.log(`✅ Received ${latestVideos.length} latest videos from channel`);
+
+          if (latestVideos.length === 0) {
+            console.log("⚠️ No videos received from API, using fallback...");
+            await loadFallbackVideos();
+            return;
+          }
+
+          // Log the first 3 videos to verify they are the latest
+          console.log("🎬 VERIFICATION - First 3 videos received:");
+          latestVideos.slice(0, 3).forEach((video, index) => {
+            console.log(`${index + 1}. "${video.snippet?.title}" - Published: ${video.snippet?.publishedAt}`);
+          });
+
+          // Convertir formato de la API - MANTENER EL ORDEN ORIGINAL (ya vienen ordenados por fecha del API)
+          const convertedLatest = latestVideos
+            .map(video => {
+              const title = norm(video.snippet?.title || "");
+              return {
+                snippet: {
+                  ...video.snippet,
+                  resourceId: { videoId: video.id?.videoId || video.id }
+                },
+                id: video.id?.videoId || video.id,
+                views: 0,
+                likes: 0,
+                date: video.snippet?.publishedAt,
+                genre: GENRES.find((genre) => title.includes(genre.toLowerCase())) || "all",
+                city: CITIES.find((city) => title.includes(city.toLowerCase())) || "all"
+              };
+            })
+            .slice(0, 20); // Tomar solo los 20 más recientes del canal
+
+          console.log(`✅ Using ${convertedLatest.length} latest channel videos ONLY - ORDERED BY MOST RECENT`);
+          console.log(`🎬 Latest video title: "${convertedLatest[0]?.snippet?.title}"`);
+          console.log(`📅 Latest video date: ${convertedLatest[0]?.date}`);
+
+          // Analizar géneros automáticamente
+          if (convertedLatest.length > 0) {
+            const genreAnalysis = genreAnalyzer.analyzeVideoCollection(convertedLatest);
+            updateGenreFilters(genreAnalysis);
+            GENRES = genreAnalysis.recommendedFilters
+              .filter(f => f.value !== 'all')
+              .map(f => f.value);
+          }
+
+          // Renderizar en el carousel
+          allVideos = convertedLatest;
+          const lastVideosCarousel = document.getElementById("last-videos-carousel");
+          if (lastVideosCarousel) {
+            console.log(`🎬 Rendering ${convertedLatest.length} LATEST CHANNEL videos to carousel`);
+            renderVideos(convertedLatest, lastVideosCarousel, true);
+          }
+
+        } catch (error) {
+          console.warn("⚠️ Error in loadLastVideos, using fallback:", error.message);
+          await loadFallbackVideos();
+        }
+      }
+      async function loadPlaylistVideos(playlistId) {
+        try {
+          console.log(`🔄 Loading full playlist: ${playlistId}`);
+          const videos = await getVideosFromPlaylist(playlistId);
+          const carousel = document.getElementById(`playlist-carousel-${playlistId}`);
+          
+          if (carousel && videos.length > 0) {
+            renderVideos(videos, carousel, true);
+            console.log(`✅ Loaded ${videos.length} videos for playlist ${playlistId}`);
+          } else if (carousel) {
+            carousel.innerHTML = `<p style="text-align: center; color: var(--text-accent); padding: 2rem;">No hay videos disponibles en esta playlist</p>`;
+          }
+        } catch (error) {
+          console.error(`Error loading playlist ${playlistId}:`, error);
+          const carousel = document.getElementById(`playlist-carousel-${playlistId}`);
+          if (carousel) {
+            carousel.innerHTML = `<p style="text-align: center; color: var(--error-color); padding: 2rem;">Error cargando videos</p>`;
+          }
+        }
+      }
+      const showPlaylist = async (playlistId) => {
+        const playlist = playlistsData.find((p) => p.id === playlistId);
+        if (!playlist) return alert("Playlist not found");
+        
+        let videos = [];
+        
+        // Manejar el playlist especial "Latest Videos"
+        if (playlistId === 'latest-videos-special') {
+          console.log("🎬 Loading full Latest Videos view...");
+          try {
+            const latestResponse = await fetch(`${window.location.origin}/api/youtube/latest`);
+            if (latestResponse.ok) {
+              const apiLatestVideos = await latestResponse.json();
+              videos = apiLatestVideos.map(video => ({
+                snippet: {
+                  ...video.snippet,
+                  resourceId: { videoId: video.id?.videoId || video.id }
+                },
+                id: video.id,
+                views: 0,
+                likes: 0,
+                date: video.snippet?.publishedAt,
+                genre: "all",
+                city: "all"
+              }));
+              console.log(`✅ Loaded ${videos.length} latest videos for full view`);
+            }
+          } catch (error) {
+            console.warn("Error loading latest videos for full view:", error);
+            // Fallback a datos locales si la API falla
+            try {
+              const localResponse = await fetch('/data/videos.json');
+              if (localResponse.ok) {
+                const localData = await localResponse.json();
+                videos = localData.map(video => ({
+                  snippet: {
+                    title: video.title,
+                    thumbnails: { medium: { url: video.thumbnail } },
+                    resourceId: { videoId: video.id }
+                  },
+                  id: video.id,
+                  views: 0,
+                  likes: 0,
+                  date: new Date().toISOString(),
+                  genre: "all",
+                  city: "all"
+                }));
+              }
+            } catch (localError) {
+              console.warn("Error loading local videos:", localError);
+            }
+          }
+        } else {
+          // Para playlists normales de YouTube
+          videos = await getVideosFromPlaylist(playlistId);
+        }
+        
+        document.getElementById("full-playlist-section").style.display = "block";
+        document.getElementById("playlists-container").style.display = "none";
+        document.getElementById("last-videos-section").style.display = "none";
+        document.getElementById("full-playlist-title").innerText = playlist.snippet.title;
+        renderVideos(videos, document.getElementById("full-playlist-view"), false);
+      };
+      const showAllPlaylists = () => {
+        document.getElementById("full-playlist-section").style.display = "none";
+        document.getElementById("playlists-container").style.display = "block";
+        document.getElementById("last-videos-section").style.display = "block";
+      };
+      const showLastVideosView = async () => {
+        console.log("🎬 Videos: Loading ALL LATEST VIDEOS for full view...");
+
+        try {
+          let allLatestVideos = [];
+
+          // 1. Obtener todos los videos más recientes del canal
+          console.log("Fetching all latest uploads for full view...");
+          try {
+            const latestResponse = await fetch(`${window.location.origin}/api/youtube/latest`);
+            if (latestResponse.ok) {
+              const latestVideos = await latestResponse.json();
+              console.log(`Found ${latestVideos.length} latest uploads from API for full view`);
+
+              const convertedLatest = latestVideos.map(video => ({
+                snippet: {
+                  ...video.snippet,
+                  resourceId: { videoId: video.id?.videoId || video.id }
+                },
+                id: video.id,
+                views: 0,
+                likes: 0,
+                date: video.snippet?.publishedAt,
+                genre: GENRES.find((genre) => norm(video.snippet?.title || "").includes(genre)) || "all",
+                city: CITIES.find((city) => norm(video.snippet?.title || "").includes(city)) || "all"
+              }));
+
+              allLatestVideos = [...convertedLatest];
+            }
+          } catch (error) {
+            console.warn("Error fetching latest uploads for full view:", error);
+          }
+
+          // 2. Complementar con videos de todos los playlists del canal
+          const channelPlaylists = await getAllChannelPlaylists();
+          const allPlaylists = channelPlaylists.map(p => p.id);
+
+          for (const playlistId of allPlaylists) {
+            try {
+              console.log(`Fetching ALL videos from playlist ${playlistId} for full view...`);
+              const playlistVideos = await getVideosFromPlaylist(playlistId);
+
+              // Agregar todos los videos, evitando duplicados
+              playlistVideos.forEach(video => {
+                const videoId = video.snippet?.resourceId?.videoId;
+                const exists = allLatestVideos.some(existing => 
+                  (existing.snippet?.resourceId?.videoId || existing.id?.videoId || existing.id) === videoId
+                );
+
+                if (!exists && videoId) {
+                  allLatestVideos.push(video);
+                }
+              });
+
+              console.log(`Added videos from playlist ${playlistId} to full view`);
+            } catch (error) {
+              console.warn(`Error fetching from playlist ${playlistId} for full view:`, error);
+            }
+          }
+
+          // 3. Ordenar todos por fecha (más recientes primero)
+          allLatestVideos.sort((a, b) => {
+            const dateA = new Date(a.date || a.snippet?.publishedAt);
+            const dateB = new Date(b.date || b.snippet?.publishedAt);
+            return dateB - dateA;
+          });
+
+          // 4. Tomar los primeros 100 para la vista completa
+          const finalVideos = allLatestVideos.slice(0, 100);
+
+          console.log(`✅ Videos: Loaded ${finalVideos.length} LATEST VIDEOS for full view from all sources`);
+
+          // Mostrar la sección completa
+          document.getElementById("full-playlist-section").style.display = "block";
+          document.getElementById("playlists-container").style.display = "none";
+          document.getElementById("last-videos-section").style.display = "none";
+          document.getElementById("full-playlist-title").innerText = "Latest Videos - All Recent Uploads";
+
+          // Renderizar videos en grid
+          const fullPlaylistView = document.getElementById("full-playlist-view");
+          if (fullPlaylistView) {
+            renderVideos(finalVideos, fullPlaylistView, false);
+            console.log(`✅ Videos: Rendered ${finalVideos.length} latest videos in full grid view`);
+          }
+
+        } catch (error) {
+          console.error("❌ Videos: Error loading latest videos for full view:", error);
+          document.getElementById("full-playlist-title").innerText = "Error - Latest Videos";
+          const fullPlaylistView = document.getElementById("full-playlist-view");
+          if (fullPlaylistView) {
+            fullPlaylistView.innerHTML = "<p style='text-align: center; color: var(--error-color); padding: 2rem;'>Error cargando videos recientes</p>";
+          }
+        }
+      };
+      async function initializePage() {
+        try {
+          console.log("🎬 Initializing ALL YouTube playlists with complete pagination...");
+          const channelId = await getChannel();
+          if (!channelId) {
+            console.warn("⚠️ No channel ID found, loading fallback playlists");
+            await loadFallbackPlaylists();
+            return;
+          }
+
+          console.log("📚 Loading ALL playlists from YouTube channel via NEW server endpoint...");
+          console.log("📚 ABOUT TO CALL getAllChannelPlaylists()...");
+          
+          // Usar ÚNICAMENTE el nuevo endpoint del servidor
+          let allPlaylists = await getAllChannelPlaylists();
+          console.log("📚 RETURNED FROM getAllChannelPlaylists()");
+          console.log("📚 allPlaylists:", allPlaylists);
+          console.log(`📚 Found ${allPlaylists.length} total playlists from NEW server endpoint`);
+          
+          if (allPlaylists.length === 0) {
+            console.log("⚠️ No playlists found, loading static fallback");
+            await loadFallbackPlaylists();
+            return;
+          }
+
+          // Agregar la sección "Latest Videos" como primer playlist especial - IGUAL A INDEX.HTML
+          const latestVideosPlaylist = {
+            id: 'latest-videos-special',
+            snippet: {
+              title: 'Latest Videos',
+              description: 'Los videos más recientes del canal Black Room - exactamente igual que en la página principal',
+              publishedAt: new Date().toISOString(),
+              thumbnails: {
+                medium: { url: '/images/logo.png' }
+              }
+            },
+            contentDetails: {
+              itemCount: 50
+            }
+          };
+
+          // Convertir el formato de playlists del servidor al formato esperado
+          const convertedPlaylists = allPlaylists.map(playlist => ({
+            id: playlist.id,
+            snippet: {
+              title: playlist.title,
+              description: playlist.description,
+              publishedAt: playlist.publishedAt,
+              thumbnails: playlist.thumbnails || { medium: { url: '/images/logo.png' } }
+            },
+            contentDetails: {
+              itemCount: playlist.itemCount
+            }
+          }));
+
+          // Insertar "Latest Videos" al principio Y mostrar TODOS los demás playlists
+          playlistsData = [latestVideosPlaylist, ...convertedPlaylists];
+          
+          console.log(`🎯 TOTAL PLAYLISTS TO RENDER: ${playlistsData.length}`);
+          console.log(`📋 PLAYLISTS LIST:`);
+          playlistsData.forEach((playlist, index) => {
+            const title = playlist.snippet?.title || 'Sin título';
+            const itemCount = playlist.contentDetails?.itemCount || 0;
+            console.log(`${index + 1}. "${title}" (${itemCount} videos)`);
+          });
+          
+          const playlistsContainer = document.getElementById("playlists-container");
+          if (playlistsData.length > 0) {
+            renderPlaylists(playlistsData, playlistsContainer);
+            console.log(`✅ ${playlistsData.length} playlists rendered successfully (including Latest Videos)`);
+            
+            // Cargar vista previa para TODOS los playlists
+            playlistsData.forEach((playlist, index) => {
+              setTimeout(() => {
+                console.log(`🔄 Loading preview for playlist ${index + 1}: ${playlist.snippet?.title}`);
+                
+                // Manejar "Latest Videos" de manera especial - USAR MISMO CONTENIDO QUE INDEX.HTML
+                if (playlist.id === 'latest-videos-special') {
+                  loadLatestVideosFromIndexHTML();
+                } else {
+                  loadPlaylistPreview(playlist.id);
+                }
+              }, index * 150); // Carga más rápida
+            });
+            
+          } else {
+            console.log("⚠️ No playlists to render, loading fallback");
+            await loadFallbackPlaylists();
+          }
+
+          // Análisis de géneros en segundo plano
+          setTimeout(async () => {
+            console.log(`🎵 Iniciando análisis completo de géneros...`);
+            await performGenreAnalysis();
+          }, 3000);
+
+        } catch (error) {
+          console.error("❌ Error initializing playlists:", error);
+          await loadFallbackPlaylists();
+        }
+
+        const searchBox = document.getElementById("search-box");
+        searchBox.addEventListener("input", () => {
+          const query = searchBox.value.trim();
+          if (query.length > 0) {
+            searchVideos();
+          } else {
+            clearSearch();
+          }
+        });
+      }
+
+      // Nueva función para cargar solo vista previa de playlists (pocos videos)
+      async function loadPlaylistPreview(playlistId) {
+        try {
+          const playlistResponse = await getJSON(
+            `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=6&key=${API_KEY}`,
+          );
+          
+          if (!playlistResponse || !playlistResponse.items) {
+            console.warn(`No preview items found for playlist ${playlistId}`);
+            return;
+          }
+
+          const videos = playlistResponse.items.map((item) => ({
+            snippet: item.snippet,
+            views: 0,
+            likes: 0,
+            date: item.snippet.publishedAt,
+            genre: "all",
+            city: "all",
+            playlistId: playlistId,
+          }));
+
+          const carousel = document.getElementById(`playlist-carousel-${playlistId}`);
+          if (carousel) {
+            renderVideos(videos, carousel, true);
+            console.log(`✅ Preview loaded for playlist ${playlistId}: ${videos.length} videos`);
+          }
+        } catch (error) {
+          console.warn(`Error loading preview for playlist ${playlistId}:`, error);
+        }
+      }
+
+      // Función para cargar Latest Videos EXACTAMENTE igual que en index.html
+      async function loadLatestVideosFromIndexHTML() {
+        try {
+          console.log("🎬 Loading Latest Videos EXACTLY like in index.html...");
+          
+          let latestVideos = [];
+          
+          // Usar EXACTAMENTE el mismo método que index.html
+          try {
+            const latestResponse = await fetch(`${window.location.origin}/api/youtube/latest`);
+            if (latestResponse.ok) {
+              const apiLatestVideos = await latestResponse.json();
+              console.log(`✅ SAME AS INDEX: Received ${apiLatestVideos.length} latest videos from API`);
+
+              // Procesar videos EXACTAMENTE igual que en index.html
+              latestVideos = apiLatestVideos.slice(0, 50).map(video => ({
+                snippet: {
+                  ...video.snippet,
+                  resourceId: { videoId: video.id?.videoId || video.id }
+                },
+                id: video.id,
+                views: Math.floor(Math.random() * 50000), // Más vistas para mostrar popularidad
+                likes: Math.floor(Math.random() * 2000),
+                date: video.snippet?.publishedAt,
+                genre: "all",
+                city: "all"
+              }));
+              
+              console.log(`✅ SAME AS INDEX: Processed ${latestVideos.length} videos for Latest Videos playlist`);
+            }
+          } catch (error) {
+            console.warn("Error fetching latest videos from API:", error);
+          }
+
+          // Si no hay videos de la API, usar datos locales EXACTAMENTE igual que index.html
+          if (latestVideos.length === 0) {
+            try {
+              const localResponse = await fetch('/data/videos.json');
+              if (localResponse.ok) {
+                const localData = await localResponse.json();
+                latestVideos = localData.slice(0, 50).map(video => ({
+                  snippet: {
+                    title: video.title,
+                    thumbnails: { medium: { url: video.thumbnail } },
+                    resourceId: { videoId: video.id }
+                  },
+                  id: video.id,
+                  views: Math.floor(Math.random() * 50000),
+                  likes: Math.floor(Math.random() * 2000),
+                  date: new Date().toISOString(),
+                  genre: "all",
+                  city: "all"
+                }));
+                console.log(`✅ SAME AS INDEX: Using ${latestVideos.length} local videos for Latest Videos playlist`);
+              }
+            } catch (localError) {
+              console.warn("Error loading local videos:", localError);
+            }
+          }
+
+          const carousel = document.getElementById(`playlist-carousel-latest-videos-special`);
+          if (carousel && latestVideos.length > 0) {
+            renderVideos(latestVideos, carousel, true);
+            console.log(`✅ SAME AS INDEX: Latest Videos playlist loaded: ${latestVideos.length} videos (EXACTLY like index.html)`);
+          } else if (carousel) {
+            carousel.innerHTML = `<p style="text-align: center; color: var(--text-accent); padding: 2rem;">No hay videos recientes disponibles</p>`;
+          }
+          
+        } catch (error) {
+          console.error("Error loading Latest Videos exactly like index.html:", error);
+          const carousel = document.getElementById(`playlist-carousel-latest-videos-special`);
+          if (carousel) {
+            carousel.innerHTML = `<p style="text-align: center; color: var(--error-color); padding: 2rem;">Error cargando videos recientes</p>`;
+          }
+        }
+      }
+
+      // Función especial para cargar Latest Videos en el playlist especial
+      async function loadLatestVideosForPlaylist() {
+        try {
+          console.log("🔄 Loading Latest Videos for special playlist...");
+          
+          // Usar la misma función que se usa en index.html
+          let latestVideos = [];
+          
+          try {
+            const latestResponse = await fetch(`${window.location.origin}/api/youtube/latest`);
+            if (latestResponse.ok) {
+              const apiLatestVideos = await latestResponse.json();
+              console.log(`✅ Received ${apiLatestVideos.length} latest videos from API`);
+
+              latestVideos = apiLatestVideos.slice(0, 6).map(video => ({
+                snippet: {
+                  ...video.snippet,
+                  resourceId: { videoId: video.id?.videoId || video.id }
+                },
+                id: video.id,
+                views: 0,
+                likes: 0,
+                date: video.snippet?.publishedAt,
+                genre: "all",
+                city: "all"
+              }));
+            }
+          } catch (error) {
+            console.warn("Error fetching latest videos from API:", error);
+          }
+
+          // Si no hay videos de la API, usar datos locales como fallback
+          if (latestVideos.length === 0) {
+            try {
+              const localResponse = await fetch('/data/videos.json');
+              if (localResponse.ok) {
+                const localData = await localResponse.json();
+                latestVideos = localData.slice(0, 6).map(video => ({
+                  snippet: {
+                    title: video.title,
+                    thumbnails: { medium: { url: video.thumbnail } },
+                    resourceId: { videoId: video.id }
+                  },
+                  id: video.id,
+                  views: 0,
+                  likes: 0,
+                  date: new Date().toISOString(),
+                  genre: "all",
+                  city: "all"
+                }));
+                console.log(`✅ Using ${latestVideos.length} local videos for Latest Videos playlist`);
+              }
+            } catch (localError) {
+              console.warn("Error loading local videos:", localError);
+            }
+          }
+
+          const carousel = document.getElementById(`playlist-carousel-latest-videos-special`);
+          if (carousel && latestVideos.length > 0) {
+            renderVideos(latestVideos, carousel, true);
+            console.log(`✅ Latest Videos playlist loaded: ${latestVideos.length} videos`);
+          } else if (carousel) {
+            carousel.innerHTML = `<p style="text-align: center; color: var(--text-accent); padding: 2rem;">No hay videos recientes disponibles</p>`;
+          }
+          
+        } catch (error) {
+          console.error("Error loading Latest Videos for playlist:", error);
+          const carousel = document.getElementById(`playlist-carousel-latest-videos-special`);
+          if (carousel) {
+            carousel.innerHTML = `<p style="text-align: center; color: var(--error-color); padding: 2rem;">Error cargando videos recientes</p>`;
+          }
+        }
+      }
+
+      // Función separada para análisis de géneros (no interfiere con carga principal)
+      async function performGenreAnalysis() {
+        try {
+          let allPlaylistVideos = [...allVideos];
+
+          for (const playlist of playlistsData.slice(0, 10)) { // Solo analizar primeras 10 playlists
+            try {
+              const playlistVideos = await getVideosFromPlaylist(playlist.id);
+              playlistVideos.forEach(video => {
+                const videoId = video.snippet?.resourceId?.videoId;
+                const exists = allPlaylistVideos.some(existing => 
+                  (existing.snippet?.resourceId?.videoId || existing.id?.videoId || existing.id) === videoId
+                );
+                if (!exists && videoId) {
+                  allPlaylistVideos.push(video);
+                }
+              });
+            } catch (error) {
+              console.warn(`Error analyzing playlist ${playlist.id}:`, error);
+            }
+          }
+
+          if (allPlaylistVideos.length > allVideos.length) {
+            console.log(`🎵 Analizando ${allPlaylistVideos.length} videos totales...`);
+            const completeGenreAnalysis = genreAnalyzer.analyzeVideoCollection(allPlaylistVideos);
+            updateGenreFilters(completeGenreAnalysis);
+            allVideos = allPlaylistVideos;
+
+            const report = genreAnalyzer.generateReport();
+            console.log(`📊 Análisis completo:`, report);
+          }
+        } catch (error) {
+          console.warn("Error en análisis de géneros:", error);
+        }
+      }
+
+      // Fallback playlists when YouTube API fails
+      async function loadFallbackPlaylists() {
+        console.log("📚 Loading fallback playlists...");
+        
+        try {
+          // Try to load from local data first
+          const localResponse = await fetch('/data/videos.json');
+          if (localResponse.ok) {
+            const localData = await localResponse.json();
+            
+            // Create playlist sections from local data
+            const playlistsContainer = document.getElementById("playlists-container");
+            if (playlistsContainer) {
+              playlistsContainer.innerHTML = `
+                <section class="playlist-section">
+                  <h2 class="playlist-title-clickable" onclick="showPlaylist('past-raves-fallback')">Past Raves</h2>
+                  <div class="carousel-wrapper">
+                    <button class="arrow prev" data-target="playlist-carousel-past-raves-fallback">‹</button>
+                    <div id="playlist-carousel-past-raves-fallback" class="carousel"></div>
+                    <button class="arrow next" data-target="playlist-carousel-past-raves-fallback">›</button>
+                  </div>
+                </section>
+                <section class="playlist-section">
+                  <h2 class="playlist-title-clickable" onclick="showPlaylist('radio-sessions-fallback')">Radio Sessions</h2>
+                  <div class="carousel-wrapper">
+                    <button class="arrow prev" data-target="playlist-carousel-radio-sessions-fallback">‹</button>
+                    <div id="playlist-carousel-radio-sessions-fallback" class="carousel"></div>
+                    <button class="arrow next" data-target="playlist-carousel-radio-sessions-fallback">›</button>
+                  </div>
+                </section>
+                <section class="playlist-section">
+                  <h2 class="playlist-title-clickable" onclick="showPlaylist('underground-series-fallback')">Underground Series</h2>
+                  <div class="carousel-wrapper">
+                    <button class="arrow prev" data-target="playlist-carousel-underground-series-fallback">‹</button>
+                    <div id="playlist-carousel-underground-series-fallback" class="carousel"></div>
+                    <button class="arrow next" data-target="playlist-carousel-underground-series-fallback">›</button>
+                  </div>
+                </section>
+              `;
+
+              // Convert local data to video format and distribute among playlists
+              const convertedVideos = localData.map(video => ({
+                snippet: {
+                  title: video.title,
+                  thumbnails: { medium: { url: video.thumbnail } },
+                  resourceId: { videoId: video.id }
+                },
+                id: video.id,
+                views: Math.floor(Math.random() * 10000),
+                likes: Math.floor(Math.random() * 500),
+                date: new Date().toISOString(),
+                genre: "all",
+                city: "all"
+              }));
+
+              // Distribute videos among playlists
+              const pastRavesVideos = convertedVideos.filter((_, i) => i % 3 === 0);
+              const radioSessionsVideos = convertedVideos.filter((_, i) => i % 3 === 1);
+              const undergroundSeriesVideos = convertedVideos.filter((_, i) => i % 3 === 2);
+
+              // Render each playlist
+              renderVideos(pastRavesVideos, document.getElementById("playlist-carousel-past-raves-fallback"), true);
+              renderVideos(radioSessionsVideos, document.getElementById("playlist-carousel-radio-sessions-fallback"), true);
+              renderVideos(undergroundSeriesVideos, document.getElementById("playlist-carousel-underground-series-fallback"), true);
+
+              console.log("✅ Fallback playlists loaded successfully");
+              return;
+            }
+          }
+        } catch (error) {
+          console.warn("⚠️ Could not load local playlist data:", error);
+        }
+
+        // Ultimate fallback with hardcoded playlists
+        const playlistsContainer = document.getElementById("playlists-container");
+        if (playlistsContainer) {
+          playlistsContainer.innerHTML = `
+            <section class="playlist-section">
+              <h2>Past Raves</h2>
+              <div class="carousel-wrapper">
+                <div class="carousel">
+                  <p style="color: var(--text-accent); padding: 2rem; text-align: center;">
+                    Black Room playlists will load here when API is available
+                  </p>
+                </div>
+              </div>
+            </section>
+          `;
+        }
+      }
+      /* ---------- CAROUSEL CONTROLS ---------- */
+      document.addEventListener("click", (e) => {
+        if (!e.target.classList.contains("arrow")) return;
+        const carouselId = e.target.dataset.target;
+        const carousel = document.getElementById(carouselId);
+        if (!carousel) return console.warn(`Carousel ${carouselId} not found`);
+        const direction = e.target.classList.contains("next") ? 1 : -1;
+        const cardWidth = carousel.querySelector(".carousel-card").offsetWidth;
+        carousel.scrollLeft += direction * (cardWidth + 20);
+      });
+      /* ---------- WATCH VIDEO (Redirect) ---------- */
+      const watchVideo = (videoId) => {
+        if (videoId) {
+          window.location.href = `watch.html?id=${videoId}`;
+        } else {
+          console.warn("watchVideo: No videoId provided.");
+        }
+      };
+      /* ---------- EVENT LISTENERS ---------- */
+      function setupEventListeners() {
+        document
+          .getElementById("search-button")
+          .addEventListener("click", searchVideos);
+        document
+          .getElementById("genre-filter")
+          .addEventListener("change", searchVideos);
+        document
+          .getElementById("city-filter")
+          .addEventListener("change", searchVideos);
+        document
+          .getElementById("sort-filter")
+          .addEventListener("change", searchVideos);
+
+        // Event listener especial para el search box
+        const searchBox = document.getElementById("search-box");
+        if (searchBox) {
+          searchBox.addEventListener("input", () => {
+            const query = searchBox.value.trim();
+            if (query.length > 0) {
+              searchVideos();
+            } else {
+              clearSearch();
+            }
+          });
+        }
+      }
+      /* ---------- GENRE STATS ---------- */
+      function showGenreStats() {
+        if (!genreAnalyzer.genreStats || Object.keys(genreAnalyzer.genreStats).length === 0) {
+          console.log("No hay estadísticas de géneros disponibles aún");
+          return;
+        }
+
+        const report = genreAnalyzer.generateReport();
+
+        console.group("📊 ESTADÍSTICAS DE GÉNEROS MUSICALES");
+        console.log(`📈 Total de géneros encontrados: ${report.totalGenres}`);
+        console.log(`🎬 Videos analizados: ${report.totalVideosAnalyzed}`);
+        console.log(`🏆 Género más popular: ${report.mostPopularGenre?.[0]} (${report.mostPopularGenre?.[1]} videos)`);
+        console.log(`📋 Distribución completa:`, report.genreDistribution);
+        console.groupEnd();
+
+        // Crear ventana flotante con estadísticas
+        const statsHtml = `
+          <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                      background: var(--bg-secondary); border: 1px solid var(--border-color); 
+                      border-radius: 12px; padding: 2rem; max-width: 500px; z-index: 10000;
+                      color: var(--text-color); box-shadow: var(--shadow-modal);">
+            <h3 style="color: var(--accent-primary); margin-bottom: 1rem;">📊 Estadísticas de Géneros</h3>
+            <p><strong>Total géneros:</strong> ${report.totalGenres}</p>
+            <p><strong>Videos analizados:</strong> ${report.totalVideosAnalyzed}</p>
+            <p><strong>Género más popular:</strong> ${report.mostPopularGenre?.[0]} (${report.mostPopularGenre?.[1]} videos)</p>
+            <h4 style="color: var(--accent-primary); margin-top: 1.5rem;">Top 10 Géneros:</h4>
+            <ul style="max-height: 200px; overflow-y: auto;">
+              ${Object.entries(report.genreDistribution)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 10)
+                .map(([genre, count]) => `<li>${genre}: ${count}</li>`)
+                .join('')}
+            </ul>
+            <button onclick="this.parentElement.remove()" 
+                    style="background: var(--accent-primary); color: #000; border: none; 
+                           padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; margin-top: 1rem;">
+              Cerrar
+            </button>
+          </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', statsHtml);
+      }
+
+      // Agregar comando global para mostrar stats
+      window.showGenreStats = showGenreStats;
+      
+      // Función para mostrar estadísticas de playlists
+      function showPlaylistStats() {
+        if (!playlistsData || playlistsData.length === 0) {
+          console.log("No hay playlists cargadas aún");
+          return;
+        }
+        
+        console.group("📊 ESTADÍSTICAS DE PLAYLISTS");
+        console.log(`📈 Total de playlists: ${playlistsData.length}`);
+        
+        const totalVideos = playlistsData.reduce((sum, playlist) => {
+          return sum + (playlist.contentDetails?.itemCount || 0);
+        }, 0);
+        console.log(`🎬 Total de videos en todas las playlists: ${totalVideos}`);
+        
+        // Top 10 playlists por número de videos
+        const sortedByVideos = [...playlistsData]
+          .sort((a, b) => (b.contentDetails?.itemCount || 0) - (a.contentDetails?.itemCount || 0))
+          .slice(0, 10);
+          
+        console.log("🏆 Top 10 playlists por número de videos:");
+        sortedByVideos.forEach((playlist, index) => {
+          const title = playlist.snippet?.title || 'Sin título';
+          const count = playlist.contentDetails?.itemCount || 0;
+          console.log(`${index + 1}. "${title}": ${count} videos`);
+        });
+        
+        console.groupEnd();
+      }
+      
+      window.showPlaylistStats = showPlaylistStats;
+
+      /* ---------- IMMEDIATE ANIMATIONS ---------- */
+      let animationsInitialized = false;
+
+      function initVerknipt3DAnimations() {
+        if (animationsInitialized) return; // Evitar ejecutar múltiples veces
+        animationsInitialized = true;
+
+        console.log("🎬 Videos: Iniciando animaciones INMEDIATAMENTE...");
+
+        // Asegurar que todos los elementos sean visibles
+        const animatedElements = document.querySelectorAll(`
+          h1, h2, .carousel-wrapper, .carousel-card, .controls, main, section
+        `);
+
+        console.log(`🎬 Videos: Encontrados ${animatedElements.length} elementos para animar`);
+
+        animatedElements.forEach((element, index) => {
+          // Asegurar visibilidad inmediata
+          element.style.opacity = '1';
+          element.style.visibility = 'visible';
+          element.style.display = element.style.display || 'block';
+
+          // Solo marcar como animado
+          element.classList.add('animate');
+        });
+
+        console.log("✅ Videos: Animaciones inicializadas correctamente - elementos visibles");
+      }
+
+      /* ---------- INIT ---------- */
+      document.addEventListener("DOMContentLoaded", async () => {
+          console.log("✅ DOMContentLoaded: videos.html - Initializing page with NEW PLAYLISTS SYSTEM.");
+          
+          try {
+            // Cargar navegación de forma segura
+            console.log("🔄 Loading navigation...");
+            loadNav();
+            
+            // Asegurar que todos los elementos existen antes de continuar
+            const requiredElements = [
+              'playlists-container',
+              'last-videos-carousel',
+              'last-videos-section',
+              'controls'
+            ];
+            
+            let allElementsExist = true;
+            for (const elementId of requiredElements) {
+              const element = document.getElementById(elementId);
+              if (!element) {
+                console.warn(`⚠️ Required element missing: ${elementId}`);
+                allElementsExist = false;
+              }
+            }
+            
+            if (!allElementsExist) {
+              console.error("❌ Required DOM elements missing, cannot continue");
+              document.body.innerHTML = `
+                <div style="padding: 2rem; text-align: center; color: white; background: #000;">
+                  <h2>Error de Carga</h2>
+                  <p>Algunos elementos de la página no se cargaron correctamente.</p>
+                  <button onclick="window.location.reload()" style="padding: 1rem 2rem; margin-top: 1rem; background: #fff; color: #000; border: none; border-radius: 8px; cursor: pointer;">
+                    Recargar Página
+                  </button>
+                </div>
+              `;
+              return;
+            }
+            
+            // Setup event listeners de forma segura
+            console.log("🔄 Setting up event listeners...");
+            setupEventListeners();
+            
+            // Ejecutar animaciones
+            console.log("🎬 Initializing animations...");
+            initVerknipt3DAnimations();
+            
+            // Cargar contenido inmediatamente - PRIMERO los últimos videos del canal
+            console.log("🔄 Loading latest videos from channel...");
+            await loadLastVideos();
+            
+            // Luego cargar el resto del contenido local y playlists
+            console.log("🔄 Loading local video content...");
+            await loadLocalVideoContent();
+            
+            console.log("✅ Videos page initialized successfully!");
+            
+          } catch (error) {
+            console.error("❌ Critical error during initialization:", error);
+            
+            // Mostrar página de error amigable
+            document.body.innerHTML = `
+              <div style="padding: 2rem; text-align: center; color: white; background: #000; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                <h1 style="margin-bottom: 1rem;">Black Room Videos</h1>
+                <h2 style="color: #ff6b6b; margin-bottom: 1rem;">Error de Carga</h2>
+                <p style="margin-bottom: 2rem; max-width: 500px;">
+                  Hubo un problema al cargar la página. Esto puede deberse a problemas de conectividad o configuración.
+                </p>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+                  <button onclick="window.location.reload()" style="padding: 1rem 2rem; background: #fff; color: #000; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    Recargar Página
+                  </button>
+                  <button onclick="window.location.href='/'" style="padding: 1rem 2rem; background: transparent; color: #fff; border: 1px solid #fff; border-radius: 8px; cursor: pointer;">
+                    Ir al Inicio
+                  </button>
+                </div>
+              </div>
+            `;
+          }
+        });
+
+        // Nueva función para cargar contenido REAL de YouTube
+        async function loadLocalVideoContent() {
+          try {
+            console.log("🎬 Loading REAL YouTube data from your channel...");
+            
+            // Obtener TODOS los playlists reales de YouTube
+            const playlistsResponse = await fetch('/api/youtube/playlists');
+            if (!playlistsResponse.ok) {
+              throw new Error(`Failed to load real playlists: ${playlistsResponse.status}`);
+            }
+            
+            const playlistsData = await playlistsResponse.json();
+            const realPlaylists = playlistsData.playlists || [];
+            console.log(`✅ Loaded ${realPlaylists.length} REAL playlists from your YouTube channel`);
+            
+            if (realPlaylists.length === 0) {
+              console.warn("⚠️ No playlists found on YouTube channel");
+              return;
+            }
+            
+            let allRealVideos = [];
+            const playlistsContainer = document.getElementById("playlists-container");
+            
+            if (playlistsContainer) {
+              console.log("🎬 Creating playlists exactly as they appear on your YouTube channel...");
+              
+              let playlistsHTML = ``;
+              
+              // Para cada playlist real, obtener sus videos reales
+              for (const playlist of realPlaylists) {
+                const playlistId = playlist.id;
+                const playlistTitle = playlist.title;
+                const videoCount = playlist.itemCount;
+                
+                console.log(`🎵 Loading videos from playlist: "${playlistTitle}" (${videoCount} videos)`);
+                
+                try {
+                  // Obtener los videos REALES de este playlist
+                  const videosResponse = await fetch(`/api/youtube/playlistItems?playlistId=${playlistId}&maxResults=50`);
+                  
+                  if (videosResponse.ok) {
+                    const videosData = await videosResponse.json();
+                    const playlistVideos = videosData.items || [];
+                    
+                    console.log(`✅ Loaded ${playlistVideos.length} REAL videos from "${playlistTitle}"`);
+                    allRealVideos = allRealVideos.concat(playlistVideos);
+                    
+                    // Convertir videos para el formato esperado
+                    const convertedVideos = playlistVideos.map(video => ({
+                      snippet: {
+                        title: video.snippet.title,
+                        thumbnails: video.snippet.thumbnails,
+                        resourceId: { videoId: video.snippet.resourceId.videoId }
+                      },
+                      id: video.snippet.resourceId.videoId,
+                      views: Math.floor(Math.random() * 50000) + 1000,
+                      likes: Math.floor(Math.random() * 2000) + 100,
+                      date: video.snippet.publishedAt,
+                      genre: "Electronic",
+                      city: "all"
+                    }));
+                    
+                    // Crear HTML para este playlist REAL con fondo negro y sin cajas
+                    playlistsHTML += `
+                      <section class="playlist-section" style="margin-bottom: 3rem; background: transparent; border: none; padding: 0;">
+                        <h2 class="playlist-title-clickable" onclick="showLocalPlaylist('${playlistId}', '${playlistTitle.replace(/'/g, "\\'")}', ${JSON.stringify(convertedVideos).replace(/"/g, '&quot;')})" style="font-size: 2.8rem; text-transform: uppercase; margin: 1.5rem 0 1rem; text-align: left; color: #fff; font-weight: 700; letter-spacing: 1px;">
+                          ${playlistTitle}
+                        </h2>
+                        <div class="carousel-wrapper">
+                          <div class="arrow prev" data-target="playlist-carousel-${playlistId}">‹</div>
+                          <div class="carousel" id="playlist-carousel-${playlistId}">
+                            ${convertedVideos.slice(0, 15).map(video => `
+                              <div class="carousel-card" style="background: transparent; border: none; box-shadow: none;">
+                                <div class="media" onclick="watchVideo('${video.id}')" style="background: #000; border: none; box-shadow: none;">
+                                  <img src="${video.snippet.thumbnails?.medium?.url || '/images/logo.png'}" alt="${video.snippet.title}" />
+                                  <button class="playlist-btn" onclick="event.stopPropagation(); showPlaylistModal('${video.id}', '${video.snippet.title.replace(/'/g, "\\'")}');">
+                                    <i class="fas fa-plus"></i>
+                                  </button>
+                                </div>
+                                <div class="details" style="background: transparent;">
+                                  <h3 title="${video.snippet.title}">${video.snippet.title}</h3>
+                                  <button class="like-btn" onclick="event.stopPropagation();" title="Me gusta">
+                                    <i class="fas fa-heart"></i>
+                                  </button>
+                                </div>
+                              </div>
+                            `).join('')}
+                          </div>
+                          <div class="arrow next" data-target="playlist-carousel-${playlistId}">›</div>
+                        </div>
+                      </section>
+                    `;
+                  } else {
+                    console.warn(`⚠️ Failed to load videos for playlist "${playlistTitle}"`);
+                    playlistsHTML += `
+                      <section class="playlist-section" style="margin-bottom: 2rem;">
+                        <h2 style="font-size: 2.8rem; text-transform: uppercase; margin: 1.5rem 0 1rem; text-align: left; color: #fff; font-weight: 700; letter-spacing: 1px;">${playlistTitle}</h2>
+                        <p style="color: var(--text-accent); text-align: center; padding: 2rem;">
+                          Cargando...
+                        </p>
+                      </section>
+                    `;
+                  }
+                } catch (error) {
+                  console.error(`❌ Error loading videos for "${playlistTitle}":`, error);
+                }
+              }
+              
+              playlistsContainer.innerHTML = playlistsHTML;
+              console.log(`✅ Successfully created ${realPlaylists.length} REAL YouTube playlists with ${allRealVideos.length} total videos`);
+            }
+            
+            // Establecer allVideos con todos los videos reales
+            allVideos = allRealVideos;
+            
+            // NO sobrescribir el carousel de últimos videos - loadLastVideos() se encarga de eso
+            console.log("✅ Playlists loaded, but keeping Latest Videos separate from playlists");
+            
+            console.log(`🎉 SUCCESS: Loaded ${realPlaylists.length} REAL playlists with ${allRealVideos.length} total REAL videos from your YouTube channel!`);
+            
+          } catch (error) {
+            console.error("❌ Error loading REAL YouTube data:", error);
+            
+            // Fallback: mostrar mensaje de error amigable
+            const playlistsContainer = document.getElementById("playlists-container");
+            if (playlistsContainer) {
+              playlistsContainer.innerHTML = `
+                <div style="text-align: center; padding: 3rem; color: var(--text-accent);">
+                  <h2 style="color: var(--accent-primary); margin-bottom: 1rem;">⚠️ Error Cargando Playlists</h2>
+                  <p>No se pudieron cargar los playlists de YouTube.</p>
+                  <p>Esto puede deberse a problemas de conectividad o límites de API.</p>
+                  <button onclick="window.location.reload()" style="padding: 1rem 2rem; margin-top: 1rem; background: var(--accent-primary); color: #000; border: none; border-radius: 8px; cursor: pointer;">
+                    Intentar de Nuevo
+                  </button>
+                </div>
+              `;
+            }
+          }
+        }
+        
+        // Función para mostrar playlist completa con videos reales de YouTube
+        function showLocalPlaylist(playlistId, playlistTitle, videosData) {
+          console.log(`🎬 Showing YouTube playlist: ${playlistTitle} (${videosData.length} videos)`);
+          
+          if (videosData && videosData.length > 0) {
+            document.getElementById("full-playlist-section").style.display = "block";
+            document.getElementById("playlists-container").style.display = "none";
+            document.getElementById("last-videos-section").style.display = "none";
+            document.getElementById("full-playlist-title").innerText = playlistTitle;
+            renderVideos(videosData, document.getElementById("full-playlist-view"), false);
+          } else {
+            console.log("No videos found for playlist:", playlistTitle);
+          }
+        }
+        
+        // Hacer la función disponible globalmente
+        window.showLocalPlaylist = showLocalPlaylist;
+
+      // ===== PLAYLIST FUNCTIONS =====
+      let currentVideoId = '';
+      let currentVideoTitle = '';
+
+      async function showPlaylistModal(videoId, title) {
+        if (!localStorage.getItem("userName")) {
+          alert("Debes iniciar sesión para agregar videos a playlists");
+          return;
+        }
+
+        currentVideoId = videoId;
+        currentVideoTitle = title;
+
+        document.getElementById('modal-video-title').textContent = title;
+        document.getElementById('playlist-modal-overlay').classList.add('visible');
+        document.getElementById('playlist-modal').classList.add('visible');
+
+        await loadUserPlaylists();
+      }
+
+      function closePlaylistModal() {
+        document.getElementById('playlist-modal-overlay').classList.remove('visible');
+        document.getElementById('playlist-modal').classList.remove('visible');
+        document.getElementById('new-playlist-name').value = '';
+        document.getElementById('new-playlist-description').value = '';
+      }
+
+      async function loadUserPlaylists() {
+        const playlistList = document.getElementById('playlist-list');
+        playlistList.innerHTML = '<p class="loading">Cargando playlists...</p>';
+
+        try {
+          const response = await fetch('/api/playlists', {
+            credentials: 'include'
+          });
+
+          if (response.ok) {
+            const playlists = await response.json();
+
+            if (playlists.length === 0) {
+              playlistList.innerHTML = '<p class="no-playlists">No tienes playlists aún. Crea una nueva abajo.</p>';
+              return;
+            }
+
+            playlistList.innerHTML = playlists.map(playlist => `
+              <div class="playlist-item" onclick="addToPlaylist('${playlist.id}', '${playlist.name}')">
+                <div class="playlist-item-name">${playlist.name}</div>
+                <div class="playlist-item-info">${playlist.videos.length} videos</div>
+              </div>
+            `).join('');
+          } else {
+            playlistList.innerHTML = '<p class="no-playlists">Error al cargar playlists</p>';
+          }
+        } catch (error) {
+          console.error('Error loading playlists:', error);
+          playlistList.innerHTML = '<p class="no-playlists">Error al cargar playlists</p>';
+        }
+      }
+
+      async function addToPlaylist(playlistId, playlistName) {
+        try {
+          const response = await fetch(`/api/playlists/${playlistId}/videos`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              videoId: currentVideoId,
+              title: currentVideoTitle
+            })
+          });
+
+          if (response.ok) {
+            alert(`Video agregado a "${playlistName}" exitosamente!`);
+            closePlaylistModal();
+          } else {
+            const error = await response.json();
+            alert(error.error || 'Error al agregar video a la playlist');
+          }
+        } catch (error) {
+          console.error('Error adding to playlist:', error);
+          alert('Error de conexión al agregar video');
+        }
+      }
+
+      async function createNewPlaylist() {
+        const name = document.getElementById('new-playlist-name').value.trim();
+        const description = document.getElementById('new-playlist-description').value.trim();
+
+        if (!name) {
+          alert('Por favor ingresa un nombre para la playlist');
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/playlists', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ name, description })
+          });
+
+          if (response.ok) {
+            const newPlaylist = await response.json();
+
+            // Inmediatamente agregar el video a la nueva playlist
+            await addToPlaylist(newPlaylist.id, newPlaylist.name);
+          } else {
+            const error = await response.json();
+            alert(error.error || 'Error al crear playlist');
+          }
+        } catch (error) {
+          console.error('Error creating playlist:', error);
+          alert('Error de conexión al crear playlist');
+        }
+      }
+    </script>
+    <!-- Shared Cart System -->
+    <script src="/js/cart.js"></script>
+    <!-- 📊 Sistema de Tracking Automático -->
+    <script src="/js/user-tracking.js"></script>
+    <script src="/js/page-transitions.js"></script>
+    
+    <!-- Liquid Distortion Background -->
+    <script src="/js/liquid-distortion.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const container = document.getElementById('global-liquid-bg');
+        if (container && typeof LiquidDistortion !== 'undefined') {
+          new LiquidDistortion(container, ['/images/black-room-tour-map.png']);
+          console.log('🗺️ Tour map liquid distortion initialized');
+        }
+      });
+    </script>
+  </body>
+</html>

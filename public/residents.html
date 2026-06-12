@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Residents — Black Room</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background: url('/images/residents/zamurai-2.jpg') center 20%/cover no-repeat;
+      filter: brightness(0.28) grayscale(0.3);
+      transform: scale(1.05);
+      transition: transform 12s ease;
+    }
+
+    .hero:hover .hero-bg {
+      transform: scale(1.0);
+    }
+
+    .hero-noise {
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .hero-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: #ff0000;
+      margin-bottom: 1.2rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-title {
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(4rem, 14vw, 11rem);
+      font-weight: 700;
+      line-height: 0.9;
+      letter-spacing: -0.04em;
+      text-transform: uppercase;
+      position: relative;
+      z-index: 2;
+      user-select: none;
+    }
+
+    /* Glitch effect on RESIDENTS */
+    .glitch {
+      position: relative;
+      display: inline-block;
+      animation: glitch-idle 6s infinite;
+    }
+
+    .glitch::before,
+    .glitch::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      font-family: inherit;
+      font-size: inherit;
+      font-weight: inherit;
+      letter-spacing: inherit;
+      color: #fff;
+    }
+
+    .glitch::before {
+      color: #ff0000;
+      animation: glitch-r 4s infinite;
+      clip-path: polygon(0 30%, 100% 30%, 100% 50%, 0 50%);
+    }
+
+    .glitch::after {
+      color: #00f0ff;
+      animation: glitch-b 4s infinite;
+      clip-path: polygon(0 55%, 100% 55%, 100% 75%, 0 75%);
+    }
+
+    @keyframes glitch-r {
+      0%, 90%, 100% { transform: none; opacity: 0; }
+      91% { transform: translateX(-4px); opacity: 1; }
+      93% { transform: translateX(4px); opacity: 1; }
+      95% { transform: translateX(-2px); opacity: 1; }
+      97% { transform: none; opacity: 0; }
+    }
+
+    @keyframes glitch-b {
+      0%, 88%, 100% { transform: none; opacity: 0; }
+      89% { transform: translateX(5px); opacity: 1; }
+      92% { transform: translateX(-3px); opacity: 1; }
+      94% { transform: translateX(2px); opacity: 1; }
+      96% { transform: none; opacity: 0; }
+    }
+
+    @keyframes glitch-idle {
+      0%, 89%, 100% { text-shadow: none; }
+      90% { text-shadow: -2px 0 #ff0000, 2px 0 #00f0ff; }
+      91% { text-shadow: 2px 0 #ff0000, -2px 0 #00f0ff; }
+      92% { text-shadow: none; }
+    }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 2.5rem;
+      right: 2.5rem;
+      z-index: 3;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #444;
+      writing-mode: vertical-rl;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .hero-scroll::after {
+      content: '';
+      width: 1px;
+      height: 50px;
+      background: linear-gradient(to bottom, #333, transparent);
+    }
+
+    /* ── MANIFESTO ── */
+    .manifesto {
+      padding: 8rem 6vw 7rem;
+      border-top: 1px solid #0d0d0d;
+      border-bottom: 1px solid #0d0d0d;
+      background: #000;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .manifesto::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(255,255,255,0.012) 3px,
+        rgba(255,255,255,0.012) 4px
+      );
+      pointer-events: none;
+    }
+
+    .manifesto-statement {
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(1.1rem, 2.8vw, 2rem);
+      font-weight: 700;
+      line-height: 1.35;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #c8c8c8;
+      max-width: 1100px;
+      margin: 0 auto 6rem;
+      text-align: center;
+      text-shadow: 0 0 40px rgba(255,255,255,0.04);
+    }
+
+    .manifesto-statement em {
+      color: #fff;
+      font-style: normal;
+      position: relative;
+      display: inline-block;
+    }
+
+    /* Glitch effect on highlighted words */
+    .glitch-word {
+      position: relative;
+      display: inline-block;
+      color: #fff;
+    }
+
+    .glitch-word::before,
+    .glitch-word::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      font-family: inherit;
+      font-size: inherit;
+      font-weight: inherit;
+      letter-spacing: inherit;
+      text-transform: inherit;
+      line-height: inherit;
+      white-space: nowrap;
+    }
+
+    .glitch-word::before {
+      color: #ff0000;
+      animation: gw-r 5s infinite;
+      clip-path: polygon(0 15%, 100% 15%, 100% 35%, 0 35%);
+    }
+
+    .glitch-word::after {
+      color: #00f0ff;
+      animation: gw-b 5s infinite;
+      clip-path: polygon(0 60%, 100% 60%, 100% 80%, 0 80%);
+    }
+
+    @keyframes gw-r {
+      0%,92%,100% { transform: none; opacity: 0; }
+      93% { transform: translateX(-5px) skewX(-2deg); opacity: 1; }
+      95% { transform: translateX(4px); opacity: 1; }
+      97% { transform: translateX(-2px); opacity: 0.5; }
+      98% { opacity: 0; }
+    }
+
+    @keyframes gw-b {
+      0%,90%,100% { transform: none; opacity: 0; }
+      91% { transform: translateX(6px) skewX(3deg); opacity: 1; }
+      94% { transform: translateX(-4px); opacity: 1; }
+      96% { transform: translateX(2px); opacity: 0.5; }
+      97% { opacity: 0; }
+    }
+
+    /* Scramble text styling */
+    .scramble {
+      display: block;
+    }
+
+    .pillars {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      border-top: 1px solid #111;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .pillar {
+      padding: 2.5rem 2rem 2rem;
+      border-right: 1px solid #111;
+    }
+
+    .pillar:last-child {
+      border-right: none;
+    }
+
+    .pillar-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #fff;
+      margin-bottom: 1rem;
+    }
+
+    .pillar-text {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      line-height: 1.9;
+      text-transform: uppercase;
+      color: #444;
+    }
+
+    /* ── MANIFESTO 2 (OUR FAMILY) ── */
+    .manifesto-family {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 4rem;
+      padding: 7rem 6vw;
+      border-bottom: 1px solid #0d0d0d;
+      align-items: start;
+      background: #030303;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .manifesto-family::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(255,255,255,0.012) 3px,
+        rgba(255,255,255,0.012) 4px
+      );
+      pointer-events: none;
+    }
+
+    .family-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #333;
+      padding-top: 0.4rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .family-right {
+      position: relative;
+      z-index: 1;
+    }
+
+    .family-statement {
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(1rem, 2.4vw, 1.7rem);
+      font-weight: 700;
+      line-height: 1.4;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: #c8c8c8;
+      margin-bottom: 4rem;
+    }
+
+    .family-statement em {
+      color: #fff;
+      font-style: normal;
+    }
+
+    .sub-pillars {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border-top: 1px solid #111;
+    }
+
+    .sub-pillar {
+      padding: 2rem 2rem 2rem 0;
+      border-right: 1px solid #111;
+    }
+
+    .sub-pillar:last-child {
+      border-right: none;
+      padding-left: 2rem;
+    }
+
+    .sub-pillar-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #fff;
+      margin-bottom: 0.75rem;
+    }
+
+    .sub-pillar-text {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.07em;
+      line-height: 1.9;
+      text-transform: uppercase;
+      color: #3a3a3a;
+    }
+
+    @media (max-width: 768px) {
+      .manifesto { padding: 5rem 1.5rem 4rem; }
+      .pillars { grid-template-columns: 1fr; }
+      .pillar { border-right: none; border-bottom: 1px solid #111; }
+      .manifesto-family { grid-template-columns: 1fr; gap: 2rem; padding: 4rem 1.5rem; }
+      .sub-pillars { grid-template-columns: 1fr; }
+      .sub-pillar { border-right: none; padding-left: 0; border-bottom: 1px solid #111; }
+      .sub-pillar:last-child { padding-left: 0; }
+    }
+
+    /* ── RESIDENT CARD ── */
+    .resident-section {
+      position: relative;
+    }
+
+    .resident {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 90vh;
+      border-top: 1px solid #111;
+    }
+
+    .resident:nth-child(even) {
+      direction: rtl;
+    }
+
+    .resident:nth-child(even) > * {
+      direction: ltr;
+    }
+
+    /* Photo gallery side */
+    .resident-gallery {
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      background: #050505;
+    }
+
+    .gallery-slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+
+    .gallery-slide.active {
+      opacity: 1;
+    }
+
+    .gallery-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center center;
+      display: block;
+      filter: grayscale(15%);
+      transition: transform 8s ease, filter 0.5s ease;
+    }
+
+    .gallery-slide.active img {
+      transform: scale(1.04);
+    }
+
+    .resident-gallery:hover .gallery-slide.active img {
+      filter: grayscale(0%);
+    }
+
+    .gallery-dots {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+      z-index: 5;
+    }
+
+    .gallery-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #333;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .gallery-dot.active {
+      background: #fff;
+    }
+
+    .gallery-counter {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      color: #555;
+      z-index: 5;
+    }
+
+    /* Info side */
+    .resident-info {
+      padding: 5rem 4rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      background: #000;
+    }
+
+    .resident-number {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: #333;
+      margin-bottom: 1.5rem;
+    }
+
+    .resident-name {
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(2.5rem, 5vw, 4.5rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 0.95;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+
+    .resident-name .name-glitch {
+      position: relative;
+      display: inline-block;
+    }
+
+    .resident-name .name-glitch::before {
+      content: attr(data-text);
+      position: absolute;
+      top: 0; left: 0;
+      color: #ff0000;
+      opacity: 0;
+      transition: opacity 0.1s;
+      transform: translateX(-3px);
+      clip-path: polygon(0 20%, 100% 20%, 100% 40%, 0 40%);
+    }
+
+    .resident-info:hover .resident-name .name-glitch::before {
+      animation: name-glitch 0.3s step-end forwards;
+    }
+
+    @keyframes name-glitch {
+      0% { opacity: 1; transform: translateX(-3px); }
+      33% { opacity: 0; transform: translateX(3px); }
+      66% { opacity: 1; transform: translateX(-1px); }
+      100% { opacity: 0; }
+    }
+
+    .resident-divider {
+      width: 40px;
+      height: 1px;
+      background: #222;
+      margin-bottom: 1.75rem;
+    }
+
+    .resident-bio {
+      font-size: 0.88rem;
+      color: #666;
+      line-height: 1.85;
+      margin-bottom: 2.5rem;
+      max-width: 440px;
+    }
+
+    .resident-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .res-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #555;
+      border: 1px solid #1a1a1a;
+      padding: 0.55rem 1rem;
+      text-decoration: none;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+
+    .res-link:hover {
+      color: #fff;
+      border-color: #333;
+      background: #0a0a0a;
+    }
+
+    .res-link i {
+      font-size: 0.7rem;
+    }
+
+    .view-profile-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: 2rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #fff;
+      background: #111;
+      border: 1px solid #222;
+      padding: 0.8rem 1.5rem;
+      text-decoration: none;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .view-profile-btn:hover {
+      background: #1a1a1a;
+      border-color: #444;
+    }
+    .view-profile-btn i { font-size: 0.6rem; }
+
+    /* Corner brackets on info panel */
+    .resident-info::before,
+    .resident-info::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+    }
+
+    .resident-info::before {
+      top: 2rem;
+      left: 2rem;
+      border-top: 1px solid #222;
+      border-left: 1px solid #222;
+    }
+
+    .resident-info::after {
+      bottom: 2rem;
+      right: 2rem;
+      border-bottom: 1px solid #222;
+      border-right: 1px solid #222;
+    }
+
+    /* ── MORE COMING ── */
+    .coming-section {
+      padding: 8rem 2rem;
+      text-align: center;
+      border-top: 1px solid #111;
+    }
+
+    .coming-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: #333;
+      margin-bottom: 1rem;
+    }
+
+    .coming-title {
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(1.5rem, 4vw, 3rem);
+      font-weight: 700;
+      color: #1a1a1a;
+      letter-spacing: -0.02em;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .resident {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      .resident:nth-child(even) {
+        direction: ltr;
+      }
+
+      .resident-gallery {
+        height: 100vw;
+        min-height: 380px;
+      }
+
+      .resident-info {
+        padding: 3rem 1.75rem;
+      }
+
+      .resident-bio {
+        max-width: 100%;
+      }
+
+      .hero-title {
+        text-align: center;
+      }
+
+      .hero-scroll {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-noise"></div>
+    <div class="hero-label">Black Room</div>
+    <h1 class="hero-title">
+      <span class="glitch" data-text="Residents">Residents</span>
+    </h1>
+    <div class="hero-scroll">Scroll</div>
+  </section>
+
+  <!-- MANIFESTO 1 -->
+  <section class="manifesto">
+    <p class="manifesto-statement" data-scramble>
+      Black Room residents are the <span class="glitch-word" data-text="BACKBONE">BACKBONE</span> of our sound —
+      pushing boundaries at every event and shaping the <span class="glitch-word" data-text="IDENTITY">IDENTITY</span>
+      of our collective across the underground.
+    </p>
+    <div class="pillars">
+      <div class="pillar">
+        <div class="pillar-title">Impact</div>
+        <div class="pillar-text">Every set our residents play is a statement. Raw, unfiltered energy that moves crowds and leaves a mark long after the music stops.</div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-title">Community</div>
+        <div class="pillar-text">They don't just perform — they build. Our residents connect people through music and forge bonds that go far beyond the dance floor.</div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-title">Authenticity</div>
+        <div class="pillar-text">No compromises, no shortcuts. Our residents stay true to their sound and bring something real every single time they step up.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESIDENTS -->
+  <div class="resident-section">
+
+    <!-- ZAMURAI -->
+    <div class="resident" id="zamurai">
+
+      <div class="resident-gallery" onclick="nextSlide(this)">
+        <div class="gallery-slide active">
+          <img src="/images/residents/zamurai-1.jpg" alt="Zamurai" loading="lazy">
+        </div>
+        <div class="gallery-slide">
+          <img src="/images/residents/zamurai-2.jpg" alt="Zamurai" loading="lazy">
+        </div>
+        <div class="gallery-slide">
+          <img src="/images/residents/zamurai-3.jpg" alt="Zamurai" loading="lazy">
+        </div>
+        <div class="gallery-counter">
+          <span class="current-slide">1</span> / 3
+        </div>
+        <div class="gallery-dots">
+          <div class="gallery-dot active" onclick="goToSlide(event, this.parentElement.parentElement, 0)"></div>
+          <div class="gallery-dot" onclick="goToSlide(event, this.parentElement.parentElement, 1)"></div>
+          <div class="gallery-dot" onclick="goToSlide(event, this.parentElement.parentElement, 2)"></div>
+        </div>
+      </div>
+
+      <div class="resident-info">
+        <div class="resident-number">Resident — 001</div>
+        <h2 class="resident-name">
+          <span class="name-glitch" data-text="Zamurai">Zamurai</span>
+        </h2>
+        <div class="resident-divider"></div>
+        <p class="resident-bio">
+          Zamurai is a 20-year-old Argentine DJ and producer who has crafted a sound as precise and versatile as it is visceral. She channels raw emotion through hypnotic rhythms and deep grooves that come alive on the dance floor. Over the past few years she has left her mark on clubs, basements, and warehouses across Argentina and the United States.
+          <br><br>
+          With Latin roots and a lifelong passion for movement and music, her sets balance tension and release — rooted in techno, always flirting with trance, tribal sounds, and bass-heavy textures.
+          <br><br>
+          Creator of <em>Digital Funk</em>, a radio/podcast space that celebrates musical expansion and real connection between artists from around the world.
+        </p>
+        <div class="resident-links">
+          <a class="res-link" href="https://www.instagram.com/zamuraii" target="_blank" rel="noopener">
+            <i class="fab fa-instagram"></i> Instagram
+          </a>
+          <a class="res-link" href="https://on.soundcloud.com/JPmQOLtt6QLGVBI7xV" target="_blank" rel="noopener">
+            <i class="fab fa-soundcloud"></i> SoundCloud
+          </a>
+        </div>
+        <a class="view-profile-btn" href="/resident-profile.html?id=zamurai">
+          View Full Profile <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+
+    </div>
+
+    <!-- PROLETAR -->
+    <div class="resident" id="proletar">
+
+      <div class="resident-gallery" onclick="nextSlide(this)">
+        <div class="gallery-slide active">
+          <img src="/images/residents/proletar-1.jpg" alt="PROLETAR" loading="lazy">
+        </div>
+        <div class="gallery-slide">
+          <img src="/images/residents/proletar-2.jpg" alt="PROLETAR" loading="lazy">
+        </div>
+        <div class="gallery-slide">
+          <img src="/images/residents/proletar-3.jpg" alt="PROLETAR" loading="lazy">
+        </div>
+        <div class="gallery-counter">
+          <span class="current-slide">1</span> / 3
+        </div>
+        <div class="gallery-dots">
+          <div class="gallery-dot active" onclick="goToSlide(event, this.parentElement.parentElement, 0)"></div>
+          <div class="gallery-dot" onclick="goToSlide(event, this.parentElement.parentElement, 1)"></div>
+          <div class="gallery-dot" onclick="goToSlide(event, this.parentElement.parentElement, 2)"></div>
+        </div>
+      </div>
+
+      <div class="resident-info">
+        <div class="resident-number">Resident — 002</div>
+        <h2 class="resident-name">
+          <span class="name-glitch" data-text="PROLETAR">PROLETAR</span>
+        </h2>
+        <div class="resident-divider"></div>
+        <p class="resident-bio">
+          23 year old Romanian-born, Miami-based PROLETAR is Black Room's second ever resident and a force to be reckoned with in South Florida's underground. With nearly half a decade of experience playing clubs, bars, warehouses, festivals and everything in between, they boast a sizable resume spanning two continents — with gigs like Space's The Ground and Floyd, iiiPoints, iiiJoints, Fetichista in Romania, and SAGEWERK in Germany.
+          <br><br>
+          They've provided support for artists like Henry Brooks, Francois X, Cera Khin, MCMLXXXV, and more.
+        </p>
+        <div class="resident-links">
+          <a class="res-link" href="https://www.instagram.com/proletar.ro?igsh=cWI2cXV5enJnbmhk" target="_blank" rel="noopener">
+            <i class="fab fa-instagram"></i> Instagram
+          </a>
+          <a class="res-link" href="https://on.soundcloud.com/8dMiv4b9vgLbVuyzC4" target="_blank" rel="noopener">
+            <i class="fab fa-soundcloud"></i> SoundCloud
+          </a>
+        </div>
+        <a class="view-profile-btn" href="/resident-profile.html?id=proletar">
+          View Full Profile <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+
+    </div>
+
+    <!-- DADREV -->
+    <div class="resident" id="dadrev">
+
+      <div class="resident-gallery" onclick="nextSlide(this)">
+        <div class="gallery-slide active">
+          <img src="/images/residents/dadrev-1.jpg" alt="Dadrev" loading="lazy">
+        </div>
+        <div class="gallery-slide">
+          <img src="/images/residents/dadrev-3.jpg" alt="Dadrev" loading="lazy">
+        </div>
+        <div class="gallery-slide">
+          <img src="/images/residents/dadrev-7.jpg" alt="Dadrev" loading="lazy">
+        </div>
+        <div class="gallery-counter">
+          <span class="current-slide">1</span> / 3
+        </div>
+        <div class="gallery-dots">
+          <div class="gallery-dot active" onclick="goToSlide(event, this.parentElement.parentElement, 0)"></div>
+          <div class="gallery-dot" onclick="goToSlide(event, this.parentElement.parentElement, 1)"></div>
+          <div class="gallery-dot" onclick="goToSlide(event, this.parentElement.parentElement, 2)"></div>
+        </div>
+      </div>
+
+      <div class="resident-info">
+        <div class="resident-number">Resident — 003</div>
+        <h2 class="resident-name">
+          <span class="name-glitch" data-text="Dadrev">Dadrev</span>
+        </h2>
+        <div class="resident-divider"></div>
+        <p class="resident-bio">
+          Born in Bogotá, Colombia, Dadrev developed a love for music from an early age — especially electronic music. Having been producing for over 8 years, he made the switch to techno after stumbling into an underground rave in Miami. He has shared the stage with Gravedgr, Neon Graveyard, Tanja Miju, Pisapia, Gianni Di Bernardo, Niotech, and many more.
+          <br><br>
+          He has played at notable clubs across Miami, New York, Philadelphia, and Tampa, as well as Mexico, Colombia, Chile, and beyond. His music has been supported by Charlie Sparks, Caravel, Vendex, Lee Ann Roberts, and many others.
+          <br><br>
+          Specializing in Schranz, Hard Techno, and Hypnotic Groovy Techno, Dadrev makes it his mission to keep the dance floor energetic and leave ravers begging for more.
+        </p>
+        <div class="resident-links">
+          <a class="res-link" href="https://www.instagram.com/dadrev_" target="_blank" rel="noopener">
+            <i class="fab fa-instagram"></i> Instagram
+          </a>
+          <a class="res-link" href="https://dadrev1.bandcamp.com" target="_blank" rel="noopener">
+            <i class="fas fa-music"></i> Bandcamp
+          </a>
+        </div>
+        <a class="view-profile-btn" href="/resident-profile.html?id=dadrev">
+          View Full Profile <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+
+    </div>
+
+    <!-- DOMNROB -->
+    <div class="resident" id="domnrob">
+
+      <div class="resident-gallery" onclick="nextSlide(this)">
+        <div class="gallery-slide active">
+          <img src="/images/residents/domnrob-1.jpg" alt="DOMNROB" loading="lazy">
+        </div>
+        <div class="gallery-slide">
+          <img src="/images/residents/domnrob-2.jpg" alt="DOMNROB" loading="lazy">
+        </div>
+        <div class="gallery-slide">
+          <img src="/images/residents/domnrob-3.jpg" alt="DOMNROB" loading="lazy">
+        </div>
+        <div class="gallery-counter">
+          <span class="current-slide">1</span> / 3
+        </div>
+        <div class="gallery-dots">
+          <div class="gallery-dot active" onclick="goToSlide(event, this.parentElement.parentElement, 0)"></div>
+          <div class="gallery-dot" onclick="goToSlide(event, this.parentElement.parentElement, 1)"></div>
+          <div class="gallery-dot" onclick="goToSlide(event, this.parentElement.parentElement, 2)"></div>
+        </div>
+      </div>
+
+      <div class="resident-info">
+        <div class="resident-number">Resident — 004</div>
+        <h2 class="resident-name">
+          <span class="name-glitch" data-text="DOMNROB">DOMNROB</span>
+        </h2>
+        <div class="resident-divider"></div>
+        <p class="resident-bio">
+          Meet DOMNROB — the dynamic duo from Venezuela now taking the Miami scene by storm. Their sets blend hyper, psy, and industrial sounds into an immersive experience that hits different every time. Beyond the decks, these 24 and 23-year-olds are dedicated event promoters and the founders of Black Room, the techno radio and collective.
+          <br><br>
+          They have shared the stage with ALIGNMENT, FATIMA HAJJI, BLK, PISAPIA, KANDER, DON WOEZIK, NEON GRAVEYARD, and many others — building a reputation for infectious energy and pulsating beats that leave crowds craving more.
+        </p>
+        <div class="resident-links">
+          <a class="res-link" href="https://www.instagram.com/domnrob" target="_blank" rel="noopener">
+            <i class="fab fa-instagram"></i> Instagram
+          </a>
+          <a class="res-link" href="https://on.soundcloud.com/mcKbmAryXFUUYEcUHu" target="_blank" rel="noopener">
+            <i class="fab fa-soundcloud"></i> SoundCloud
+          </a>
+          <a class="res-link" href="https://youtube.com/@domnrob." target="_blank" rel="noopener">
+            <i class="fab fa-youtube"></i> YouTube
+          </a>
+        </div>
+        <a class="view-profile-btn" href="/resident-profile.html?id=domnrob">
+          View Full Profile <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- MORE COMING -->
+  <div class="coming-section">
+    <div class="coming-label">Black Room Residents</div>
+    <div class="coming-title">More Coming Soon</div>
+  </div>
+
+  <script src="/js/global-header.js"></script>
+  <script src="/js/analytics.js"></script>
+  <script>
+    function nextSlide(gallery) {
+      const slides = gallery.querySelectorAll('.gallery-slide');
+      const dots = gallery.querySelectorAll('.gallery-dot');
+      const counter = gallery.querySelector('.current-slide');
+      let current = [...slides].findIndex(s => s.classList.contains('active'));
+      slides[current].classList.remove('active');
+      dots[current].classList.remove('active');
+      current = (current + 1) % slides.length;
+      slides[current].classList.add('active');
+      dots[current].classList.add('active');
+      if (counter) counter.textContent = current + 1;
+    }
+
+    function goToSlide(e, gallery, index) {
+      e.stopPropagation();
+      const slides = gallery.querySelectorAll('.gallery-slide');
+      const dots = gallery.querySelectorAll('.gallery-dot');
+      const counter = gallery.querySelector('.current-slide');
+      slides.forEach(s => s.classList.remove('active'));
+      dots.forEach(d => d.classList.remove('active'));
+      slides[index].classList.add('active');
+      dots[index].classList.add('active');
+      if (counter) counter.textContent = index + 1;
+    }
+
+    // Auto-advance slides every 5s
+    document.querySelectorAll('.resident-gallery').forEach(gallery => {
+      setInterval(() => nextSlide(gallery), 5000);
+    });
+
+    // Glitch on hero text — random intervals
+    const glitchEl = document.querySelector('.glitch');
+    if (glitchEl) {
+      setInterval(() => {
+        glitchEl.style.animation = 'none';
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            glitchEl.style.animation = '';
+          });
+        });
+      }, Math.random() * 3000 + 2000);
+    }
+
+    // ── TEXT SCRAMBLE ENGINE ──
+    const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&!?';
+
+    function scrambleNode(node, finalText, duration) {
+      const start = performance.now();
+      const len = finalText.length;
+      function frame(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        let output = '';
+        for (let i = 0; i < len; i++) {
+          if (finalText[i] === ' ') { output += ' '; continue; }
+          if (i < Math.floor(progress * len)) {
+            output += finalText[i];
+          } else {
+            output += CHARS[Math.floor(Math.random() * CHARS.length)];
+          }
+        }
+        node.textContent = output;
+        if (progress < 1) requestAnimationFrame(frame);
+        else node.textContent = finalText;
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function scrambleElement(el) {
+      // Collect only direct text nodes, skip child elements (glitch-word spans)
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      const textNodes = [];
+      let node;
+      while ((node = walker.nextNode())) {
+        const txt = node.textContent.trim();
+        if (txt.length > 0) textNodes.push({ node, original: node.textContent });
+      }
+      textNodes.forEach(({ node, original }, i) => {
+        const duration = 900 + i * 120;
+        const dummy = original.toUpperCase();
+        node.textContent = dummy.replace(/[A-Z0-9]/g, () => CHARS[Math.floor(Math.random() * CHARS.length)]);
+        setTimeout(() => scrambleNode(node, original.toUpperCase() === original ? original : original, duration), i * 80);
+      });
+    }
+
+    const scrambleEls = document.querySelectorAll('[data-scramble]');
+    const scrambleObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          scrambleElement(entry.target);
+          scrambleObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.3 });
+
+    scrambleEls.forEach(el => scrambleObserver.observe(el));
+  </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+# ── Excluded from deployment bundle ──
+# (Files still exist locally for development)
+
+# Debug/test artifacts
+debug-test/
+debug-*.js
+diagnostics-report-*.json
+*.log
+logs/
+
+# Attached assets (uploaded files for chat reference, not used in app)
+attached_assets/
+
+# Local download/cache state
+download-state/
+cache/
+.cache/
+
+# Backups & archives
+*.zip
+*.tar
+*.tar.gz
+*.7z
+
+# Local DB scratch
+db/*.bak
+db/*.backup
+
+# Replit local helpers
+.local/
+.agents/
+
+# Git
+.git/
+
+# Misc dev scripts not needed in prod
+import-videos.js
+auto-restart.js
+check-batch-images.js

@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendor Application — Black Room Miami</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    :root {
+      --bg-primary: #000000;
+      --bg-card: #111111;
+      --text-primary: #ffffff;
+      --text-secondary: #888888;
+      --border-color: #222222;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .page-hero {
+      padding: 100px 2rem 60px;
+      text-align: center;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .page-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: #ff0000;
+      margin-bottom: 1rem;
+    }
+
+    .page-title {
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 1.2rem;
+    }
+
+    .page-subtitle {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    .form-section {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 60px 2rem 80px;
+    }
+
+    .form-card {
+      background: #0a0a0a;
+      border: 1px solid var(--border-color);
+      padding: 2.5rem;
+    }
+
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #444;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #1a1a1a;
+    }
+
+    .field-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    label {
+      display: block;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #666;
+      margin-bottom: 0.5rem;
+    }
+
+    label .req {
+      color: #ff0000;
+      margin-left: 2px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="url"],
+    textarea,
+    select {
+      width: 100%;
+      background: #000;
+      border: 1px solid #222;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      padding: 0.75rem 1rem;
+      outline: none;
+      transition: border-color 0.15s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: #555;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: #333;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 110px;
+    }
+
+    select {
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23555' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      padding-right: 2.5rem;
+    }
+
+    select option {
+      background: #111;
+      color: #fff;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.25rem;
+    }
+
+    .radio-option {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: #000;
+      border: 1px solid #222;
+      padding: 0.7rem 1rem;
+      cursor: pointer;
+      transition: border-color 0.15s;
+      font-size: 0.85rem;
+      color: #888;
+    }
+
+    .radio-option:has(input:checked) {
+      border-color: #555;
+      color: #fff;
+    }
+
+    .radio-option input[type="radio"] {
+      width: 14px;
+      height: 14px;
+      accent-color: #fff;
+      flex-shrink: 0;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      margin: 2rem 0;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: #fff;
+      color: #000;
+      border: none;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 1.1rem;
+      cursor: pointer;
+      font-weight: 700;
+      transition: opacity 0.15s;
+      margin-top: 0.5rem;
+    }
+
+    .btn-submit:hover { opacity: 0.85; }
+    .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .form-note {
+      font-size: 0.72rem;
+      color: #444;
+      text-align: center;
+      margin-top: 1rem;
+      line-height: 1.6;
+    }
+
+    .success-state {
+      display: none;
+      text-align: center;
+      padding: 3rem 2rem;
+    }
+
+    .success-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .success-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 1.2rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .success-text {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .error-msg {
+      background: rgba(255, 0, 0, 0.08);
+      border: 1px solid rgba(255, 0, 0, 0.2);
+      color: #ff4444;
+      font-size: 0.8rem;
+      padding: 0.75rem 1rem;
+      margin-top: 1rem;
+      display: none;
+      font-family: 'Space Mono', monospace;
+    }
+
+    @media (max-width: 560px) {
+      .form-card { padding: 1.75rem 1.25rem; }
+      .field-row { grid-template-columns: 1fr; }
+      .radio-group { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-hero">
+    <div class="page-label">Black Room</div>
+    <h1 class="page-title">Vendor Application</h1>
+    <p class="page-subtitle">Apply to set up at our events. We review every application and will reach out if it's a good fit.</p>
+  </div>
+
+  <div class="form-section">
+    <div class="form-card">
+
+      <div class="section-label">Application Form</div>
+
+      <form id="vendorForm">
+
+        <div class="field-row">
+          <div class="field-group">
+            <label>Business / Brand Name <span class="req">*</span></label>
+            <input type="text" name="businessName" placeholder="Your brand name" required>
+          </div>
+          <div class="field-group">
+            <label>Phone <span class="req">*</span></label>
+            <input type="tel" name="phone" placeholder="+1 (000) 000-0000" required>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label>Instagram <span class="req">*</span></label>
+            <input type="text" name="instagram" placeholder="@youraccount" required>
+          </div>
+          <div class="field-group">
+            <label>Website</label>
+            <input type="url" name="website" placeholder="https://yoursite.com">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>What do you sell / showcase? <span class="req">*</span></label>
+          <textarea name="businessDescription" placeholder="Describe your products or services — clothing, art, jewelry, accessories, etc." required></textarea>
+        </div>
+
+        <hr class="divider">
+
+        <div class="field-group">
+          <label>Do you have your own table / setup? <span class="req">*</span></label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="hasOwnTable" value="yes" required> Yes, I bring my own
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="hasOwnTable" value="no"> No, I need one provided
+            </label>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>Do you need a power outlet? <span class="req">*</span></label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="needsPower" value="yes" required> Yes
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="needsPower" value="no"> No
+            </label>
+          </div>
+        </div>
+
+        <div id="errorMsg" class="error-msg"></div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">
+          Submit Application
+        </button>
+
+        <p class="form-note">We'll contact you at your Instagram or email if your application moves forward.</p>
+
+      </form>
+
+      <div class="success-state" id="successState">
+        <div class="success-icon">✓</div>
+        <div class="success-title">Application Received</div>
+        <p class="success-text">Thanks for applying. We review all submissions and will reach out if it's a match.<br><br>Follow us on Instagram for event updates.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="/js/global-header.js"></script>
+  <script src="/js/analytics.js"></script>
+  <script>
+    const form = document.getElementById('vendorForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const errorMsg = document.getElementById('errorMsg');
+    const successState = document.getElementById('successState');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.style.display = 'none';
+
+      const data = Object.fromEntries(new FormData(form).entries());
+
+      if (!data.hasOwnTable) {
+        errorMsg.textContent = 'Please select if you have your own table.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+      if (!data.needsPower) {
+        errorMsg.textContent = 'Please select if you need a power outlet.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+
+      try {
+        const res = await fetch('/api/vendor-applications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (!res.ok) throw new Error(result.error || 'Failed to submit');
+
+        form.style.display = 'none';
+        successState.style.display = 'block';
+
+      } catch (err) {
+        errorMsg.textContent = 'Error: ' + err.message;
+        errorMsg.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Application';
+      }
+    });
+  </script>
+</body>
+</html>

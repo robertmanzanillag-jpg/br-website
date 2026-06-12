@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black Room II Anniversary Fest - November 22</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            background: rgba(0, 0, 0, 0.95);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid #333;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo img {
+            height: 40px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #ff3333;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 3rem 1rem;
+            text-align: center;
+            background: linear-gradient(135deg, #000 0%, #1a0000 100%);
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .hero .subtitle {
+            font-size: 1.5rem;
+            color: #ff3333;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .hero .date {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-bottom: 2rem;
+        }
+
+        .hero .date a {
+            color: #aaa;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .hero .date a:hover {
+            color: #ff3333;
+            text-decoration: underline;
+        }
+
+        /* Images Section */
+        .images-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .image-card {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(255, 51, 51, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .image-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .image-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Features Section */
+        .features {
+            max-width: 600px;
+            margin: 3rem auto;
+            padding: 0 1rem;
+        }
+
+        .features-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .features-list li {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #fff;
+            padding: 0.75rem 0;
+            padding-left: 2rem;
+            position: relative;
+        }
+
+        .features-list li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #ff3333;
+            font-size: 1.8rem;
+            line-height: 1;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            padding: 3rem 1rem;
+            background: linear-gradient(135deg, #1a0000 0%, #000 100%);
+        }
+
+        .buy-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff3333 0%, #cc0000 100%);
+            color: #fff;
+            padding: 1.5rem 4rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            border-radius: 50px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 8px 24px rgba(255, 51, 51, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .buy-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(255, 51, 51, 0.6);
+            background: linear-gradient(135deg, #ff4444 0%, #dd0000 100%);
+        }
+
+        .buy-btn i {
+            margin-right: 0.5rem;
+        }
+
+        .buy-btn-hero {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff3333 0%, #cc0000 100%);
+            color: #fff;
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-decoration: none;
+            border-radius: 50px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 8px 24px rgba(255, 51, 51, 0.4);
+            transition: all 0.3s ease;
+            margin-top: 1.5rem;
+        }
+
+        .buy-btn-hero:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(255, 51, 51, 0.6);
+            background: linear-gradient(135deg, #ff4444 0%, #dd0000 100%);
+        }
+
+        .buy-btn-hero i {
+            margin-right: 0.5rem;
+        }
+
+        /* Mobile Menu Toggle */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero .subtitle {
+                font-size: 1.2rem;
+            }
+
+            .hero .date {
+                font-size: 1rem;
+            }
+
+            .images-container {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+                padding: 1rem;
+            }
+
+            .features-list li {
+                font-size: 1.1rem;
+                padding: 0.6rem 0;
+                padding-left: 1.8rem;
+            }
+
+            .features-list li::before {
+                font-size: 1.5rem;
+            }
+
+            .buy-btn {
+                padding: 1.2rem 2.5rem;
+                font-size: 1.2rem;
+                width: 90%;
+                max-width: 400px;
+            }
+
+            header {
+                padding: 1rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .features-list li {
+                font-size: 1rem;
+            }
+
+            .hero h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav>
+            <div class="logo">
+                <a href="/"><img src="images/logo.png" alt="Black Room Logo"></a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/">HOME</a></li>
+                <li><a href="/events.html">EVENTS</a></li>
+                <li><a href="/calendar.html">CALENDAR</a></li>
+                <li><a href="/anniversary.html" style="color: #ff3333;">ANNIVERSARY</a></li>
+            </ul>
+            <button class="menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Black Room</h1>
+        <div class="subtitle">II Anniversary Fest</div>
+        <div class="date">November 22, 2025</div>
+        <div class="date">
+            <a href="https://www.google.com/maps/search/?api=1&query=Casa+Nube+Wynwood+2060+NW+1st+Ave+Miami+FL+33127" target="_blank" rel="noopener noreferrer">
+                Casa Nube Wynwood<br>2060 NW 1st Ave, Miami, FL 33127
+            </a>
+        </div>
+        <a href="https://posh.vip/f/3bd28?t=landingrob" target="_blank" rel="noopener noreferrer" class="buy-btn-hero">
+            <i class="fas fa-ticket-alt"></i> Buy Now
+        </a>
+    </section>
+
+    <!-- Event Images -->
+    <section class="images-container">
+        <div class="image-card">
+            <img src="images/anniversary-lineup.jpg" alt="Black Room II Anniversary DJ Lineup">
+        </div>
+        <div class="image-card">
+            <img src="images/anniversary-map.jpg" alt="Black Room II Anniversary Event Map">
+        </div>
+        <div class="image-card">
+            <img src="images/anniversary-settimes.jpg" alt="Black Room II Anniversary Set Times">
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <ul class="features-list">
+            <li>4 Stages</li>
+            <li>12 Hours</li>
+            <li>28 DJs</li>
+            <li>Interactive Activities</li>
+            <li>Food Vendors</li>
+            <li>Vendors</li>
+        </ul>
+    </section>
+
+    <!-- CTA Button -->
+    <section class="cta-section">
+        <a href="https://posh.vip/f/3bd28?t=landingrob" target="_blank" rel="noopener noreferrer" class="buy-btn">
+            <i class="fas fa-ticket-alt"></i> Buy Now
+        </a>
+    </section>
+
+<script src="/js/responsive-header.js"></script>
+</body>
+</html>

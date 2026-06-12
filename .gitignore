@@ -1,0 +1,46 @@
+
+# Environment variables
+.env
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Cache directories
+cache/
+.cache/
+
+# Debug files
+debug-test/
+download-state/
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Database files (if they contain sensitive data)
+db/users.json
+
+# Downloaded videos
+public/videos/
+*.mp4
+*.webm
+*.mkv
+
+# Attached assets
+attached_assets/
+
+# Cookies
+cookies.txt

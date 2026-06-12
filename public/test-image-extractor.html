@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Image Extractor - Black Room</title>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            padding: 12px;
+            margin: 5px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background: #333;
+            color: #fff;
+            width: calc(100% - 150px);
+            font-size: 14px;
+        }
+        button {
+            background: #ff6b6b;
+            color: white;
+            cursor: pointer;
+            padding: 12px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #ff5252;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { 
+            background: linear-gradient(135deg, #2d5a2d, #1a4a1a);
+            border-color: #4caf50;
+        }
+        .error { 
+            background: linear-gradient(135deg, #5a2d2d, #4a1a1a);
+            border-color: #f44336;
+        }
+        .info {
+            background: linear-gradient(135deg, #2d4a5a, #1a3a4a);
+            border-color: #2196f3;
+        }
+        .test-urls {
+            background: #111;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .test-url {
+            display: block;
+            color: #64b5f6;
+            margin: 5px 0;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 3px;
+            transition: background 0.3s;
+        }
+        .test-url:hover {
+            background: #333;
+        }
+        pre {
+            background: #222;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            font-size: 12px;
+        }
+        .image-preview {
+            max-width: 100%;
+            height: auto;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 2px solid #444;
+        }
+        .url-display {
+            background: #222;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Image Extractor - Black Room</h1>
+        <p>Herramienta para probar la extracción de imágenes de eventos desde diferentes URLs</p>
+
+        <div class="input-group">
+            <input type="text" id="testUrl" placeholder="Pega aquí la URL del evento (Posh.vip, Eventbrite, etc.)" value="https://posh.vip/e/bloodmoon-feast-neon-graveyard">
+            <button onclick="testExtraction()">🔍 Extraer Info</button>
+            <button onclick="clearResult()">🗑️ Limpiar</button>
+        </div>
+
+        <div class="test-urls">
+            <h3>URLs de Prueba:</h3>
+            <div class="test-url" onclick="loadTestUrl('https://posh.vip/e/bloodmoon-feast-neon-graveyard')">
+                🎃 Bloodmoon Feast Neon Graveyard
+            </div>
+            <div class="test-url" onclick="loadTestUrl('https://posh.vip/e/colosseum')">
+                🏛️ Colosseum Event
+            </div>
+            <div class="test-url" onclick="loadTestUrl('https://posh.vip/e/red-room-xl-afters-1')">
+                🔴 Red Room XL Afters
+            </div>
+            <div class="test-url" onclick="loadTestUrl('https://www.eventbrite.com/e/techno-night-tickets-123456789')">
+                🎵 Eventbrite Test (Generic)
+            </div>
+        </div>
+
+        <div id="result"></div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #111; border-radius: 8px;">
+            <h3>🔧 Extracción Completa de Eventos:</h3>
+            <div id="completeExtractionContainer"></div>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #111; border-radius: 8px;">
+            <h3>ℹ️ Información:</h3>
+            <ul>
+                <li>Esta herramienta extrae imágenes de meta tags (og:image, twitter:image)</li>
+                <li>Funciona con Posh.vip, Eventbrite y otras plataformas que usen Open Graph</li>
+                <li>También extrae título y descripción del evento cuando están disponibles</li>
+                <li>La extracción completa incluye: título, fecha, ubicación, precio, descripción e imagen</li>
+                <li>Si hay errores, verifica la consola del navegador para más detalles</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function loadTestUrl(url) {
+            document.getElementById('testUrl').value = url;
+        }
+
+        function clearResult() {
+            document.getElementById('result').innerHTML = '';
+        }
+
+        // Initialize complete event extractor
+        window.addEventListener('DOMContentLoaded', () => {
+            const extractor = new EventImageExtractor();
+            
+            // Create complete event extraction form
+            extractor.createCompleteEventExtractorForm('#completeExtractionContainer', {
+                onSuccess: (eventData) => {
+                    console.log('✅ Complete event extraction successful:', eventData);
+                },
+                onError: (error) => {
+                    console.error('❌ Complete event extraction failed:', error);
+                }
+            });
+        });
+
+        async function testExtraction() {
+        const url = document.getElementById('testUrl').value.trim();
+        const resultDiv = document.getElementById('result');
+
+        if (!url) {
+          resultDiv.innerHTML = '<div class="result error">❌ Por favor ingresa una URL</div>';
+          return;
+        }
+
+        // Add protocol if missing
+        let finalUrl = url.trim();
+        if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+            finalUrl = 'https://' + finalUrl;
+            console.log('🔧 Added HTTPS protocol to URL:', finalUrl);
+        }
+
+        console.log('🔍 Testing URL:', finalUrl);
+        resultDiv.innerHTML = '<div class="result info">🔍 Extrayendo información del evento...</div>';
+
+        try {
+            const startTime = Date.now();
+
+            const response = await fetch('/api/extract-event-image', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ url: finalUrl }
+            });
+
+            const responseTime = Date.now() - startTime;
+            const responseText = await response.text();
+
+            console.log('Response status:', response.status);
+            console.log('Response text:', responseText);
+
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (parseError) {
+                throw new Error(`Invalid JSON response: ${responseText.substring(0, 200)}...`);
+            }
+
+            if (response.ok && data.imageUrl) {
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        <h3>✅ Imagen extraída exitosamente</h3>
+                        <div class="image-container">
+                            <img src="${data.imageUrl}" alt="Event Image" style="max-width: 100%; border-radius: 8px; margin: 10px 0;" 
+                                 onerror="this.style.display='none'; this.nextSibling.style.display='block';">
+                            <div style="display: none; padding: 10px; background: #ffebee; border-radius: 4px; color: #c62828;">
+                                ⚠️ Error cargando imagen. Verifica la URL: <a href="${data.imageUrl}" target="_blank">${data.imageUrl}</a>
+                            </div>
+                        </div>
+                        <div class="details">
+                            <p><strong>URL de imagen:</strong> <a href="${data.imageUrl}" target="_blank">${data.imageUrl}</a></p>
+                            <p><strong>Tiempo de respuesta:</strong> ${responseTime}ms</p>
+                            <p><strong>Método de extracción:</strong> ${data.extractionMethod || 'meta tags'}</p>
+                            ${data.eventInfo?.title ? `<p><strong>Título:</strong> ${data.eventInfo.title}</p>` : ''}
+                            ${data.eventInfo?.description ? `<p><strong>Descripción:</strong> ${data.eventInfo.description}</p>` : ''}
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Error en la extracción</h3>
+                        <p><strong>Error:</strong> ${data.error || 'Error desconocido'}</p>
+                        <p><strong>Status HTTP:</strong> ${response.status}</p>
+                        <p><strong>Tiempo de respuesta:</strong> ${responseTime}ms</p>
+
+                        ${data.debug ? `
+                            <details style="margin-top: 15px;">
+                                <summary>🔍 Información de depuración</summary>
+                                <div style="background: #f5f5f5; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                                    <p><strong>URL procesada:</strong> ${data.debug.url}</p>
+                                    <p><strong>Método encontrado:</strong> ${data.debug.foundBy || 'ninguno'}</p>
+                                    <p><strong>Longitud HTML:</strong> ${data.debug.htmlLength}</p>
+                                    ${data.debug.candidateImages?.length ? `
+                                        <p><strong>Imágenes candidatas encontradas:</strong></p>
+                                        <ul>
+                                            ${data.debug.candidateImages.map(img => `<li><a href="${img}" target="_blank">${img}</a></li>`).join('')}
+                                        </ul>
+                                    ` : ''}
+                                </div>
+                            </details>
+                        ` : ''}
+
+                        ${data.htmlPreview ? `
+                            <details style="margin-top: 15px;">
+                                <summary>📄 Vista previa del HTML</summary>
+                                <pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; max-height: 200px;">${data.htmlPreview}</pre>
+                            </details>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+        } catch (error) {
+            console.error('Test extraction error:', error);
+            resultDiv.innerHTML = `
+                <div class="result error">
+                    <h3>❌ Error de Conexión</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>URL probada:</strong> ${url}</p>
+                    <button onclick="testExtraction()" style="margin-top: 10px;">🔄 Reintentar</button>
+                </div>
+            `;
+        }
+    }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ URL copiada al portapapeles');
+            }).catch(err => {
+                console.error('Error copying to clipboard:', err);
+                // Fallback
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('✅ URL copiada al portapapeles');
+            });
+        }
+
+        function openInNewTab(url) {
+            window.open(url, '_blank');
+        }
+
+        // Auto-test on page load with first URL
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🧪 Test Image Extractor loaded');
+        });
+    </script>
+</body>
+</html>

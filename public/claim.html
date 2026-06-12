@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claim Token - Black Room</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0a;
+            --bg-tertiary: #111111;
+            --text-color: #ffffff;
+            --text-accent: #888888;
+            --accent-primary: #fff;
+            --border-color: #222222;
+            --success-color: #4CAF50;
+            --error-color: #e63946;
+            --neon-glow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: url("https://images.unsplash.com/photo-1549490349-86641884489a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: -1;
+        }
+
+        .container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 3rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: var(--neon-glow);
+            backdrop-filter: blur(20px);
+            text-align: center;
+        }
+
+        .logo {
+            margin-bottom: 2rem;
+        }
+
+        .logo img {
+            height: 60px;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+        }
+
+        h1 {
+            color: var(--accent-primary);
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-shadow: var(--neon-glow);
+        }
+
+        .subtitle {
+            color: var(--text-accent);
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+
+        .claim-form {
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-accent);
+            font-size: 1.2rem;
+            z-index: 2;
+        }
+
+        #code-input {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            color: var(--text-color);
+            padding: 1.2rem 1rem 1.2rem 3rem;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+        }
+
+        #code-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        #code-input::placeholder {
+            color: var(--text-accent);
+            text-transform: none;
+            letter-spacing: normal;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .claim-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--text-accent) 100%);
+            color: var(--bg-primary);
+            border: none;
+            padding: 1.2rem 2rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .claim-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .claim-btn:disabled {
+            background: var(--border-color);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
+        }
+
+        .message.error {
+            background: rgba(231, 57, 70, 0.2);
+            border: 1px solid var(--error-color);
+            color: var(--error-color);
+        }
+
+        .loading {
+            display: none;
+            margin: 1rem 0;
+        }
+
+        .spinner {
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--accent-primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        .help-text {
+            color: var(--text-accent);
+            font-size: 0.9rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .help-text a {
+            color: var(--accent-primary);
+            text-decoration: none;
+        }
+
+        .help-text a:hover {
+            text-decoration: underline;
+        }
+
+        .token-preview {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .token-preview img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 2rem 1.5rem;
+                margin: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+    <script src="js/responsive-header.js"></script>
+</head>
+<body>
+    <!-- Header injected by responsive-header.js -->
+    <div class="container">
+        <div class="logo">
+            <img src="images/logo.png" alt="Black Room">
+        </div>
+
+        <h1>Claim your piece</h1>
+        <p class="subtitle">Enter your unique code from the package to add this piece to your profile</p>
+
+        <form class="claim-form" id="claim-form">
+            <div class="input-group">
+                <i class="fas fa-tag input-icon"></i>
+                <input 
+                    type="text" 
+                    id="code-input" 
+                    placeholder="Enter your code (e.g., S2-RSQ-7GJ4KQ)"
+                    maxlength="24"
+                    autocomplete="off"
+                    spellcheck="false"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="claim-btn" id="claim-btn">
+                <i class="fas fa-plus-circle"></i>
+                Add to my profile
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Processing your claim...</p>
+        </div>
+
+        <div class="message" id="message"></div>
+
+        <div class="token-preview" id="token-preview">
+            <img id="token-image" src="" alt="Token">
+            <h3 id="token-title"></h3>
+            <p id="token-details"></p>
+        </div>
+
+        <div class="help-text">
+            <p><i class="fas fa-info-circle"></i> Find your code on the card inside the package</p>
+            <p><i class="fas fa-user"></i> You need an account to claim your item</p>
+            <p>Don't have an account? <a href="/register.html">Register here</a></p>
+            <p><a href="/profile.html">View my items</a> | <a href="/">Home</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-format input as user types
+        document.getElementById('code-input').addEventListener('input', (e) => {
+            let value = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+            e.target.value = value;
+        });
+
+        // Function to display messages
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = `message ${type}`;
+            messageDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+                ${text}
+            `;
+            messageDiv.style.display = 'block';
+        }
+
+        // Function to hide messages
+        function hideMessage() {
+            document.getElementById('message').style.display = 'none';
+        }
+
+        // Function to display token preview
+        function showTokenPreview(token) {
+            const preview = document.getElementById('token-preview');
+            const image = document.getElementById('token-image');
+            const title = document.getElementById('token-title');
+            const details = document.getElementById('token-details');
+
+            image.src = token.image_url || 'images/logo.png';
+            title.textContent = `${token.product} #${token.serial}`;
+
+            const detailsParts = [token.drop_name];
+            if (token.variant) detailsParts.push(token.variant);
+            if (token.size) detailsParts.push(token.size);
+            if (token.color) detailsParts.push(token.color);
+
+            details.textContent = detailsParts.join(' • ');
+            preview.style.display = 'block';
+        }
+
+        // Function to handle token claiming process
+        async function claimToken() {
+            const code = document.getElementById('code-input').value.trim();
+            const btn = document.getElementById('claim-btn');
+            const loading = document.getElementById('loading');
+
+            // Reset UI
+            hideMessage();
+            document.getElementById('token-preview').style.display = 'none';
+
+            // Show loading state
+            btn.disabled = true;
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch('/claim', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ code })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Success
+                    const token = result.token; // Get the token object
+                    let productInfo = token.product;
+                    if (token.drop_name) productInfo += ` - ${token.drop_name}`;
+                    if (token.variant) productInfo += ` ${token.variant}`;
+
+                    // Use the existing showMessage function with a more descriptive message
+                    showMessage(`Code verified! ${productInfo} has been added to your account.`, 'success');
+
+                    // Show token preview
+                    if (result.token) {
+                        showTokenPreview(result.token);
+                    }
+
+                    // Clear form
+                    document.getElementById('code-input').value = '';
+
+                    // Redirect after delay
+                    setTimeout(() => {
+                        window.location.href = '/profile.html';
+                    }, 2000); 
+
+                } else {
+                    // Handle specific errors
+                    if (response.status === 401) {
+                        showMessage('You must log in or create an account to claim items.', 'error');
+                        setTimeout(() => {
+                            window.location.href = '/login.html?redirect=/claim';
+                        }, 2000);
+                    } else if (response.status === 409) {
+                        showMessage('This code has already been claimed by another user.', 'error');
+                    } else if (response.status === 404) {
+                        showMessage('Invalid code. Please verify you entered it correctly.', 'error');
+                    } else {
+                        showMessage(result.error || 'Error processing code. Please try again.', 'error');
+                    }
+                }
+
+            } catch (error) {
+                console.error('Claim error:', error);
+                showMessage('Network error. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+
+        // Handle form submission by calling the claimToken function
+        document.getElementById('claim-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await claimToken(); // Call the new function
+        });
+
+        // Focus input on load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('code-input').focus();
+        });
+    </script>
+</body>
+</html>

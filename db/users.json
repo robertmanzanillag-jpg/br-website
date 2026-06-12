@@ -1,0 +1,109 @@
+[
+  {
+    "name": "robert",
+    "email": "rob_alexd24de5ee@hotmail.com",
+    "password": "12345678",
+    "createdAt": "2025-07-17T06:17:12.312Z"
+  },
+  {
+    "name": "robert",
+    "email": "rob_alexd2w4de5ee@hotmail.com",
+    "password": "12345678",
+    "createdAt": "2025-07-17T06:17:29.658Z",
+    "phone": "3053216017",
+    "fullName": "robert",
+    "city": "miami beach",
+    "instagram": "robertmanzanilla22",
+    "soundcloud": "",
+    "likes": [
+      {
+        "videoId": "WzaSYoPogP0",
+        "title": "ZEUZ - DJ Set at Black Room - VARIANCE Rave at Underground Warehouse in Miami | MAR 07-25",
+        "likedAt": "2025-07-18T04:03:37.212Z"
+      },
+      {
+        "videoId": "GxjAcsoPXxI",
+        "title": "TANJA MIJU - DJ Set at Black Room in Miami | JAN 10-25",
+        "likedAt": "2025-07-18T04:03:38.179Z"
+      },
+      {
+        "videoId": "PRDHoXdezDI",
+        "title": "19.85 - DJ Set at Black Room Radio Latam America Tour Santiago | MARCH 30-25",
+        "likedAt": "2025-07-18T04:03:39.736Z"
+      }
+    ]
+  },
+  {
+    "name": "Robert",
+    "email": "robert.manzanillag@gmail.com",
+    "password": "12345678",
+    "city": "",
+    "phone": "",
+    "instagram": "",
+    "soundcloud": "",
+    "photo": "",
+    "likes": [
+      {
+        "videoId": "HVIwlYgXCok",
+        "title": "SCHWARZ - Industrial Techno Live Set | Black Room Miami",
+        "likedAt": "2024-12-16T19:14:56.815Z"
+      },
+      {
+        "videoId": "7FrdvQCv1Uk",
+        "title": "KATALINA - Melodic Techno Journey | Black Room Radio",
+        "likedAt": "2024-12-16T19:14:58.200Z"
+      },
+      {
+        "videoId": "gSLsZo4qN14",
+        "title": "MVRPH - Acid Techno Session | Underground Series",
+        "likedAt": "2024-12-16T19:14:59.477Z"
+      },
+      {
+        "videoId": "n85C7QaAwG0",
+        "title": "DR_REIN - Hypnotic Minimal Set | Black Room Sessions",
+        "likedAt": "2024-12-16T19:15:00.832Z"
+      }
+    ],
+    "role": "admin"
+  },
+  {
+    "name": "robert",
+    "email": "rob_aleexed2w4de5ee@hotmail.com",
+    "password": "12345678",
+    "createdAt": "2025-07-27T21:18:32.068Z"
+  },
+  {
+    "name": "robert",
+    "email": "dsds@a.vom",
+    "password": "12345678",
+    "createdAt": "2025-08-30T23:05:48.298Z"
+  },
+  {
+    "name": "robert",
+    "email": "123@a.com",
+    "password": "12345678",
+    "createdAt": "2025-08-30T23:06:20.055Z"
+  },
+  {
+    "name": "Jade Quinones",
+    "email": "quinonesjada@gmail.com",
+    "password": "Digna418!25",
+    "createdAt": "2025-08-30T23:20:19.231Z"
+  },
+  {
+    "name": "Black Room",
+    "email": "blackroom.us@gmail.com",
+    "password": "Miami2020.",
+    "createdAt": "2025-12-03T12:00:00.000Z",
+    "role": "admin",
+    "isAdmin": true
+  },
+  {
+    "name": "Kong Admin",
+    "email": "kongintllc@gmail.com",
+    "password": "Miami2020.",
+    "role": "admin",
+    "isAdmin": true,
+    "createdAt": "2026-05-13T01:43:31.167Z"
+  }
+]

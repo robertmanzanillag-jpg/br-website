@@ -1,0 +1,13 @@
+{
+  "description": "Posh.vip event URLs for Black Room. Add new events here and run sync to update.",
+  "lastUpdated": "2026-02-06T04:51:24.117Z",
+  "groupUrl": "https://posh.vip/g/black-room",
+  "eventUrls": [
+    "https://posh.vip/e/january-black-pass",
+    "https://posh.vip/e/february-black-pass",
+    "https://posh.vip/e/high-voltage-by-quantum-nexus",
+    "https://posh.vip/e/blood-room-afters",
+    "https://posh.vip/e/blood-feast-neon-graveyard",
+    "https://posh.vip/e/red-room-xl"
+  ]
+}

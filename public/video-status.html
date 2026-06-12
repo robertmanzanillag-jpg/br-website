@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estado de Videos Descargados - Black Room</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #000000, #1a1a1a);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ff6b35;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+        }
+
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 107, 53, 0.3);
+        }
+
+        .download-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff6b35;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .video-grid {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .video-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 4px solid #666;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .video-item.complete {
+            border-left-color: #4CAF50;
+        }
+
+        .video-item.incomplete {
+            border-left-color: #FFC107;
+        }
+
+        .video-item.missing {
+            border-left-color: #F44336;
+        }
+
+        .video-info {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .video-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        .video-status {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .video-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            transition: width 0.3s ease;
+        }
+
+        .error-message {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #F44336;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #ffffff;
+        }
+
+        .success-message {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #ffffff;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .video-item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .video-actions {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📹 Estado de Videos Descargados</h1>
+
+        <div class="controls">
+            <button class="btn" onclick="checkVideos()">🔍 Verificar Videos</button>
+            <button class="btn" onclick="startDownloads()" id="download-btn">▶️ Iniciar Descargas</button>
+            <button class="btn" onclick="pauseDownloads()">⏸️ Pausar Descargas</button>
+            <button class="btn" onclick="showDownloadProgress()">📊 Ver Progreso</button>
+            <a href="/videos.html" class="btn">📺 Ver Lista de Videos</a>
+        </div>
+
+        <div class="status-card">
+            <h3>Estado del Sistema de Descarga</h3>
+            <div class="download-status" id="download-status">
+                <div class="stat-item">
+                    <div class="stat-value" id="total-videos">-</div>
+                    <div class="stat-label">Total Videos</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="processed-videos">-</div>
+                    <div class="stat-label">Procesados</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="successful-downloads">-</div>
+                    <div class="stat-label">Exitosos</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="failed-downloads">-</div>
+                    <div class="stat-label">Fallidos</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="queue-size">-</div>
+                    <div class="stat-label">En Cola</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="success-rate">-</div>
+                    <div class="stat-label">Tasa de Éxito</div>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+
+            <div id="current-video" style="text-align: center; margin-top: 10px; font-style: italic;"></div>
+        </div>
+
+        <div id="message-container"></div>
+
+        <div class="status-card">
+            <h3>Videos en el Sistema</h3>
+            <div id="video-list" class="loading">
+                Cargando estado de videos...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefresh = null;
+
+        async function loadVideoStatus() {
+            console.log('Fetching video status...');
+            try {
+                const response = await fetch('/api/videos/check-status');
+                const data = await response.json();
+
+                console.log('Video status data:', data);
+
+                if (response.ok) {
+                    displayVideoList(data);
+                    updateSummary(data.summary);
+                } else {
+                    showError(`Error: ${data.error}`);
+                }
+            } catch (error) {
+                console.error('Error fetching video status:', error);
+                showError('Error al cargar el estado de videos');
+            }
+        }
+
+        async function loadDownloadStatus() {
+            try {
+                const response = await fetch('/api/videos/download-status');
+                const status = await response.json();
+
+                if (response.ok) {
+                    updateDownloadStatus(status);
+                }
+            } catch (error) {
+                console.error('Error fetching download status:', error);
+            }
+        }
+
+        function updateDownloadStatus(status) {
+            document.getElementById('total-videos').textContent = status.totalVideos || 0;
+            document.getElementById('processed-videos').textContent = status.processedVideos || 0;
+            document.getElementById('successful-downloads').textContent = status.successfulDownloads || 0;
+            document.getElementById('failed-downloads').textContent = status.failedDownloads || 0;
+            document.getElementById('queue-size').textContent = status.queueSize || 0;
+            document.getElementById('success-rate').textContent = (status.successRate || 0) + '%';
+
+            // Actualizar barra de progreso
+            const progressPercent = status.totalVideos > 0 
+                ? Math.round((status.processedVideos / status.totalVideos) * 100)
+                : 0;
+            document.getElementById('progress-fill').style.width = progressPercent + '%';
+
+            // Mostrar video actual
+            const currentVideoEl = document.getElementById('current-video');
+            if (status.isRunning && status.currentVideo) {
+                currentVideoEl.textContent = `🎵 Descargando: ${status.currentVideo.title || status.currentVideo.videoId}`;
+                currentVideoEl.style.color = '#4CAF50';
+            } else if (status.isRunning) {
+                currentVideoEl.textContent = '🔄 Sistema en funcionamiento...';
+                currentVideoEl.style.color = '#FFC107';
+            } else {
+                currentVideoEl.textContent = '⏸️ Sistema pausado';
+                currentVideoEl.style.color = '#F44336';
+            }
+
+            // Actualizar botón de descarga
+            const downloadBtn = document.getElementById('download-btn');
+            if (status.isRunning) {
+                downloadBtn.textContent = '🔄 Descargando...';
+                downloadBtn.disabled = true;
+            } else {
+                downloadBtn.textContent = '▶️ Iniciar Descargas';
+                downloadBtn.disabled = false;
+            }
+        }
+
+        function updateSummary(summary) {
+            if (!summary) return;
+
+            // Los totales ya se actualizan en updateDownloadStatus
+            // Aquí podemos mostrar información adicional si es necesaria
+        }
+
+        function displayVideoList(data) {
+            const container = document.getElementById('video-list');
+
+            if (!data.videos || data.videos.length === 0) {
+                container.innerHTML = '<p style="text-align: center;">No se encontraron videos en la cola.</p>';
+                return;
+            }
+
+            let html = '<div class="video-grid">';
+
+            data.videos.forEach(video => {
+                const statusClass = video.status.replace('video-', '');
+
+                html += `
+                    <div class="video-item ${statusClass}">
+                        <div class="video-info">
+                            <div class="video-title">${video.title}</div>
+                            <div class="video-status">${video.statusText}</div>
+                            ${video.filename ? `<div style="font-size: 0.8rem; opacity: 0.7; margin-top: 5px;">📁 ${video.filename}</div>` : ''}
+                            ${video.size ? `<div style="font-size: 0.8rem; opacity: 0.7;">💾 ${video.size}</div>` : ''}
+                        </div>
+                        <div class="video-actions">
+                            ${video.playable ? 
+                                `<button class="btn btn-small" onclick="playVideo('${video.videoId}')">▶️ Reproducir</button>` :
+                                `<button class="btn btn-small" onclick="downloadSingle('${video.videoId}')">⬇️ Descargar</button>`
+                            }
+                            <button class="btn btn-small" onclick="openYouTube('${video.videoId}')">🔗 YouTube</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        async function checkVideos() {
+            showMessage('🔍 Verificando estado de videos...', 'info');
+            await loadVideoStatus();
+            await loadDownloadStatus();
+            showMessage('✅ Estado actualizado', 'success');
+        }
+
+        async function startDownloads() {
+            const btn = document.getElementById('download-btn');
+            btn.disabled = true;
+            btn.textContent = 'Iniciando...';
+
+            try {
+                const response = await fetch('/api/videos/resume-download', {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage(result.message, 'success');
+                    startAutoRefresh();
+                } else {
+                    showMessage(`Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error starting download:', error);
+                showMessage('Error al iniciar las descargas', 'error');
+            } finally {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.textContent = '▶️ Iniciar Descargas';
+                }, 3000);
+            }
+        }
+
+        async function pauseDownloads() {
+            try {
+                const response = await fetch('/api/videos/pause-download', {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage(result.message, 'success');
+                    stopAutoRefresh();
+                } else {
+                    showMessage(`Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error pausing download:', error);
+                showMessage('Error al pausar las descargas', 'error');
+            }
+        }
+
+        async function downloadSingle(videoId) {
+            try {
+                const response = await fetch('/api/videos/download-single', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ videoId })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage(result.message, 'success');
+                    setTimeout(() => loadVideoStatus(), 2000);
+                } else {
+                    showMessage(`Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error downloading single video:', error);
+                showMessage('Error al iniciar descarga individual', 'error');
+            }
+        }
+
+        function playVideo(videoId) {
+            window.open(`/watch.html?v=${videoId}`, '_blank');
+        }
+
+        function openYouTube(videoId) {
+            window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
+        }
+
+        async function showDownloadProgress() {
+            try {
+                const response = await fetch('/api/videos/download-status');
+                const status = await response.json();
+
+                const progressInfo = `
+Estado de Descarga Detallado:
+
+🔄 Sistema ejecutándose: ${status.isRunning ? 'SÍ' : 'NO'}
+📊 Progreso: ${status.processedVideos}/${status.totalVideos} (${Math.round((status.processedVideos / status.totalVideos) * 100) || 0}%)
+✅ Descargas exitosas: ${status.successfulDownloads}
+❌ Descargas fallidas: ${status.failedDownloads}
+📈 Tasa de éxito: ${status.successRate}%
+⏳ Cola restante: ${status.queueSize}
+${status.currentVideo ? `🎵 Video actual: ${status.currentVideo.title || status.currentVideo.videoId}` : ''}
+${status.estimatedTimeRemaining ? `⏱️ Tiempo estimado: ${status.estimatedTimeRemaining}` : ''}
+                `;
+
+                alert(progressInfo);
+            } catch (error) {
+                console.error('Error fetching download status:', error);
+                showMessage('Error al obtener el estado de descarga', 'error');
+            }
+        }
+
+        function showMessage(message, type = 'info') {
+            const container = document.getElementById('message-container');
+            const className = type === 'error' ? 'error-message' : 'success-message';
+
+            container.innerHTML = `<div class="${className}">${message}</div>`;
+
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        function showError(message) {
+            showMessage(message, 'error');
+        }
+
+        function startAutoRefresh() {
+            if (autoRefresh) return;
+
+            autoRefresh = setInterval(async () => {
+                await loadDownloadStatus();
+                await loadVideoStatus();
+            }, 10000); // Actualizar cada 10 segundos
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefresh) {
+                clearInterval(autoRefresh);
+                autoRefresh = null;
+            }
+        }
+
+        // Cargar estado al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing page...');
+            loadVideoStatus();
+            loadDownloadStatus();
+            startAutoRefresh();
+        });
+
+        // Limpiar al cerrar la página
+        window.addEventListener('beforeunload', function() {
+            stopAutoRefresh();
+        });
+    </script>
+<script src="/js/responsive-header.js"></script>
+</body>
+</html>

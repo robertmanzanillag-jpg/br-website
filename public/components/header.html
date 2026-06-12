@@ -1,0 +1,649 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* Header Variables */
+        :root {
+            --header-bg: rgba(0, 0, 0, 0.95);
+            --header-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --accent-primary: #ffffff;
+            --hover-bg: rgba(255, 255, 255, 0.1);
+            --mobile-menu-bg: rgba(0, 0, 0, 0.98);
+        }
+
+        /* Reset and Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Header Styles */
+        .black-room-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: var(--header-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--header-border);
+            transition: all 0.3s ease;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+        }
+
+        /* Logo Section */
+        .header-logo {
+            display: flex;
+            align-items: center;
+            z-index: 1001;
+        }
+
+        .header-logo img {
+            height: 45px;
+            width: auto;
+            transition: transform 0.3s ease;
+        }
+
+        .header-logo:hover img {
+            transform: scale(1.05);
+        }
+
+        /* Navigation */
+        .header-nav {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .header-nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .header-nav a::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--accent-primary);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .header-nav a:hover,
+        .header-nav a.active {
+            color: var(--text-primary);
+            background: var(--hover-bg);
+        }
+
+        .header-nav a:hover::before {
+            width: 80%;
+        }
+
+        /* User Actions */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-actions button,
+        .header-actions a {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+        }
+
+        .header-actions button:hover,
+        .header-actions a:hover {
+            color: var(--text-primary);
+            background: var(--hover-bg);
+            transform: translateY(-2px);
+        }
+
+        .header-user-info {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            white-space: nowrap;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            z-index: 1001;
+        }
+
+        .mobile-menu-btn:hover {
+            background: var(--hover-bg);
+        }
+
+        /* Mobile Menu Overlay */
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 280px;
+            height: 100vh;
+            background: var(--mobile-menu-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            transition: right 0.3s ease;
+            padding: 80px 2rem 2rem;
+            overflow-y: auto;
+        }
+
+        .mobile-menu.active {
+            right: 0;
+        }
+
+        .mobile-nav {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .mobile-nav li {
+            margin-bottom: 0.5rem;
+        }
+
+        .mobile-nav a {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-nav a:hover,
+        .mobile-nav a.active {
+            color: var(--text-primary);
+            background: var(--hover-bg);
+        }
+
+        .mobile-actions {
+            border-top: 1px solid var(--header-border);
+            padding-top: 2rem;
+        }
+
+        .mobile-actions .header-user-info {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--hover-bg);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .mobile-action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .mobile-action-buttons button,
+        .mobile-action-buttons a {
+            background: var(--hover-bg);
+            border: none;
+            color: var(--text-primary);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .mobile-action-buttons button:hover,
+        .mobile-action-buttons a:hover {
+            background: var(--accent-primary);
+            color: #000;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .black-room-header {
+                padding: 0 1rem;
+                height: 60px;
+            }
+
+            .header-logo img {
+                height: 35px;
+            }
+
+            .header-nav,
+            .header-actions {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .black-room-header {
+                padding: 0 0.75rem;
+                height: 55px;
+            }
+
+            .header-logo img {
+                height: 30px;
+            }
+
+            .mobile-menu {
+                width: 100%;
+                right: -100%;
+            }
+        }
+
+        /* Body padding to account for fixed header */
+        body.has-header {
+            padding-top: 70px;
+        }
+
+        @media (max-width: 768px) {
+            body.has-header {
+                padding-top: 60px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body.has-header {
+                padding-top: 55px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="black-room-header">
+        <!-- Logo -->
+        <a href="index.html" class="header-logo">
+            <img src="images/logo.png" alt="Black Room Logo">
+        </a>
+
+        <!-- Desktop Navigation -->
+        <nav>
+            <ul class="header-nav" id="desktop-nav">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="events.html">Events</a></li>
+                <li><a href="videos.html">Videos</a></li>
+                <li><a href="academy.html">Academy</a></li>
+            </ul>
+        </nav>
+
+        <!-- Desktop Actions -->
+        <div class="header-actions" id="desktop-actions">
+            <!-- Will be populated by JavaScript -->
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <button class="mobile-menu-btn" id="mobile-menu-btn">
+            <i class="fas fa-bars"></i>
+        </button>
+    </header>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobile-menu">
+        <nav>
+            <ul class="mobile-nav">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="events.html">Events</a></li>
+                <li><a href="videos.html">Videos</a></li>
+                <li><a href="academy.html">Academy</a></li>
+            </ul>
+        </nav>
+
+        <div class="mobile-actions" id="mobile-actions">
+            <!-- Will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        class BlackRoomHeader {
+            constructor() {
+                this.mobileMenuBtn = document.getElementById('mobile-menu-btn');
+                this.mobileMenu = document.getElementById('mobile-menu');
+                this.mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+                this.desktopActions = document.getElementById('desktop-actions');
+                this.mobileActions = document.getElementById('mobile-actions');
+                
+                this.init();
+            }
+
+            init() {
+                // Add body class for padding
+                document.body.classList.add('has-header');
+                
+                // Set active navigation item
+                this.setActiveNavItem();
+                
+                // Load user actions
+                this.loadUserActions();
+                
+                // Setup mobile menu
+                this.setupMobileMenu();
+                
+                // Setup sync session
+                this.syncSession();
+            }
+
+            setActiveNavItem() {
+                const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                const navLinks = document.querySelectorAll('.header-nav a, .mobile-nav a');
+                
+                navLinks.forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (href === currentPage || (currentPage === 'index.html' && href === 'index.html')) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+
+            async syncSession() {
+                try {
+                    const response = await fetch('/api/profile', { credentials: 'include' });
+                    if (response.ok) {
+                        const { name, fullName } = await response.json();
+                        localStorage.setItem('userName', name);
+                        localStorage.setItem('fullName', fullName || name);
+                    } else {
+                        localStorage.removeItem('userName');
+                        localStorage.removeItem('fullName');
+                    }
+                    this.loadUserActions();
+                } catch (error) {
+                    console.error('Session sync failed:', error);
+                    this.loadUserActions();
+                }
+            }
+
+            loadUserActions() {
+                const userName = localStorage.getItem('userName');
+                const fullName = localStorage.getItem('fullName') || userName;
+
+                if (userName) {
+                    // Logged in state
+                    this.desktopActions.innerHTML = `
+                        <button onclick="window.location.href='calendar.html'" title="Calendar">
+                            <i class="fas fa-calendar"></i>
+                        </button>
+                        <button id="search-btn" title="Search">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <button id="cart-btn" title="Cart">
+                            <i class="fas fa-shopping-cart"></i>
+                        </button>
+                        <span class="header-user-info">Hello, ${fullName}</span>
+                        <button onclick="window.location.href='profile.html'" title="Profile">
+                            <i class="fas fa-user"></i>
+                        </button>
+                        <button id="logout-btn" title="Logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    `;
+
+                    this.mobileActions.innerHTML = `
+                        <div class="header-user-info">Hello, ${fullName}</div>
+                        <div class="mobile-action-buttons">
+                            <a href="calendar.html">
+                                <i class="fas fa-calendar"></i> Calendar
+                            </a>
+                            <button id="mobile-search-btn">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                            <button id="mobile-cart-btn">
+                                <i class="fas fa-shopping-cart"></i> Cart
+                            </button>
+                            <a href="profile.html">
+                                <i class="fas fa-user"></i> Profile
+                            </a>
+                            <button id="mobile-logout-btn">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </button>
+                        </div>
+                    `;
+
+                    // Setup logout handlers
+                    const logoutHandler = async () => {
+                        try {
+                            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+                        } catch (error) {
+                            console.error('Logout error:', error);
+                        } finally {
+                            localStorage.clear();
+                            window.location.reload();
+                        }
+                    };
+
+                    const logoutBtn = document.getElementById('logout-btn');
+                    const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+                    if (logoutBtn) logoutBtn.onclick = logoutHandler;
+                    if (mobileLogoutBtn) mobileLogoutBtn.onclick = logoutHandler;
+
+                } else {
+                    // Not logged in state
+                    this.desktopActions.innerHTML = `
+                        <button onclick="window.location.href='calendar.html'" title="Calendar">
+                            <i class="fas fa-calendar"></i>
+                        </button>
+                        <button id="search-btn" title="Search">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <button id="cart-btn" title="Cart">
+                            <i class="fas fa-shopping-cart"></i>
+                        </button>
+                        <a href="login.html">Login</a>
+                        <a href="register.html">Register</a>
+                    `;
+
+                    this.mobileActions.innerHTML = `
+                        <div class="mobile-action-buttons">
+                            <a href="calendar.html">
+                                <i class="fas fa-calendar"></i> Calendar
+                            </a>
+                            <button id="mobile-search-btn">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                            <button id="mobile-cart-btn">
+                                <i class="fas fa-shopping-cart"></i> Cart
+                            </button>
+                            <a href="login.html">
+                                <i class="fas fa-sign-in-alt"></i> Login
+                            </a>
+                            <a href="register.html">
+                                <i class="fas fa-user-plus"></i> Register
+                            </a>
+                        </div>
+                    `;
+                }
+
+                // Setup search and cart handlers
+                this.setupActionHandlers();
+            }
+
+            setupActionHandlers() {
+                // Search handlers
+                const searchBtns = document.querySelectorAll('#search-btn, #mobile-search-btn');
+                searchBtns.forEach(btn => {
+                    if (btn) {
+                        btn.onclick = () => {
+                            // Redirect to search or open search modal based on page
+                            if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
+                                // If on index page and has search modal, trigger it
+                                if (typeof toggleSearch === 'function') {
+                                    toggleSearch();
+                                } else {
+                                    window.location.href = 'videos.html';
+                                }
+                            } else {
+                                window.location.href = 'videos.html';
+                            }
+                        };
+                    }
+                });
+
+                // Cart handlers  
+                const cartBtns = document.querySelectorAll('#cart-btn, #mobile-cart-btn');
+                cartBtns.forEach(btn => {
+                    if (btn) {
+                        btn.onclick = () => {
+                            // If on page with cart functionality, trigger it
+                            if (typeof toggleCart === 'function') {
+                                toggleCart();
+                            } else {
+                                window.location.href = 'shop.html';
+                            }
+                        };
+                    }
+                });
+            }
+
+            setupMobileMenu() {
+                if (this.mobileMenuBtn) {
+                    this.mobileMenuBtn.addEventListener('click', () => {
+                        this.toggleMobileMenu();
+                    });
+                }
+
+                if (this.mobileMenuOverlay) {
+                    this.mobileMenuOverlay.addEventListener('click', () => {
+                        this.closeMobileMenu();
+                    });
+                }
+
+                // Close menu on escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.closeMobileMenu();
+                    }
+                });
+
+                // Close menu when clicking nav links
+                const mobileNavLinks = document.querySelectorAll('.mobile-nav a');
+                mobileNavLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        this.closeMobileMenu();
+                    });
+                });
+            }
+
+            toggleMobileMenu() {
+                const isActive = this.mobileMenu.classList.contains('active');
+                if (isActive) {
+                    this.closeMobileMenu();
+                } else {
+                    this.openMobileMenu();
+                }
+            }
+
+            openMobileMenu() {
+                this.mobileMenu.classList.add('active');
+                this.mobileMenuOverlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                
+                // Change hamburger to X
+                const icon = this.mobileMenuBtn.querySelector('i');
+                if (icon) {
+                    icon.className = 'fas fa-times';
+                }
+            }
+
+            closeMobileMenu() {
+                this.mobileMenu.classList.remove('active');
+                this.mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+                
+                // Change X back to hamburger
+                const icon = this.mobileMenuBtn.querySelector('i');
+                if (icon) {
+                    icon.className = 'fas fa-bars';
+                }
+            }
+        }
+
+        // Initialize header when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new BlackRoomHeader();
+        });
+
+        // Export for global access
+        window.BlackRoomHeader = BlackRoomHeader;
+    </script>
+</body>
+</html>

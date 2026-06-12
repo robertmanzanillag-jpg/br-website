@@ -1,0 +1,54 @@
+[
+  {
+    "id": "red-room-tshirt",
+    "name": "RED ROOM T-SHIRT",
+    "price": 55,
+    "description": "Black Room signature t-shirt with red BR logo on front and iconic red frame design on back. Premium cotton blend.",
+    "images": {
+      "front": "/images/products/red-room-front.jpg",
+      "back": "/images/products/red-room-back.jpg"
+    },
+    "sizes": ["S", "M", "L", "XL"],
+    "category": "clothing",
+    "inStock": true
+  },
+  {
+    "id": "electric-tshirt",
+    "name": "ELECTRIC T-SHIRT",
+    "price": 55,
+    "description": "Black Room electric edition with metallic BR logo on front and intricate white tribal frame design on back. Premium cotton blend.",
+    "images": {
+      "front": "/images/products/electric-front.jpg",
+      "back": "/images/products/electric-back.jpg"
+    },
+    "sizes": ["S", "M", "L", "XL"],
+    "category": "clothing",
+    "inStock": true
+  },
+  {
+    "id": "phoenix-tshirt",
+    "name": "PHOENIX T-SHIRT",
+    "price": 55,
+    "description": "Black Room phoenix edition with fire BR logo on front and stunning flame frame design on back. Premium cotton blend.",
+    "images": {
+      "front": "/images/products/phoenix-front.jpg",
+      "back": "/images/products/phoenix-back.jpg"
+    },
+    "sizes": ["S", "M", "L", "XL"],
+    "category": "clothing",
+    "inStock": true
+  },
+  {
+    "id": "timeless-tshirt",
+    "name": "TIMELESS T-SHIRT",
+    "price": 55,
+    "description": "Black Room timeless edition with silver BR logo on front and clean white frame design on back. Premium cotton blend.",
+    "images": {
+      "front": "/images/products/timeless-front.jpg",
+      "back": "/images/products/timeless-back.png"
+    },
+    "sizes": ["S", "M", "L", "XL"],
+    "category": "clothing",
+    "inStock": true
+  }
+]

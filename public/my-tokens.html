@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Pieces - Black Room</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #0d0d0d;
+            --bg-tertiary: #1a1a1a;
+            --text-color: #e0e0e0;
+            --text-accent: #a0a0a0;
+            --accent-primary: #fff;
+            --border-color: #282828;
+            --success-color: #4CAF50;
+            --neon-glow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            background-image: url("https://images.unsplash.com/photo-1549490349-86641884489a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(20px);
+        }
+
+        .header h1 {
+            color: var(--accent-primary);
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: var(--neon-glow);
+        }
+
+        .header p {
+            color: var(--text-accent);
+            font-size: 1.2rem;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .stat-label {
+            color: var(--text-accent);
+            font-size: 0.9rem;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .btn {
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--text-accent);
+            transform: translateY(-2px);
+        }
+
+        .btn.secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn.secondary:hover {
+            background: var(--border-color);
+        }
+
+        .tokens-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .token-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            aspect-ratio: 4/5;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .token-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--neon-glow);
+            border-color: var(--accent-primary);
+        }
+
+        .token-image {
+            width: 100%;
+            height: 60%;
+            background: var(--bg-tertiary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .token-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .token-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--success-color);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .token-info {
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .token-title {
+            color: var(--accent-primary);
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .token-details {
+            color: var(--text-accent);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            flex: 1;
+        }
+
+        .token-code {
+            background: var(--bg-tertiary);
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--text-accent);
+            cursor: pointer;
+            padding: 0.2rem;
+            transition: color 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            color: var(--accent-primary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--text-accent);
+            margin-bottom: 1.5rem;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            color: var(--text-color);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            color: var(--text-accent);
+            margin-bottom: 2rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .spinner {
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--accent-primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--success-color);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .stats {
+                gap: 1rem;
+            }
+
+            .toolbar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .tokens-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 1rem;
+            }
+        }
+    </style>
+    <script src="js/responsive-header.js"></script>
+</head>
+<body>
+    <!-- Header injected by responsive-header.js -->
+    <div class="container">
+        <div class="page-header">
+            <h1><i class="fas fa-gem"></i> My Pieces</h1>
+            <p>Your Black Room collection</p>
+
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-number" id="total-pieces">-</div>
+                    <div class="stat-label">Total Pieces</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="unique-drops">-</div>
+                    <div class="stat-label">Unique Drops</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div>
+                <span id="pieces-count">Loading...</span>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <a href="/claim" class="btn">
+                    <i class="fas fa-plus"></i>
+                    Claim New Piece
+                </a>
+                <a href="/" class="btn secondary">
+                    <i class="fas fa-home"></i>
+                    Back to Home
+                </a>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Loading your collection...</p>
+        </div>
+
+        <div class="tokens-grid" id="tokens-grid" style="display: none;">
+            <!-- Tokens will be loaded here -->
+        </div>
+
+        <div class="empty-state" id="empty-state" style="display: none;">
+            <i class="fas fa-box-open"></i>
+            <h3>No pieces yet</h3>
+            <p>You haven't claimed any pieces yet. Get your first piece by scanning the QR code on your Black Room package!</p>
+            <a href="/claim" class="btn">
+                <i class="fas fa-plus-circle"></i>
+                Claim Your First Piece
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Load tokens on page load
+        document.addEventListener('DOMContentLoaded', loadTokens);
+
+        async function loadTokens() {
+            const loading = document.getElementById('loading');
+            const grid = document.getElementById('tokens-grid');
+            const emptyState = document.getElementById('empty-state');
+
+            try {
+                const response = await fetch('/api/me/tokens', { credentials: 'include' });
+                const tokens = await response.json();
+
+                loading.style.display = 'none';
+
+                if (tokens.length === 0) {
+                    emptyState.style.display = 'block';
+                    updateStats(0, 0);
+                    document.getElementById('pieces-count').textContent = 'No pieces';
+                } else {
+                    grid.style.display = 'grid';
+                    renderTokens(tokens);
+
+                    // Calculate stats
+                    const uniqueDrops = new Set(tokens.map(t => t.drop_name)).size;
+                    updateStats(tokens.length, uniqueDrops);
+                    document.getElementById('pieces-count').textContent = `${tokens.length} piece${tokens.length === 1 ? '' : 's'}`;
+                }
+
+            } catch (error) {
+                console.error('Error loading tokens:', error);
+                loading.style.display = 'none';
+                emptyState.style.display = 'block';
+                document.getElementById('pieces-count').textContent = 'Error loading';
+            }
+        }
+
+        function renderTokens(tokens) {
+            const grid = document.getElementById('tokens-grid');
+            grid.innerHTML = '';
+
+            tokens.forEach(token => {
+                const card = createTokenCard(token);
+                grid.appendChild(card);
+            });
+        }
+
+        function createTokenCard(token) {
+            const card = document.createElement('div');
+            card.className = 'token-card';
+            card.onclick = () => openTokenDetail(token.token_code);
+
+            const detailsParts = [token.drop_name];
+            if (token.variant) detailsParts.push(token.variant);
+            if (token.size) detailsParts.push(token.size);
+            if (token.color) detailsParts.push(token.color);
+
+            card.innerHTML = `
+                <div class="token-image">
+                    <img src="${token.image_url || 'images/logo.png'}" alt="${token.product}" loading="lazy"
+                         onerror="this.src='images/logo.png'; this.onerror=null;">
+                    <div class="token-badge">Owned</div>
+                </div>
+                <div class="token-info">
+                    <div class="token-title">${token.product} #${token.serial}</div>
+                    <div class="token-details">${detailsParts.join(' • ')}</div>
+                    <div class="token-code">
+                        <span>${token.token_code}</span>
+                        <button class="copy-btn" onclick="event.stopPropagation(); copyCode('${token.token_code}')" title="Copy code">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        function updateStats(totalPieces, uniqueDrops) {
+            document.getElementById('total-pieces').textContent = totalPieces;
+            document.getElementById('unique-drops').textContent = uniqueDrops;
+        }
+
+        function openTokenDetail(tokenCode) {
+            window.open(`/p/${tokenCode}`, '_blank');
+        }
+
+        function copyCode(code) {
+            navigator.clipboard.writeText(code).then(() => {
+                showToast('Code copied to clipboard!');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = code;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showToast('Code copied to clipboard!');
+            });
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i class="fas fa-check"></i> ${message}`;
+            document.body.appendChild(toast);
+
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

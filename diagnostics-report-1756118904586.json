@@ -1,0 +1,93 @@
+{
+  "timestamp": "2025-08-25T10:48:21.928Z",
+  "results": {
+    "database": {
+      "status": "connected",
+      "timestamp": "2025-08-25T10:48:24.075Z",
+      "database": "neondb",
+      "version": "PostgreSQL"
+    },
+    "poolStatus": {
+      "total": 2,
+      "idle": 1,
+      "waiting": 0
+    },
+    "tables": [
+      "batch_items",
+      "batches",
+      "tokens"
+    ],
+    "tables_status": "complete",
+    "dataIntegrity": {
+      "batches": 13,
+      "tokens": 3340,
+      "batch_items": 3337
+    },
+    "orphanedRecords": {
+      "tokens": 3,
+      "batch_items": 0
+    },
+    "duplicateTokens": [],
+    "tokenGeneration": {
+      "status": "working",
+      "samples": [
+        "TEST-M3VMB9",
+        "TEST-SCQ737",
+        "TEST-XZ8NUL",
+        "TEST-DDP795",
+        "TEST-DE46XE"
+      ],
+      "uniqueCount": 5
+    },
+    "recentActivity": {
+      "batches": [
+        {
+          "name": "Vinyl - ERTYUIO - ADSZFRGTHJ (12-111) [1x each]",
+          "created_at": "2025-08-25T08:13:38.628Z"
+        },
+        {
+          "name": "Poster - sdfsdfsd - fsdsdfsdf (200-1000) [1x each]",
+          "created_at": "2025-08-25T08:05:01.068Z"
+        },
+        {
+          "name": "Poster - sdfsdfsd - fsdsdfsdf (200-1000) [1x each]",
+          "created_at": "2025-08-25T08:04:56.711Z"
+        },
+        {
+          "name": "Poster - sdfsdfsd - fsdsdfsdf (200-1000) [1x each]",
+          "created_at": "2025-08-25T08:04:40.059Z"
+        },
+        {
+          "name": "Hoodie - dsdvfsds - dsdsdvsd (20-30) [1x each]",
+          "created_at": "2025-08-25T07:59:27.866Z"
+        }
+      ],
+      "claims": [
+        {
+          "token_code": "S-S-U3AUVH",
+          "claimed_at": "2025-08-25T07:32:58.836Z",
+          "status": "claimed"
+        },
+        {
+          "token_code": "S-F-F22J3M",
+          "claimed_at": "2025-08-25T06:46:03.306Z",
+          "status": "claimed"
+        },
+        {
+          "token_code": "S-D-M8CQ3J",
+          "claimed_at": "2025-08-25T06:36:51.069Z",
+          "status": "claimed"
+        },
+        {
+          "token_code": "C-D-ER6CJS",
+          "claimed_at": "2025-08-25T06:25:32.803Z",
+          "status": "claimed"
+        }
+      ]
+    },
+    "overallStatus": "issues_found",
+    "issues": [
+      "Registros huérfanos encontrados"
+    ]
+  }
+}

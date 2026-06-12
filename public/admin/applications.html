@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Applications — Black Room Admin</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #000;
+      --card: #0d0d0d;
+      --border: #1a1a1a;
+      --border2: #272727;
+      --text: #fff;
+      --muted: #555;
+      --muted2: #888;
+      --accent: #ff2233;
+      --green: #22c55e;
+      --row-h: 44px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 90px 0 60px; }
+
+    /* PAGE HEADER */
+    .page-header { max-width: 1500px; margin: 0 auto 28px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .ph-left { display: flex; align-items: center; gap: 14px; }
+    .logo-box { width: 40px; height: 40px; border: 1px solid var(--border2); display: grid; place-items: center; font-family: 'Space Mono', monospace; font-size: 12px; color: var(--muted2); }
+    .page-title { font-family: 'Space Mono', monospace; font-size: 1rem; letter-spacing: 3px; text-transform: uppercase; }
+    .page-sub { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-top: 3px; }
+    .ph-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .btn-sm { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; background: transparent; border: 1px solid var(--border2); color: var(--muted2); padding: 8px 14px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 7px; text-decoration: none; }
+    .btn-sm:hover { border-color: #444; color: var(--text); }
+
+    /* SECTION CARDS */
+    .sections-grid { max-width: 1500px; margin: 0 auto 28px; padding: 0 24px; display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+    @media(max-width:900px){.sections-grid{grid-template-columns:repeat(2,1fr);}}
+    @media(max-width:540px){.sections-grid{grid-template-columns:1fr;}}
+    .section-card { background: var(--card); border: 1px solid var(--border2); padding: 20px 22px; cursor: pointer; transition: all .2s; position: relative; overflow: hidden; }
+    .section-card::after { content:''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: transparent; transition: background .2s; }
+    .section-card:hover { border-color: #333; }
+    .section-card.active { border-color: #333; }
+    .section-card.active::after { background: var(--accent); }
+    .sc-icon { width: 36px; height: 36px; border: 1px solid var(--border2); display: grid; place-items: center; margin-bottom: 14px; font-size: 14px; color: var(--muted2); transition: all .2s; }
+    .section-card.active .sc-icon, .section-card:hover .sc-icon { border-color: var(--accent); color: var(--accent); }
+    .sc-label { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); margin-bottom: 6px; }
+    .section-card.active .sc-label { color: var(--text); }
+    .sc-count { font-family: 'Space Mono', monospace; font-size: 1.6rem; font-weight: 700; color: var(--text); }
+    .sc-desc { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    /* PANEL */
+    .panel-wrap { max-width: 1500px; margin: 0 auto; padding: 0 24px; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* CONTROLS */
+    .controls { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
+    .search-wrap i { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 11px; }
+    .search-wrap input { width: 100%; background: var(--card); border: 1px solid var(--border2); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 8px 12px 8px 32px; outline: none; transition: border-color .2s; }
+    .search-wrap input:focus { border-color: #333; }
+    .search-wrap input::placeholder { color: var(--muted); }
+    .stats-label { margin-left: auto; font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
+
+    /* TABLE — fixed row height, no overflow */
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 700px; table-layout: fixed; }
+    col.col-chk   { width: 44px; }
+    col.col-id    { width: 40px; }
+    col.col-name  { width: 130px; }
+    col.col-std   { width: 150px; }
+    col.col-sm    { width: 70px; }
+    col.col-badge { width: 80px; }
+    col.col-date  { width: 92px; }
+    col.col-act   { width: 70px; }
+    thead tr { background: var(--card); border-bottom: 1px solid var(--border2); }
+    th { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); padding: 11px 12px; text-align: left; white-space: nowrap; cursor: pointer; user-select: none; overflow: hidden; }
+    th:hover { color: var(--muted2); }
+    th.sorted { color: var(--accent); }
+
+    tbody tr { border-bottom: 1px solid var(--border); height: var(--row-h); cursor: pointer; transition: background .1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #0f0f0f; }
+    tbody tr.editing { background: #111; cursor: default; }
+
+    td {
+      padding: 0 12px;
+      height: var(--row-h);
+      vertical-align: middle;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 0; /* makes text-overflow work with table-layout:fixed */
+    }
+    .cell-id { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); }
+    .cell-date { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); }
+
+    /* CONTACTED checkbox */
+    .chk-cell { text-align: center; padding: 0; }
+    .chk {
+      width: 18px; height: 18px;
+      border: 1px solid var(--border2);
+      background: transparent;
+      display: inline-grid; place-items: center;
+      cursor: pointer;
+      transition: all .15s;
+      position: relative;
+    }
+    .chk:hover { border-color: #555; }
+    .chk.checked { background: var(--green); border-color: var(--green); }
+    .chk.checked::after { content: '✓'; color: #000; font-size: 12px; font-weight: bold; line-height: 1; }
+    tbody tr.contacted { opacity: 0.5; }
+    tbody tr.contacted:hover { opacity: 0.8; }
+
+    /* Clickable contact links */
+    .clink {
+      color: var(--text);
+      text-decoration: none;
+      border-bottom: 1px dashed transparent;
+      transition: all .15s;
+      display: inline-flex; align-items: center; gap: 5px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .clink:hover { color: var(--accent); border-bottom-color: var(--accent); }
+    .clink i { font-size: 10px; opacity: .5; flex-shrink: 0; }
+    .clink:hover i { opacity: 1; }
+
+    .badge { display: inline-block; font-size: 10px; font-family: 'Space Mono', monospace; letter-spacing: 1px; text-transform: uppercase; padding: 3px 7px; border-radius: 2px; }
+    .badge-yes  { background: rgba(34,197,94,.1);  color: #22c55e; border: 1px solid rgba(34,197,94,.2); }
+    .badge-no   { background: rgba(255,255,255,.04); color: var(--muted2); border: 1px solid var(--border2); }
+    .badge-basic       { background: rgba(255,255,255,.06); color: #bbb; border: 1px solid var(--border2); }
+    .badge-intermediate{ background: rgba(255,165,0,.1); color: #f97316; border: 1px solid rgba(255,165,0,.2); }
+
+    /* INLINE EDIT */
+    .edit-field { background: #1a1a1a; border: 1px solid #333; color: var(--text); font-family: 'Inter', sans-serif; font-size: 12px; padding: 3px 7px; width: 100%; outline: none; }
+    .edit-field:focus { border-color: var(--accent); }
+    .edit-select { background: #1a1a1a; border: 1px solid #333; color: var(--text); font-family: 'Space Mono', monospace; font-size: 11px; padding: 3px 7px; outline: none; cursor: pointer; width: 100%; }
+    .edit-select:focus { border-color: var(--accent); }
+
+    /* ROW ACTIONS */
+    .actions { display: flex; gap: 4px; align-items: center; }
+    .btn-act { background: transparent; border: 1px solid var(--border2); color: var(--muted2); font-size: 10px; padding: 4px 8px; cursor: pointer; transition: all .15s; font-family: 'Space Mono', monospace; white-space: nowrap; }
+    .btn-act:hover { border-color: #444; color: var(--text); }
+    .btn-act.save { border-color: var(--green); color: var(--green); }
+    .btn-act.save:hover { background: rgba(34,197,94,.08); }
+    .btn-act.del:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* EMPTY / LOADING */
+    .empty { padding: 60px; text-align: center; }
+    .empty i { font-size: 1.8rem; color: var(--border2); margin-bottom: 12px; display: block; }
+    .empty p { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+    .loading { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 60px; font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+    .spinner { width: 14px; height: 14px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 28px; right: 28px; background: var(--card); border: 1px solid var(--border2); color: var(--text); font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; padding: 12px 18px; z-index: 9999; opacity: 0; transform: translateY(8px); transition: all .25s; pointer-events: none; display: flex; align-items: center; gap: 9px; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.ok  { border-left: 2px solid var(--green); }
+    .toast.err { border-left: 2px solid var(--accent); }
+
+    /* DELETE MODAL */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.88); z-index: 999; display: none; place-items: center; }
+    .overlay.open { display: grid; }
+    .del-modal { background: var(--card); border: 1px solid var(--border2); padding: 32px; max-width: 360px; width: 90%; text-align: center; }
+    .del-modal h3 { font-family: 'Space Mono', monospace; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+    .del-modal p { font-size: 13px; color: var(--muted2); margin-bottom: 24px; line-height: 1.6; }
+    .modal-btns { display: flex; gap: 10px; justify-content: center; }
+    .modal-btns button { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; padding: 10px 18px; border: 1px solid var(--border2); background: transparent; color: var(--muted2); cursor: pointer; transition: all .2s; }
+    .modal-btns .confirm { border-color: var(--accent); color: var(--accent); }
+    .modal-btns .confirm:hover { background: rgba(255,34,51,.08); }
+    .modal-btns .cancel:hover { border-color: #444; color: var(--text); }
+
+    /* DETAIL DRAWER */
+    .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 800; opacity: 0; pointer-events: none; transition: opacity .25s; }
+    .drawer-overlay.open { opacity: 1; pointer-events: all; }
+    .drawer { position: fixed; top: 0; right: 0; width: 380px; max-width: 95vw; height: 100vh; background: #0a0a0a; border-left: 1px solid var(--border2); z-index: 801; transform: translateX(100%); transition: transform .3s cubic-bezier(.16,1,.3,1); overflow-y: auto; display: flex; flex-direction: column; }
+    .drawer.open { transform: translateX(0); }
+    .drawer-head { padding: 22px 22px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; position: sticky; top: 0; background: #0a0a0a; z-index: 1; }
+    .drawer-name { font-family: 'Space Mono', monospace; font-size: 14px; letter-spacing: 1px; color: var(--text); }
+    .drawer-tag { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-top: 4px; }
+    .drawer-close { background: transparent; border: 1px solid var(--border2); color: var(--muted2); width: 30px; height: 30px; cursor: pointer; font-size: 14px; flex-shrink: 0; transition: all .2s; }
+    .drawer-close:hover { border-color: #444; color: var(--text); }
+    .drawer-body { padding: 20px 22px; flex: 1; }
+    .drawer-field { margin-bottom: 16px; }
+    .drawer-field:last-child { margin-bottom: 0; }
+    .df-label { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+    .df-value { font-size: 13px; color: var(--text); line-height: 1.5; word-break: break-word; }
+    .df-value.muted { color: var(--muted2); }
+    .drawer-divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+    .drawer-actions { padding: 18px 22px; border-top: 1px solid var(--border); display: flex; gap: 8px; position: sticky; bottom: 0; background: #0a0a0a; }
+    .drawer-btn { flex: 1; font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; padding: 10px; border: 1px solid var(--border2); background: transparent; color: var(--muted2); cursor: pointer; transition: all .2s; }
+    .drawer-btn:hover { border-color: #444; color: var(--text); }
+    .drawer-btn.del-btn:hover { border-color: var(--accent); color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<div id="global-header-placeholder"></div>
+<script src="/js/global-header.js"></script>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><i class="fas fa-check" id="toastIcon"></i><span id="toastMsg"></span></div>
+
+<!-- DELETE CONFIRM -->
+<div class="overlay" id="delModal">
+  <div class="del-modal">
+    <h3>Delete Entry</h3>
+    <p>This will permanently remove this entry. This cannot be undone.</p>
+    <div class="modal-btns">
+      <button class="cancel" onclick="closeDelModal()">Cancel</button>
+      <button class="confirm" onclick="confirmDel()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL DRAWER -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div>
+      <div class="drawer-name" id="drawerName">—</div>
+      <div class="drawer-tag" id="drawerTag">—</div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-actions">
+    <button class="drawer-btn" id="drawerEditBtn" onclick="drawerEdit()">Edit</button>
+    <button class="drawer-btn del-btn" id="drawerDelBtn" onclick="drawerDelete()"><i class="fas fa-trash"></i> Delete</button>
+  </div>
+</div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="ph-left">
+    <div class="logo-box">BR</div>
+    <div>
+      <div class="page-title">Applications</div>
+      <div class="page-sub">Admin Sheet</div>
+    </div>
+  </div>
+  <div class="ph-right">
+    <button class="btn-sm" onclick="exportCSV()"><i class="fas fa-download"></i> Export CSV</button>
+    <a href="/admin/link-stats.html" class="btn-sm"><i class="fas fa-arrow-left"></i> Admin</a>
+  </div>
+</div>
+
+<!-- SECTION CARDS -->
+<div class="sections-grid">
+  <div class="section-card active" id="card-opendeck" onclick="switchTab('opendeck')">
+    <div class="sc-icon"><i class="fas fa-headphones"></i></div>
+    <div class="sc-label">Open Deck</div>
+    <div class="sc-count" id="cnt-opendeck">—</div>
+    <div class="sc-desc">DJ session sign-ups</div>
+  </div>
+  <div class="section-card" id="card-promoters" onclick="switchTab('promoters')">
+    <div class="sc-icon"><i class="fas fa-bullhorn"></i></div>
+    <div class="sc-label">Promoters</div>
+    <div class="sc-count" id="cnt-promoters">—</div>
+    <div class="sc-desc">Brand promoter applications</div>
+  </div>
+  <div class="section-card" id="card-ambassadors" onclick="switchTab('ambassadors')">
+    <div class="sc-icon"><i class="fas fa-star"></i></div>
+    <div class="sc-label">Ambassadors</div>
+    <div class="sc-count" id="cnt-ambassadors">—</div>
+    <div class="sc-desc">Brand ambassador applications</div>
+  </div>
+  <div class="section-card" id="card-academy" onclick="switchTab('academy')">
+    <div class="sc-icon"><i class="fas fa-graduation-cap"></i></div>
+    <div class="sc-label">Academy</div>
+    <div class="sc-count" id="cnt-academy">—</div>
+    <div class="sc-desc">DJ academy enrollments</div>
+  </div>
+</div>
+
+<!-- PANELS -->
+<div class="panel-wrap">
+
+  <div class="panel active" id="panel-opendeck">
+    <div class="controls">
+      <div class="search-wrap"><i class="fas fa-search"></i><input type="text" placeholder="Search…" oninput="renderOpenDeck()" id="q-opendeck"></div>
+      <span class="stats-label" id="stats-opendeck">— entries</span>
+    </div>
+    <div class="table-wrap" id="tbl-opendeck"><div class="loading"><div class="spinner"></div> Loading…</div></div>
+  </div>
+
+  <div class="panel" id="panel-promoters">
+    <div class="controls">
+      <div class="search-wrap"><i class="fas fa-search"></i><input type="text" placeholder="Search…" oninput="renderTeam('promoters')" id="q-promoters"></div>
+      <span class="stats-label" id="stats-promoters">— entries</span>
+    </div>
+    <div class="table-wrap" id="tbl-promoters"><div class="loading"><div class="spinner"></div> Loading…</div></div>
+  </div>
+
+  <div class="panel" id="panel-ambassadors">
+    <div class="controls">
+      <div class="search-wrap"><i class="fas fa-search"></i><input type="text" placeholder="Search…" oninput="renderTeam('ambassadors')" id="q-ambassadors"></div>
+      <span class="stats-label" id="stats-ambassadors">— entries</span>
+    </div>
+    <div class="table-wrap" id="tbl-ambassadors"><div class="loading"><div class="spinner"></div> Loading…</div></div>
+  </div>
+
+  <div class="panel" id="panel-academy">
+    <div class="controls">
+      <div class="search-wrap"><i class="fas fa-search"></i><input type="text" placeholder="Search…" oninput="renderAcademy()" id="q-academy"></div>
+      <span class="stats-label" id="stats-academy">— entries</span>
+    </div>
+    <div class="table-wrap" id="tbl-academy"><div class="loading"><div class="spinner"></div> Loading…</div></div>
+  </div>
+
+</div>
+
+<script>
+  let currentTab = 'opendeck';
+  let openDeckData = [], teamData = [], academyData = [];
+  let sorts = {
+    opendeck:    { col:'created_at', dir:-1 },
+    promoters:   { col:'created_at', dir:-1 },
+    ambassadors: { col:'created_at', dir:-1 },
+    academy:     { col:'createdAt',  dir:-1 }
+  };
+  let delTarget = null;
+  let drawerRecord = null;
+  let drawerType = null;
+
+  // ── INIT ──
+  async function init() {
+    await Promise.all([loadOpenDeck(), loadTeam(), loadAcademy()]);
+    renderOpenDeck();
+  }
+
+  async function loadOpenDeck() {
+    try { const r = await fetch('/api/admin/open-deck-submissions'); openDeckData = await r.json(); document.getElementById('cnt-opendeck').textContent = openDeckData.length; } catch(e){}
+  }
+  async function loadTeam() {
+    try {
+      const r = await fetch('/api/admin/team-applications'); teamData = await r.json();
+      document.getElementById('cnt-promoters').textContent   = teamData.filter(x=>x.role==='promoter').length;
+      document.getElementById('cnt-ambassadors').textContent = teamData.filter(x=>x.role==='ambassador').length;
+    } catch(e){}
+  }
+  async function loadAcademy() {
+    try { const r = await fetch('/api/admin/academy-registrations'); const raw = await r.json(); academyData = raw.map((x,i)=>({...x,_idx:i})); document.getElementById('cnt-academy').textContent = academyData.length; } catch(e){}
+  }
+
+  // ── TABS ──
+  function switchTab(tab) {
+    currentTab = tab;
+    closeDrawer();
+    ['opendeck','promoters','ambassadors','academy'].forEach(t => {
+      document.getElementById(`card-${t}`).classList.toggle('active', t===tab);
+      document.getElementById(`panel-${t}`).classList.toggle('active', t===tab);
+    });
+    if (tab==='opendeck') renderOpenDeck();
+    else if (tab==='promoters') renderTeam('promoters');
+    else if (tab==='ambassadors') renderTeam('ambassadors');
+    else renderAcademy();
+  }
+
+  // ── SORT ──
+  function sortData(data, tab) {
+    const {col,dir} = sorts[tab];
+    return [...data].sort((a,b)=>{ let av=a[col]??'',bv=b[col]??''; if(typeof av==='string') av=av.toLowerCase(); if(typeof bv==='string') bv=bv.toLowerCase(); return av<bv?-dir:av>bv?dir:0; });
+  }
+  function thSort(tab,col,label) {
+    const {col:sc,dir}=sorts[tab]; const arrow=sc===col?(dir===1?' ↑':' ↓'):''; const cls=sc===col?'sorted':'';
+    return `<th class="${cls}" onclick="doSort('${tab}','${col}')">${label}${arrow}</th>`;
+  }
+  function doSort(tab,col) {
+    if(sorts[tab].col===col) sorts[tab].dir*=-1; else{sorts[tab].col=col;sorts[tab].dir=-1;}
+    if(tab==='opendeck') renderOpenDeck(); else if(tab==='promoters'||tab==='ambassadors') renderTeam(tab); else renderAcademy();
+  }
+  function q(tab){return(document.getElementById(`q-${tab}`)?.value||'').toLowerCase().trim();}
+
+  // ── OPEN DECK ──
+  function renderOpenDeck() {
+    const search=q('opendeck');
+    let data=openDeckData.filter(r=>!search||[r.full_name,r.email,r.phone,r.instagram,r.soundcloud,r.genre,r.which_event].some(f=>(f||'').toLowerCase().includes(search)));
+    data=sortData(data,'opendeck');
+    document.getElementById('stats-opendeck').textContent=`${data.length} entries`;
+    if(!data.length){document.getElementById('tbl-opendeck').innerHTML=emptyHTML();return;}
+
+    const html=`<table>
+      <colgroup><col class="col-chk"><col class="col-id"><col class="col-name"><col class="col-sm"><col class="col-std"><col class="col-std"><col class="col-std"><col class="col-std"><col class="col-badge"><col class="col-badge"><col class="col-date"><col class="col-act"></colgroup>
+      <thead><tr>
+        <th title="Contacted"><i class="fas fa-check"></i></th>
+        ${thSort('opendeck','id','#')}
+        ${thSort('opendeck','full_name','Name')}
+        ${thSort('opendeck','age','Age')}
+        ${thSort('opendeck','email','Email')}
+        ${thSort('opendeck','phone','Phone')}
+        ${thSort('opendeck','instagram','Instagram')}
+        ${thSort('opendeck','genre','Genre')}
+        ${thSort('opendeck','played_before','Played')}
+        ${thSort('opendeck','attended_event','Attended')}
+        ${thSort('opendeck','created_at','Date')}
+        <th>Act</th>
+      </tr></thead>
+      <tbody>${data.map(r=>`
+        <tr onclick="openDrawerOD('${r.id}')" id="row-od-${r.id}" class="${r.contacted?'contacted':''}">
+          <td class="chk-cell" onclick="event.stopPropagation()"><div class="chk ${r.contacted?'checked':''}" onclick="toggleContacted('opendeck','${r.id}',this)"></div></td>
+          <td class="cell-id">${r.id}</td>
+          <td title="${esc(r.full_name)}">${esc(r.full_name)}</td>
+          <td>${r.age??'—'}</td>
+          <td title="${esc(r.email)}">${emailLink(r.email)}</td>
+          <td title="${esc(r.phone)}" onclick="event.stopPropagation()">${phoneLink(r.phone)}</td>
+          <td title="${esc(r.instagram||'')}" onclick="event.stopPropagation()">${igLink(r.instagram)}</td>
+          <td title="${esc(r.genre||'')}">${esc(r.genre||'—')}</td>
+          <td>${yesno(r.played_before)}</td>
+          <td>${yesno(r.attended_event)}</td>
+          <td class="cell-date">${fmtDate(r.created_at)}</td>
+          <td onclick="event.stopPropagation()"><div class="actions">
+            <button class="btn-act del" onclick="askDel('${r.id}','opendeck')"><i class="fas fa-trash"></i></button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody></table>`;
+
+    document.getElementById('tbl-opendeck').innerHTML=html;
+  }
+
+  function openDrawerOD(id) {
+    const r=openDeckData.find(x=>String(x.id)===String(id)); if(!r) return;
+    drawerRecord=r; drawerType='opendeck';
+    document.getElementById('drawerName').textContent=r.full_name;
+    document.getElementById('drawerTag').textContent=`Open Deck · ${fmtDate(r.created_at)}`;
+    document.getElementById('drawerBody').innerHTML=`
+      ${df('Age', r.age)}
+      ${dfLink('Email', emailLink(r.email))}
+      ${dfLink('Phone', phoneLink(r.phone))}
+      ${dfLink('Instagram', igLink(r.instagram))}
+      ${dfLink('SoundCloud', scLink(r.soundcloud))}
+      ${df('Genre', r.genre||'—')}
+      <hr class="drawer-divider">
+      ${dfBadge('Played before', r.played_before)}
+      ${dfBadge('Attended Black Room event', r.attended_event)}
+      ${r.attended_event==='yes' ? df('Which event', r.which_event||'—') : ''}`;
+    openDrawer();
+  }
+
+  // ── TEAM ──
+  function renderTeam(tab) {
+    const role=tab==='promoters'?'promoter':'ambassador';
+    const search=q(tab);
+    let data=teamData.filter(r=>r.role===role&&(!search||[r.full_name,r.email,r.phone,r.instagram].some(f=>(f||'').toLowerCase().includes(search))));
+    data=sortData(data,tab);
+    document.getElementById(`stats-${tab}`).textContent=`${data.length} entries`;
+    if(!data.length){document.getElementById(`tbl-${tab}`).innerHTML=emptyHTML();return;}
+
+    const extraCols = tab==='ambassadors'
+      ? `<col class="col-badge"><col class="col-badge">`
+      : '';
+    const extraHdrs = tab==='ambassadors'
+      ? thSort(tab,'can_represent','Represent')+thSort(tab,'can_attend_shoots','Shoots')
+      : '';
+
+    const html=`<table>
+      <colgroup><col class="col-chk"><col class="col-id"><col class="col-name"><col class="col-std"><col class="col-std"><col class="col-std"><col class="col-std">${extraCols}<col class="col-date"><col class="col-act"></colgroup>
+      <thead><tr>
+        <th title="Contacted"><i class="fas fa-check"></i></th>
+        ${thSort(tab,'id','#')}
+        ${thSort(tab,'full_name','Name')}
+        ${thSort(tab,'email','Email')}
+        ${thSort(tab,'phone','Phone')}
+        ${thSort(tab,'instagram','Instagram')}
+        ${thSort(tab,'experience','Experience')}
+        ${extraHdrs}
+        ${thSort(tab,'created_at','Date')}
+        <th>Act</th>
+      </tr></thead>
+      <tbody>${data.map(r=>`
+        <tr onclick="openDrawerTeam('${r.id}')" id="row-team-${r.id}" class="${r.contacted?'contacted':''}">
+          <td class="chk-cell" onclick="event.stopPropagation()"><div class="chk ${r.contacted?'checked':''}" onclick="toggleContacted('team','${r.id}',this)"></div></td>
+          <td class="cell-id">${r.id}</td>
+          <td title="${esc(r.full_name)}">${esc(r.full_name)}</td>
+          <td title="${esc(r.email||'')}">${emailLink(r.email)}</td>
+          <td title="${esc(r.phone||'')}" onclick="event.stopPropagation()">${phoneLink(r.phone)}</td>
+          <td title="${esc(r.instagram||'')}" onclick="event.stopPropagation()">${igLink(r.instagram)}</td>
+          <td title="${esc(r.experience||'')}">${esc(r.experience||'—')}</td>
+          ${tab==='ambassadors' ? `<td>${r.can_represent?yesno(r.can_represent):'—'}</td><td>${r.can_attend_shoots?yesno(r.can_attend_shoots):'—'}</td>` : ''}
+          <td class="cell-date">${fmtDate(r.created_at)}</td>
+          <td onclick="event.stopPropagation()"><div class="actions">
+            <button class="btn-act del" onclick="askDel('${r.id}','team')"><i class="fas fa-trash"></i></button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody></table>`;
+
+    document.getElementById(`tbl-${tab}`).innerHTML=html;
+  }
+
+  function openDrawerTeam(id) {
+    const r=teamData.find(x=>String(x.id)===String(id)); if(!r) return;
+    drawerRecord=r; drawerType='team';
+    document.getElementById('drawerName').textContent=r.full_name;
+    document.getElementById('drawerTag').textContent=`${r.role==='promoter'?'Promoter':'Ambassador'} · ${fmtDate(r.created_at)}`;
+    let body=`
+      ${dfLink('Email', emailLink(r.email))}
+      ${dfLink('Phone', phoneLink(r.phone))}
+      ${dfLink('Instagram', igLink(r.instagram))}
+      <hr class="drawer-divider">`;
+    if(r.role==='promoter') {
+      body+=`${dfBadge('Has experience', r.experience)}
+        ${r.experience==='yes'?df('Experience at',r.experience_where||'—'):''}`;
+    } else {
+      body+=`${dfBadge('Can represent brand', r.can_represent)}
+        ${dfBadge('Can attend shoots', r.can_attend_shoots)}`;
+    }
+    document.getElementById('drawerBody').innerHTML=body;
+    openDrawer();
+  }
+
+  // ── ACADEMY ──
+  function renderAcademy() {
+    const search=q('academy');
+    let data=academyData.filter(r=>!search||[r.name,r.email,r.phone,r.course].some(f=>(f||'').toLowerCase().includes(search)));
+    data=sortData(data,'academy');
+    document.getElementById('stats-academy').textContent=`${data.length} entries`;
+    if(!data.length){document.getElementById('tbl-academy').innerHTML=emptyHTML();return;}
+
+    const html=`<table>
+      <colgroup><col class="col-chk"><col class="col-id"><col class="col-name"><col class="col-std"><col class="col-std"><col class="col-badge"><col class="col-date"><col class="col-act"></colgroup>
+      <thead><tr>
+        <th title="Contacted"><i class="fas fa-check"></i></th>
+        ${thSort('academy','_idx','#')}
+        ${thSort('academy','name','Name')}
+        ${thSort('academy','email','Email')}
+        ${thSort('academy','phone','Phone')}
+        ${thSort('academy','course','Course')}
+        ${thSort('academy','createdAt','Date')}
+        <th>Act</th>
+      </tr></thead>
+      <tbody>${data.map(r=>`
+        <tr onclick="openDrawerAcademy('${r._idx}')" class="${r.contacted?'contacted':''}">
+          <td class="chk-cell" onclick="event.stopPropagation()"><div class="chk ${r.contacted?'checked':''}" onclick="toggleContacted('academy','${r._idx}',this)"></div></td>
+          <td class="cell-id">${r._idx}</td>
+          <td title="${esc(r.name)}">${esc(r.name)}</td>
+          <td title="${esc(r.email)}">${emailLink(r.email)}</td>
+          <td title="${esc(r.phone)}" onclick="event.stopPropagation()">${phoneLink(r.phone)}</td>
+          <td>${courseBadge(r.course)}</td>
+          <td class="cell-date">${fmtDate(r.createdAt)}</td>
+          <td onclick="event.stopPropagation()"><div class="actions">
+            <button class="btn-act del" onclick="askDel('${r._idx}','academy')"><i class="fas fa-trash"></i></button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody></table>`;
+
+    document.getElementById('tbl-academy').innerHTML=html;
+  }
+
+  function openDrawerAcademy(idx) {
+    const r=academyData.find(x=>String(x._idx)===String(idx)); if(!r) return;
+    drawerRecord=r; drawerType='academy';
+    document.getElementById('drawerName').textContent=r.name;
+    document.getElementById('drawerTag').textContent=`Academy · ${fmtDate(r.createdAt)}`;
+    document.getElementById('drawerBody').innerHTML=`
+      ${dfLink('Email', emailLink(r.email))}
+      ${dfLink('Phone', phoneLink(r.phone))}
+      <hr class="drawer-divider">
+      <div class="drawer-field"><div class="df-label">Course</div><div>${courseBadge(r.course)}</div></div>`;
+    openDrawer();
+  }
+
+  // ── DRAWER ──
+  function openDrawer() {
+    document.getElementById('drawerOverlay').classList.add('open');
+    document.getElementById('drawer').classList.add('open');
+  }
+  function closeDrawer() {
+    document.getElementById('drawerOverlay').classList.remove('open');
+    document.getElementById('drawer').classList.remove('open');
+    drawerRecord=null; drawerType=null;
+  }
+  function drawerEdit() {
+    if(!drawerRecord||!drawerType) return;
+    closeDrawer();
+    if(drawerType==='opendeck') editOD(drawerRecord.id);
+    else if(drawerType==='team') editTeam(drawerRecord.id);
+  }
+  function drawerDelete() {
+    if(!drawerRecord||!drawerType) return;
+    const id = drawerType==='academy' ? drawerRecord._idx : drawerRecord.id;
+    const type = drawerType==='team' ? 'team' : drawerType;
+    closeDrawer();
+    askDel(id, type);
+  }
+
+  // ── INLINE EDIT (opens row edit mode) ──
+  function editOD(id) {
+    closeDrawer();
+    const r=openDeckData.find(x=>String(x.id)===String(id)); if(!r) return;
+    const row=document.getElementById(`row-od-${id}`); if(!row) return;
+    row.classList.add('editing');
+    row.onclick=null;
+    const c=row.querySelectorAll('td');
+    c[2].innerHTML=inp('full_name',r.full_name);
+    c[3].innerHTML=`<input class="edit-field" type="number" style="width:52px" data-field="age" value="${r.age??''}">`;
+    c[4].innerHTML=inp('email',r.email);
+    c[5].innerHTML=inp('phone',r.phone);
+    c[6].innerHTML=inp('instagram',r.instagram||'');
+    c[7].innerHTML=inp('genre',r.genre||'');
+    c[8].innerHTML=sel('played_before',r.played_before,[['yes','Yes'],['no','No']]);
+    c[9].innerHTML=sel('attended_event',r.attended_event,[['yes','Yes'],['no','No']]);
+    c[11].innerHTML=`<div class="actions"><button class="btn-act save" onclick="saveOD('${id}')">Save</button><button class="btn-act" onclick="renderOpenDeck()">✕</button></div>`;
+  }
+
+  async function saveOD(id) {
+    const row=document.getElementById(`row-od-${id}`);
+    const fields={}; row.querySelectorAll('[data-field]').forEach(el=>{fields[el.dataset.field]=el.value;});
+    const ok=await apiPut(`/api/admin/open-deck-submissions/${id}`,fields);
+    if(ok){const i=openDeckData.findIndex(x=>String(x.id)===String(id)); if(i>-1)openDeckData[i]={...openDeckData[i],...fields}; toast('Saved'); renderOpenDeck();}
+    else toast('Error saving','err');
+  }
+
+  function editTeam(id) {
+    closeDrawer();
+    const r=teamData.find(x=>String(x.id)===String(id)); if(!r) return;
+    const tab=r.role==='promoter'?'promoters':'ambassadors';
+    const row=document.getElementById(`row-team-${id}`); if(!row) return;
+    row.classList.add('editing');
+    row.onclick=null;
+    const c=row.querySelectorAll('td');
+    c[2].innerHTML=inp('full_name',r.full_name);
+    c[3].innerHTML=inp('email',r.email||'');
+    c[4].innerHTML=inp('phone',r.phone||'');
+    c[5].innerHTML=inp('instagram',r.instagram||'');
+    c[6].innerHTML=inp('experience',r.experience||'');
+    const lastIdx=r.role==='ambassador'?10:8;
+    if(r.role==='ambassador'){
+      c[7].innerHTML=sel('can_represent',r.can_represent||'',[['','—'],['yes','Yes'],['no','No']]);
+      c[8].innerHTML=sel('can_attend_shoots',r.can_attend_shoots||'',[['','—'],['yes','Yes'],['no','No']]);
+    }
+    c[lastIdx].innerHTML=`<div class="actions"><button class="btn-act save" onclick="saveTeam('${id}','${tab}')">Save</button><button class="btn-act" onclick="renderTeam('${tab}')">✕</button></div>`;
+  }
+
+  async function saveTeam(id,tab) {
+    const row=document.getElementById(`row-team-${id}`);
+    const fields={}; row.querySelectorAll('[data-field]').forEach(el=>{fields[el.dataset.field]=el.value;});
+    const ok=await apiPut(`/api/admin/team-applications/${id}`,fields);
+    if(ok){const i=teamData.findIndex(x=>String(x.id)===String(id)); if(i>-1)teamData[i]={...teamData[i],...fields}; toast('Saved'); renderTeam(tab);}
+    else toast('Error saving','err');
+  }
+
+  // ── DELETE ──
+  function askDel(id,type){ delTarget={id,type}; document.getElementById('delModal').classList.add('open'); }
+  function closeDelModal(){ document.getElementById('delModal').classList.remove('open'); delTarget=null; }
+  async function confirmDel() {
+    if(!delTarget) return;
+    const {id,type}=delTarget;
+    const url=type==='opendeck'?`/api/admin/open-deck-submissions/${id}`:type==='team'?`/api/admin/team-applications/${id}`:`/api/admin/academy-registrations/${id}`;
+    try {
+      const r=await fetch(url,{method:'DELETE'}); const d=await r.json();
+      if(d.success){
+        if(type==='opendeck'){openDeckData=openDeckData.filter(x=>String(x.id)!==String(id)); document.getElementById('cnt-opendeck').textContent=openDeckData.length; renderOpenDeck();}
+        else if(type==='team'){
+          teamData=teamData.filter(x=>String(x.id)!==String(id));
+          document.getElementById('cnt-promoters').textContent=teamData.filter(x=>x.role==='promoter').length;
+          document.getElementById('cnt-ambassadors').textContent=teamData.filter(x=>x.role==='ambassador').length;
+          renderTeam(currentTab);
+        } else {
+          academyData=academyData.filter(x=>String(x._idx)!==String(id));
+          document.getElementById('cnt-academy').textContent=academyData.length;
+          renderAcademy();
+        }
+        toast('Deleted');
+      } else toast('Error','err');
+    } catch(e){toast('Network error','err');}
+    closeDelModal();
+  }
+
+  // ── EXPORT ──
+  function exportCSV(){
+    let data,filename;
+    if(currentTab==='opendeck'){data=openDeckData;filename='open-deck';}
+    else if(currentTab==='promoters'){data=teamData.filter(x=>x.role==='promoter');filename='promoters';}
+    else if(currentTab==='ambassadors'){data=teamData.filter(x=>x.role==='ambassador');filename='ambassadors';}
+    else{data=academyData;filename='academy';}
+    if(!data.length) return;
+    const keys=Object.keys(data[0]);
+    const csv=[keys.join(','),...data.map(r=>keys.map(k=>`"${String(r[k]??'').replace(/"/g,'""')}"`).join(','))].join('\n');
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    a.download=`blackroom-${filename}-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  }
+
+  // ── HELPERS ──
+  async function apiPut(url,body){
+    try{const r=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();return d.success;}catch(e){return false;}
+  }
+  async function toggleContacted(type,id,el){
+    const newVal = !el.classList.contains('checked');
+    el.classList.toggle('checked', newVal);
+    const tr = el.closest('tr'); if (tr) tr.classList.toggle('contacted', newVal);
+    let url;
+    if (type==='opendeck') url = `/api/admin/open-deck-submissions/${id}/contacted`;
+    else if (type==='team') url = `/api/admin/team-applications/${id}/contacted`;
+    else url = `/api/admin/academy-registrations/${id}/contacted`;
+    try {
+      const r = await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({contacted:newVal})});
+      const d = await r.json();
+      if (!d.success) throw new Error();
+      // update local cache
+      if (type==='opendeck') { const i=openDeckData.findIndex(x=>String(x.id)===String(id)); if(i>-1) openDeckData[i].contacted=newVal; }
+      else if (type==='team') { const i=teamData.findIndex(x=>String(x.id)===String(id)); if(i>-1) teamData[i].contacted=newVal; }
+      else { const i=academyData.findIndex(x=>String(x._idx)===String(id)); if(i>-1) academyData[i].contacted=newVal; }
+    } catch(e){
+      el.classList.toggle('checked', !newVal);
+      if (tr) tr.classList.toggle('contacted', !newVal);
+      toast('Error','err');
+    }
+  }
+  function igLink(handle){
+    if(!handle) return '<span style="color:var(--muted)">—</span>';
+    const clean = String(handle).trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i,'').replace(/\/$/,'');
+    if(!clean) return '<span style="color:var(--muted)">—</span>';
+    return `<a class="clink" href="https://instagram.com/${encodeURIComponent(clean)}" target="_blank" rel="noopener"><i class="fab fa-instagram"></i>@${esc(clean)}</a>`;
+  }
+  function phoneLink(phone){
+    if(!phone) return '<span style="color:var(--muted)">—</span>';
+    const tel = String(phone).replace(/[^0-9+]/g,'');
+    return `<a class="clink" href="tel:${tel}"><i class="fas fa-phone"></i>${esc(phone)}</a>`;
+  }
+  function emailLink(email){
+    if(!email) return '<span style="color:var(--muted)">—</span>';
+    return `<a class="clink" href="mailto:${esc(email)}"><i class="fas fa-envelope"></i>${esc(email)}</a>`;
+  }
+  function scLink(sc){
+    if(!sc) return '<span style="color:var(--muted)">—</span>';
+    let url = String(sc).trim();
+    if(!/^https?:\/\//i.test(url)){
+      const handle = url.replace(/^@/,'').replace(/^soundcloud\.com\//i,'').replace(/\/$/,'');
+      url = 'https://soundcloud.com/' + handle;
+    }
+    return `<a class="clink" href="${esc(url)}" target="_blank" rel="noopener"><i class="fab fa-soundcloud"></i>${esc(sc)}</a>`;
+  }
+  function dfLink(label,htmlVal){return`<div class="drawer-field"><div class="df-label">${label}</div><div class="df-value">${htmlVal}</div></div>`;}
+  function inp(field,val){return `<input class="edit-field" data-field="${field}" value="${esc(val)}">`;}
+  function sel(field,current,options){return `<select class="edit-select" data-field="${field}">${options.map(([v,l])=>`<option value="${v}" ${current===v?'selected':''}>${l}</option>`).join('')}</select>`;}
+  function yesno(val){const y=val==='yes';return `<span class="badge ${y?'badge-yes':'badge-no'}">${y?'Yes':'No'}</span>`;}
+  function courseBadge(c){return `<span class="badge badge-${c}">${c==='basic'?'Basic':'Intermediate'}</span>`;}
+  function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function fmtDate(d){if(!d)return'—';return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+  function emptyHTML(){return`<div class="empty"><i class="fas fa-inbox"></i><p>No entries found</p></div>`;}
+  function df(label,val){return`<div class="drawer-field"><div class="df-label">${label}</div><div class="df-value${!val||val==='—'?' muted':''}">${esc(String(val||'—'))}</div></div>`;}
+  function dfBadge(label,val){return`<div class="drawer-field"><div class="df-label">${label}</div><div>${val?yesno(val):'<span class="df-value muted">—</span>'}</div></div>`;}
+  function toast(msg,type='ok'){const t=document.getElementById('toast'),m=document.getElementById('toastMsg'),ic=document.getElementById('toastIcon');t.className=`toast ${type} show`;m.textContent=msg;ic.className=type==='ok'?'fas fa-check':'fas fa-times';clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2500);}
+
+  document.getElementById('delModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeDelModal();});
+
+  init();
+</script>
+</body>
+</html>

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Details</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            padding-top: 50px;
+        }
+
+        .event-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .event-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+
+        #cart-modal .modal-content {
+            border: none;
+        }
+
+        #cart-modal .modal-header {
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        #cart-modal .modal-footer {
+            border-top: 1px solid #dee2e6;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        #cart-total {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal {
+            overflow-y: auto;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+
+        nav .nav-right #profile-btn,
+        nav .nav-right #logout-btn {
+            color: var(--accent-primary);
+        }
+
+        #cart-btn-nav i,
+        #search-btn-nav i,
+        .calendar-nav-link i {
+            font-size: 1.5rem;
+            color: var(--accent-primary);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="header-left">
+            <a class="logo" href="index.html"><img src="images/logo.png" alt="Black Room Logo" /></a>
+            <nav class="nav-left">
+                <ul>
+                    <li><a href="events.html">Events</a></li>
+                    <li><a href="videos.html">Videos</a></li>
+                    <li><a href="shop.html">Shop</a></li>
+                </ul>
+            </nav>
+        </div>
+        <nav class="nav-right">
+            <ul id="nav-right"></ul>
+        </nav>
+    </header>
+    <div class="container">
+        <div class="event-container">
+            <img id="event-image" src="" alt="Event Image" class="event-image">
+            <h1 id="event-name"></h1>
+            <p id="event-description"></p>
+            <p>Price: <span id="event-price"></span> <span id="event-currency"></span></p>
+            <button id="add-to-cart-btn" class="btn btn-primary">Add to Cart</button>
+        </div>
+
+        <h2>Your Cart</h2>
+        <!-- Cart icon/button to trigger the modal -->
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#cart-modal">
+            View Cart
+        </button>
+
+        <!-- Cart Modal -->
+        <div class="modal fade" id="cart-modal" tabindex="-1" role="dialog" aria-labelledby="cart-modal-label"
+            aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="cart-modal-label">Your Cart</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <ul id="cart-items-list">
+                            <!-- Cart items will be dynamically added here -->
+                        </ul>
+                        <p>Total: <span id="cart-total">$0.00</span></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button id="checkout-cart-btn" type="button" class="btn btn-primary">Checkout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        const stripe = Stripe('pk_test_51RPCpIPsqtc7OoB8GRMlO8wiEE7qGQv5eufFQFbppVQVpm4Mqgr71kFSdrDPZcw7yJI80JLcwooAeAu80OyinKUl00OmpRU7k2');
+        let eventData = null;
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+        // Sincronización de sesión
+        async function syncSession() {
+            try {
+                const response = await fetch(`${window.location.origin}/api/profile`, {
+                    credentials: "include",
+                });
+                if (!response.ok) throw Error("No session");
+                const {
+                    name,
+                    fullName
+                } = await response.json();
+                localStorage.setItem("userName", name);
+                localStorage.setItem("fullName", fullName || name);
+            } catch (error) {
+                localStorage.removeItem("userName");
+                localStorage.removeItem("fullName");
+            }
+        }
+
+        // Renderizar navegación
+        async function renderNav() {
+            const navRight = document.getElementById("nav-right");
+            const userName = localStorage.getItem("userName");
+            const fullName = localStorage.getItem("fullName") || userName;
+
+            if (userName) {
+                const navHtml = `
+            <li><button id="search-btn-nav"><i class="fas fa-search" style="color: var(--accent-primary);"></i></button></li>
+            <li><button id="cart-btn-nav"><i class="fas fa-shopping-cart" style="color: var(--accent-primary);"></i></button></li>
+            <li><a href="calendar.html" class="calendar-nav-link" title="Event Calendar"><i class="fas fa-calendar" style="color: var(--accent-primary);"></i></a></li>
+            <li><span style="color: var(--text-color);">Hola, ${fullName}</span></li>
+            <li><button onclick="location.href='profile.html'" title="Profile"><i class="fas fa-user" style="color: var(--accent-primary);"></i></button></li>
+            <li><button id="logout-btn" style="color: var(--accent-primary);"><i class="fas fa-sign-out-alt"></i></button></li>
+        `;
+                navRight.innerHTML = navHtml;
+
+                // Agregar funcionalidad de logout si está logueado
+                if (userName) {
+                    const logoutBtn = document.getElementById("logout-btn");
+                    if (logoutBtn) {
+                        logoutBtn.onclick = async () => {
+                            try {
+                                await fetch("/api/logout", {
+                                    method: "POST",
+                                    credentials: "include",
+                                });
+                            } catch (error) {
+                                console.error("Error during logout:", error);
+                            } finally {
+                                localStorage.clear();
+                                location.href = "index.html";
+                            }
+                        };
+                    }
+                }
+
+                // Funcionalidad para botones de navegación
+                document.getElementById("cart-btn-nav").onclick = () => {
+                    if (!userName) {
+                        alert("Inicia sesión para acceder al carrito");
+                    } else {
+                        window.location.href = 'shop.html';
+                    }
+                };
+
+                document.getElementById("search-btn-nav").onclick = () => {
+                    window.location.href = 'index.html';
+                };
+            } else {
+                const navHtml = `
+            <li><button id="search-btn-nav"><i class="fas fa-search" style="color: var(--accent-primary);"></i></button></li>
+            <li><button id="cart-btn-nav"><i class="fas fa-shopping-cart" style="color: var(--accent-primary);"></i></button></li>
+            <li><a href="calendar.html" class="calendar-nav-link" title="Event Calendar"><i class="fas fa-calendar" style="color: var(--accent-primary);"></i></a></li>
+            <li class="login-register-link"><a href="login.html" style="color: var(--accent-primary);">Login</a></li>
+            <li><a href="register.html" style="color: var(--accent-primary);">Register</a></li>
+          `;
+                navRight.innerHTML = navHtml;
+
+                // Funcionalidad para botones de navegación
+                document.getElementById("cart-btn-nav").onclick = () => {
+                    if (!userName) {
+                        alert("Inicia sesión para acceder al carrito");
+                    } else {
+                        window.location.href = 'shop.html';
+                    }
+                };
+
+                document.getElementById("search-btn-nav").onclick = () => {
+                    window.location.href = 'index.html';
+                };
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            await syncSession();
+            await renderNav();
+            const urlParams = new URLSearchParams(window.location.search);
+            const eventId = urlParams.get('id');
+
+            if (eventId) {
+                loadEventDetails(eventId);
+            } else {
+                console.error('No event ID provided.');
+            }
+
+            updateCartUI();
+        });
+
+        async function loadEventDetails(eventId) {
+            try {
+                console.log("Client: Loading event with ID:", eventId);
+                const response = await fetch(`/api/event?id=${eventId}`);
+                console.log("Client: Response status:", response.status);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                eventData = await response.json();
+                console.log("Client: Event data received:", eventData);
+
+                document.getElementById('event-name').textContent = eventData.name;
+                document.getElementById('event-description').textContent = eventData.description;
+                document.getElementById('event-price').textContent = (eventData.price / 100).toFixed(2); // Assuming price is in cents
+                document.getElementById('event-currency').textContent = eventData.currency;
+                document.getElementById('event-image').src = eventData.image;
+
+                document.getElementById('add-to-cart-btn').addEventListener('click', function () {
+                    addToCart(eventData.priceId, eventData.name, eventData.price / 100, eventData.currency, eventData.id); // dividing by 100 to convert from cents to dollars
+                });
+
+
+            } catch (error) {
+                console.error("Client: Failed to fetch event:", error);
+            }
+        }
+
+        function saveCartToLocalStorage() {
+            localStorage.setItem('cart', JSON.stringify(cart));
+        }
+
+        function addToCart(priceId, name, amount, currency, id = null) {
+            if (!amount || isNaN(amount)) {
+                console.error('Invalid amount:', amount);
+                alert('Error: Invalid ticket price');
+                return;
+            }
+            const existingItem = cart.find(
+                (item) => item.priceId === priceId,
+            );
+            if (existingItem) {
+                existingItem.quantity++;
+            } else {
+                cart.push({
+                    priceId,
+                    name,
+                    amount: parseFloat(amount),
+                    currency: currency || 'usd',
+                    quantity: 1,
+                    id,
+                });
+            }
+            saveCartToLocalStorage();
+            alert(`Added ${name} to cart!`);
+            showCartModal();
+        }
+
+        function updateCartUI() {
+            const cartItemsList = document.getElementById("cart-items-list");
+            const cartTotalDisplay = document.getElementById("cart-total");
+            let total = 0;
+
+            cartItemsList.innerHTML = "";
+
+            if (!Array.isArray(cart) || cart.length === 0) {
+                cartItemsList.innerHTML = '<li style="text-align: center; color: #888; padding: 15px 0;">Your cart is empty.</li>';
+                document.getElementById("checkout-cart-btn").disabled = true;
+                cartTotalDisplay.textContent = "$0.00 USD";
+                return;
+            }
+
+            cart.forEach((item) => {
+                const listItem = document.createElement("li");
+                listItem.classList.add("cart-item");
+
+                const itemDetails = document.createElement("div");
+                itemDetails.textContent = `${item.name} x ${item.quantity}`;
+                listItem.appendChild(itemDetails);
+
+                const itemPrice = document.createElement("div");
+                itemPrice.textContent = `$${(item.amount * item.quantity).toFixed(2)} ${item.currency}`;
+                listItem.appendChild(itemPrice);
+
+                cartItemsList.appendChild(listItem);
+                total += item.amount * item.quantity;
+            });
+
+            cartTotalDisplay.textContent = `$${total.toFixed(2)} USD`;
+            document.getElementById("checkout-cart-btn").disabled = false;
+        }
+
+        function showCartModal() {
+            updateCartUI(); // Refresh the cart UI before showing
+            $('#cart-modal').modal('show'); // Use jQuery to show the modal
+        }
+
+        document.getElementById('checkout-cart-btn').addEventListener('click', function () {
+            checkoutCart();
+        });
+
+
+        async function checkoutCart() {
+            if (cart.length === 0) {
+                alert("Your cart is empty.");
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        cartItems: cart
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Error creating checkout session:', errorData);
+                    alert('Error creating checkout session: ' + errorData.error);
+                    return;
+                }
+
+                const {
+                    sessionId
+                } = await response.json();
+                console.log("Client: Received session ID:", sessionId);
+
+                // Redirect to Stripe Checkout
+                const result = await stripe.redirectToCheckout({
+                    sessionId: sessionId
+                });
+
+                if (result.error) {
+                    console.error('Stripe redirect error:', result.error.message);
+                    alert('Stripe redirect error: ' + result.error.message);
+                }
+            } catch (error) {
+                console.error('Error during checkout:', error);
+                alert('Error during checkout: ' + error.message);
+            }
+        }
+        console.log("Client: Received Stripe Publishable Key (first 5 chars):", stripe._apiKey.substring(0, 5));
+    </script>
+</body>
+
+</html>

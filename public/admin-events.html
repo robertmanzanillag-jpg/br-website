@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Black Room — Event Manager</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; color: #fff; font-family: 'Space Mono', monospace; min-height: 100vh; }
+    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+
+    header {
+      border-bottom: 1px solid #1a1a1a;
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    header img { height: 36px; }
+    header h1 { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: #888; }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 3rem 2rem; }
+
+    h2 { font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase; color: #555; margin-bottom: 1.5rem; }
+
+    .form-card {
+      background: #0a0a0a;
+      border: 1px solid #1a1a1a;
+      padding: 2rem;
+      margin-bottom: 3rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .form-group.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #555;
+    }
+
+    input, textarea {
+      background: #000;
+      border: 1px solid #222;
+      color: #fff;
+      padding: 0.75rem 1rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.8rem;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    input:focus, textarea:focus { border-color: #444; }
+
+    textarea { resize: vertical; min-height: 80px; }
+
+    .btn {
+      background: #fff;
+      color: #000;
+      border: none;
+      padding: 0.85rem 2rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-top: 1.5rem;
+    }
+
+    .btn:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-danger {
+      background: transparent;
+      color: #ff4444;
+      border: 1px solid #331111;
+      padding: 0.5rem 1rem;
+      font-size: 0.6rem;
+      margin-top: 0;
+    }
+
+    .btn-danger:hover { border-color: #ff4444; }
+
+    .msg {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.7rem;
+      border-left: 2px solid;
+    }
+    .msg.success { border-color: #22c55e; color: #22c55e; background: #0a1a0a; }
+    .msg.error { border-color: #ef4444; color: #ef4444; background: #1a0a0a; }
+
+    .events-list { display: flex; flex-direction: column; gap: 1rem; }
+
+    .event-row {
+      background: #0a0a0a;
+      border: 1px solid #1a1a1a;
+      padding: 1.2rem 1.5rem;
+      display: grid;
+      grid-template-columns: 60px 1fr auto auto;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .event-thumb {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      background: #111;
+      border: 1px solid #222;
+    }
+
+    .event-info { min-width: 0; }
+
+    .event-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .event-meta {
+      font-size: 0.62rem;
+      color: #555;
+      margin-top: 0.3rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .event-date-badge {
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      color: #888;
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .empty { color: #333; font-size: 0.7rem; letter-spacing: 0.1em; text-align: center; padding: 3rem; border: 1px dashed #1a1a1a; }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .count-badge {
+      font-size: 0.6rem;
+      color: #444;
+      letter-spacing: 0.1em;
+    }
+
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .event-row { grid-template-columns: 1fr auto; }
+      .event-thumb { display: none; }
+      .event-date-badge { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="/images/logo.png" alt="BR">
+  <h1>Event Manager</h1>
+</header>
+
+<div class="container">
+
+  <!-- ADD EVENT FORM -->
+  <div class="form-card">
+    <h2>Add New Event</h2>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Event Name *</label>
+        <input id="f-title" type="text" placeholder="CIRCUS" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Date *</label>
+        <input id="f-date" type="date">
+      </div>
+      <div class="form-group">
+        <label>Price</label>
+        <input id="f-price" type="text" placeholder="$25+" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Venue</label>
+        <input id="f-venue" type="text" placeholder="Space Miami" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Location</label>
+        <input id="f-location" type="text" placeholder="Miami, FL" autocomplete="off">
+      </div>
+      <div class="form-group full">
+        <label>Flyer Image URL</label>
+        <input id="f-image" type="url" placeholder="https://... (posh image URL or your CDN)" autocomplete="off">
+      </div>
+      <div class="form-group full">
+        <label>Ticket Link (Posh.vip URL)</label>
+        <input id="f-ticket" type="url" placeholder="https://posh.vip/e/..." autocomplete="off">
+      </div>
+      <div class="form-group full">
+        <label>Description (optional)</label>
+        <textarea id="f-desc" placeholder="Event description..."></textarea>
+      </div>
+    </div>
+    <button class="btn" id="add-btn" onclick="addEvent()">Add Event</button>
+    <div id="add-msg" style="display:none" class="msg"></div>
+  </div>
+
+  <!-- MANUAL EVENTS LIST -->
+  <div class="section-title">
+    <h2>Manual Events</h2>
+    <span class="count-badge" id="count-label"></span>
+  </div>
+  <div class="events-list" id="events-list">
+    <div class="empty">Loading events...</div>
+  </div>
+
+  <!-- POSH SYNC SECTION -->
+  <div style="margin-top: 4rem; border-top: 1px solid #1a1a1a; padding-top: 3rem;">
+    <div class="section-title">
+      <h2>Posh.vip Events (Auto-Sync)</h2>
+      <div style="display:flex;gap:1rem;align-items:center;">
+        <span class="count-badge" id="posh-count-label"></span>
+        <button class="btn" id="sync-btn" onclick="syncPosh()" style="font-size:0.55rem;padding:0.6rem 1.2rem;">Sync Now</button>
+      </div>
+    </div>
+    <p style="font-size:0.6rem;color:#444;letter-spacing:0.1em;margin-bottom:1.5rem;">Events are automatically synced daily from posh.vip/g/black-room</p>
+    <div id="sync-msg" style="display:none" class="msg"></div>
+    <div class="events-list" id="posh-events-list">
+      <div class="empty">Loading...</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  async function loadEvents() {
+    const res = await fetch('/api/admin/manual-events');
+    const data = await res.json();
+    const list = document.getElementById('events-list');
+    const events = data.events || [];
+    document.getElementById('count-label').textContent = events.length + ' event' + (events.length !== 1 ? 's' : '');
+
+    if (!events.length) {
+      list.innerHTML = '<div class="empty">No events yet. Add one above.</div>';
+      return;
+    }
+
+    list.innerHTML = events.map(e => `
+      <div class="event-row" id="row-${e.id}">
+        <img class="event-thumb" src="${e.image || '/images/events/default-event.jpg'}" onerror="this.src='/images/events/default-event.jpg'">
+        <div class="event-info">
+          <div class="event-name">${e.title}</div>
+          <div class="event-meta">${e.venue || ''} &nbsp;·&nbsp; ${e.price || ''} ${e.ticketUrl ? '&nbsp;·&nbsp; <a href="' + e.ticketUrl + '" target="_blank" style="color:#888">Posh ↗</a>' : ''}</div>
+        </div>
+        <div class="event-date-badge">${formatDate(e.date)}</div>
+        <button class="btn btn-danger" onclick="deleteEvent('${e.id}')">Delete</button>
+      </div>
+    `).join('');
+  }
+
+  function formatDate(d) {
+    if (!d) return 'TBA';
+    const dt = new Date(d + 'T12:00:00');
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
+  }
+
+  async function addEvent() {
+    const btn = document.getElementById('add-btn');
+    const msg = document.getElementById('add-msg');
+
+    const title = document.getElementById('f-title').value.trim();
+    const date = document.getElementById('f-date').value;
+
+    if (!title || !date) {
+      showMsg(msg, 'error', 'Event name and date are required.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Adding...';
+
+    const body = {
+      title,
+      date,
+      venue: document.getElementById('f-venue').value.trim() || 'Miami, FL',
+      location: document.getElementById('f-location').value.trim() || 'Miami, FL',
+      price: document.getElementById('f-price').value.trim() || '$25+',
+      image: document.getElementById('f-image').value.trim(),
+      ticketUrl: document.getElementById('f-ticket').value.trim(),
+      description: document.getElementById('f-desc').value.trim()
+    };
+
+    try {
+      const res = await fetch('/api/admin/manual-events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showMsg(msg, 'success', `"${title}" added successfully. Total: ${data.total} event(s).`);
+        // Clear form
+        ['f-title','f-date','f-price','f-venue','f-location','f-image','f-ticket','f-desc'].forEach(id => {
+          document.getElementById(id).value = '';
+        });
+        loadEvents();
+      } else {
+        showMsg(msg, 'error', data.error || 'Failed to add event.');
+      }
+    } catch (err) {
+      showMsg(msg, 'error', 'Network error: ' + err.message);
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Add Event';
+  }
+
+  async function deleteEvent(id) {
+    if (!confirm('Delete this event?')) return;
+    const res = await fetch('/api/admin/manual-events/' + id, { method: 'DELETE' });
+    if (res.ok) {
+      document.getElementById('row-' + id)?.remove();
+      loadEvents();
+    }
+  }
+
+  function showMsg(el, type, text) {
+    el.className = 'msg ' + type;
+    el.textContent = text;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 5000);
+  }
+
+  async function syncPosh() {
+    const btn = document.getElementById('sync-btn');
+    const msg = document.getElementById('sync-msg');
+    btn.disabled = true;
+    btn.textContent = 'Syncing...';
+    msg.style.display = 'none';
+    try {
+      const res = await fetch('/api/admin/scrape-posh', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        showMsg(msg, 'success', `Sync complete — ${data.eventCount} events loaded from Posh.vip`);
+        loadPoshEvents();
+      } else {
+        showMsg(msg, 'error', 'Sync failed. Check server logs.');
+      }
+    } catch (err) {
+      showMsg(msg, 'error', 'Network error: ' + err.message);
+    }
+    btn.disabled = false;
+    btn.textContent = 'Sync Now';
+  }
+
+  async function loadPoshEvents() {
+    const res = await fetch('/api/posh-events');
+    const data = await res.json();
+    const list = document.getElementById('posh-events-list');
+    const events = (data.events || []).filter(e => {
+      const d = new Date(e.parsedDate || e.date || e.dateText);
+      return !isNaN(d) && d >= new Date(new Date().setHours(0,0,0,0));
+    }).sort((a,b) => new Date(a.parsedDate||a.date) - new Date(b.parsedDate||b.date));
+
+    document.getElementById('posh-count-label').textContent = events.length + ' upcoming';
+
+    if (!events.length) {
+      list.innerHTML = '<div class="empty">No upcoming events in cache. Click Sync Now to fetch from Posh.vip.</div>';
+      return;
+    }
+
+    list.innerHTML = events.map(e => `
+      <div class="event-row">
+        <img class="event-thumb" src="${e.image || '/images/events/default-event.jpg'}" onerror="this.src='/images/events/default-event.jpg'">
+        <div class="event-info">
+          <div class="event-name">${e.title}</div>
+          <div class="event-meta">${e.location || ''} &nbsp;·&nbsp; <a href="${e.poshUrl}" target="_blank" style="color:#888">Posh ↗</a></div>
+        </div>
+        <div class="event-date-badge">${e.dateText || e.parsedDate || ''}</div>
+      </div>
+    `).join('');
+  }
+
+  // Enter key on form
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT') addEvent();
+  });
+
+  loadEvents();
+  loadPoshEvents();
+</script>
+</body>
+</html>

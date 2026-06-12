@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Black Room — Resident</title>
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── FEATURED YOUTUBE VIDEO ── */
+    .featured-video {
+      background: #000;
+      padding: 4rem 3rem;
+      border-top: 1px solid #111;
+      border-bottom: 1px solid #111;
+    }
+    .featured-video-head {
+      max-width: 1280px;
+      margin: 0 auto 1.5rem;
+    }
+    .featured-video-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: #666;
+    }
+    .featured-video-frame {
+      max-width: 1280px;
+      margin: 0 auto;
+      aspect-ratio: 16/9;
+      background: #050505;
+      border: 1px solid #1a1a1a;
+      overflow: hidden;
+    }
+    .featured-video-frame iframe {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    @media (max-width: 768px) {
+      .featured-video { padding: 2.5rem 1.25rem; }
+    }
+
+    /* ── BACK BAR (sits below global header) ── */
+    .top-bar {
+      position: relative;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 1rem 2rem;
+      background: #000;
+      border-bottom: 1px solid #111;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #aaa;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .back-btn:hover { color: #fff; }
+    .back-btn i { font-size: 0.7rem; }
+
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .hero-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      filter: grayscale(20%);
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, #000 0%, rgba(0,0,0,0.3) 50%, transparent 100%);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      padding: 4rem 3rem;
+      width: 100%;
+    }
+
+    .hero-number {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.4em;
+      color: #555;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    .hero-name {
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(3.5rem, 12vw, 9rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 0.9;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-tagline {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      color: #888;
+      text-transform: uppercase;
+      max-width: 500px;
+    }
+
+    /* ── BIO SECTION ── */
+    .bio-section {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 0;
+      border-top: 1px solid #111;
+    }
+
+    .bio-sidebar {
+      padding: 5rem 3rem;
+      border-right: 1px solid #111;
+      position: sticky;
+      top: 0;
+      height: fit-content;
+    }
+
+    .bio-sidebar-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.5rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: #333;
+      margin-bottom: 3rem;
+    }
+
+    .bio-links {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .bio-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #555;
+      text-decoration: none;
+      transition: color 0.2s;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #111;
+    }
+    .bio-link:hover { color: #fff; }
+    .bio-link i { font-size: 0.85rem; width: 16px; text-align: center; }
+
+    .bio-main {
+      padding: 5rem 4rem;
+    }
+
+    .bio-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.5rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: #333;
+      margin-bottom: 2.5rem;
+    }
+
+    .bio-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      line-height: 1.9;
+      color: #999;
+      max-width: 680px;
+    }
+
+    .bio-text p + p { margin-top: 1.5rem; }
+
+    /* ── CAROUSEL SECTIONS (shared) ── */
+    .carousel-section {
+      border-top: 1px solid #111;
+      padding: 5rem 0;
+      position: relative;
+    }
+    .carousel-section.dark { background: #050505; }
+
+    .carousel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem 2.5rem;
+    }
+
+    .carousel-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.5rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: #333;
+    }
+
+    .carousel-nav {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .carousel-btn {
+      width: 38px;
+      height: 38px;
+      background: transparent;
+      border: 1px solid #222;
+      color: #888;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .carousel-btn:hover:not(:disabled) {
+      border-color: #fff;
+      color: #fff;
+    }
+    .carousel-btn:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+    }
+
+    .carousel-track {
+      display: flex;
+      gap: 2px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      padding: 0 3rem;
+      scrollbar-width: none;
+    }
+    .carousel-track::-webkit-scrollbar { display: none; }
+
+    /* ── VIDEO CAROUSEL ITEMS ── */
+    .video-item {
+      flex: 0 0 auto;
+      width: min(720px, 80vw);
+      aspect-ratio: 16/9;
+      background: #000;
+      overflow: hidden;
+      scroll-snap-align: start;
+    }
+    .video-item.vertical {
+      width: min(360px, 60vw);
+      aspect-ratio: 9/16;
+    }
+    .video-item video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      cursor: pointer;
+    }
+
+    /* ── LOGO CAROUSEL ITEMS ── */
+    .logo-tile {
+      flex: 0 0 auto;
+      width: min(320px, 70vw);
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem;
+      position: relative;
+      scroll-snap-align: start;
+    }
+    .logo-tile.bg-black { background: #000; border: 1px solid #1a1a1a; }
+    .logo-tile.bg-white { background: #fff; }
+    .logo-tile img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .logo-tile a.dl {
+      position: absolute;
+      bottom: 0.75rem;
+      right: 0.75rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.45rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: #555;
+      transition: color 0.2s;
+    }
+    .logo-tile.bg-white a.dl { color: #999; }
+    .logo-tile a.dl:hover { color: #fff; }
+    .logo-tile.bg-white a.dl:hover { color: #000; }
+
+    /* ── PHOTO CAROUSEL ITEMS ── */
+    .gallery-item {
+      flex: 0 0 auto;
+      width: min(520px, 75vw);
+      aspect-ratio: 4/5;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      scroll-snap-align: start;
+      background: #050505;
+    }
+    .gallery-item img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      transition: transform 0.6s ease, filter 0.4s ease;
+      filter: grayscale(30%);
+    }
+    .gallery-item:hover img {
+      transform: scale(1.04);
+      filter: grayscale(0%);
+    }
+
+    /* Lightbox */
+
+    /* Lightbox */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.95);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .lightbox.active { display: flex; }
+    .lightbox img {
+      max-width: 90vw;
+      max-height: 90vh;
+      object-fit: contain;
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 2rem; right: 2rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: #555;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .lightbox-close:hover { color: #fff; }
+
+    /* ── FOOTER ── */
+    .profile-footer {
+      border-top: 1px solid #111;
+      padding: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-brand {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.3em;
+      color: #222;
+      text-transform: uppercase;
+    }
+
+    .footer-back {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #333;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-back:hover { color: #fff; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .top-bar { padding: 1rem 1.25rem; }
+
+      .hero-content { padding: 3rem 1.5rem; }
+      .hero-number { margin-bottom: 0.75rem; }
+
+      .bio-section { grid-template-columns: 1fr; }
+      .bio-sidebar {
+        padding: 3rem 1.5rem 2rem;
+        border-right: none;
+        border-bottom: 1px solid #111;
+        position: static;
+      }
+      .bio-sidebar-label { margin-bottom: 1.5rem; }
+      .bio-links { flex-direction: row; flex-wrap: wrap; gap: 0.5rem; }
+      .bio-link {
+        border-bottom: none;
+        border: 1px solid #222;
+        padding: 0.5rem 0.85rem;
+        border-radius: 2px;
+      }
+      .bio-main { padding: 3rem 1.5rem; }
+
+      .carousel-section { padding: 3rem 0; }
+      .carousel-head { padding: 0 1.5rem 1.5rem; }
+      .carousel-track { padding: 0; gap: 0; scroll-padding: 0; }
+      .carousel-btn { width: 34px; height: 34px; }
+      .logo-tile { padding: 1.5rem; }
+
+      /* Mobile: one item per view, perfectly centered, swipe to see more */
+      .video-item,
+      .video-item.vertical,
+      .logo-tile,
+      .gallery-item {
+        width: 100vw;
+        scroll-snap-align: center;
+      }
+      .video-item { aspect-ratio: 16/9; }
+      .video-item.vertical { aspect-ratio: 9/16; }
+      .logo-tile { aspect-ratio: 1; }
+      .gallery-item { aspect-ratio: 4/5; }
+      .video-item video,
+      .logo-tile,
+      .gallery-item img {
+        background: #000;
+      }
+
+      .profile-footer { padding: 2rem 1.5rem; flex-direction: column; gap: 1rem; text-align: center; }
+    }
+
+    /* ── NOT FOUND ── */
+    .not-found {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    .not-found h1 {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR (back link sits below the global header) -->
+  <div class="top-bar">
+    <a href="/residents.html" class="back-btn">
+      <i class="fas fa-arrow-left"></i> All Residents
+    </a>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero" id="profileHero">
+    <img class="hero-img" id="heroImg" src="" alt="">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-number" id="heroNumber"></div>
+      <h1 class="hero-name" id="heroName"></h1>
+      <div class="hero-tagline" id="heroTagline"></div>
+    </div>
+  </section>
+
+  <!-- BIO -->
+  <div class="bio-section">
+    <aside class="bio-sidebar">
+      <div class="bio-sidebar-label">Links</div>
+      <div class="bio-links" id="bioLinks"></div>
+    </aside>
+    <div class="bio-main">
+      <div class="bio-title">Biography</div>
+      <div class="bio-text" id="bioText"></div>
+    </div>
+  </div>
+
+  <!-- FEATURED YOUTUBE VIDEO -->
+  <section class="featured-video" id="featuredVideoSection" style="display:none;">
+    <div class="featured-video-head">
+      <div class="featured-video-label">Featured</div>
+    </div>
+    <div class="featured-video-frame">
+      <iframe id="featuredVideoIframe" src="" title="Featured video"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen></iframe>
+    </div>
+  </section>
+
+  <!-- VIDEOS CAROUSEL -->
+  <section class="carousel-section dark" id="videosSection" style="display:none;">
+    <div class="carousel-head">
+      <div class="carousel-title">Videos</div>
+      <div class="carousel-nav">
+        <button class="carousel-btn" data-dir="-1" data-target="videosGrid" aria-label="Previous">‹</button>
+        <button class="carousel-btn" data-dir="1" data-target="videosGrid" aria-label="Next">›</button>
+      </div>
+    </div>
+    <div class="carousel-track" id="videosGrid"></div>
+  </section>
+
+  <!-- LOGOS CAROUSEL -->
+  <section class="carousel-section" id="logosSection" style="display:none;">
+    <div class="carousel-head">
+      <div class="carousel-title">Brand · Logos</div>
+      <div class="carousel-nav">
+        <button class="carousel-btn" data-dir="-1" data-target="logosGrid" aria-label="Previous">‹</button>
+        <button class="carousel-btn" data-dir="1" data-target="logosGrid" aria-label="Next">›</button>
+      </div>
+    </div>
+    <div class="carousel-track" id="logosGrid"></div>
+  </section>
+
+  <!-- PHOTOS CAROUSEL -->
+  <section class="carousel-section">
+    <div class="carousel-head">
+      <div class="carousel-title">Photos</div>
+      <div class="carousel-nav">
+        <button class="carousel-btn" data-dir="-1" data-target="galleryGrid" aria-label="Previous">‹</button>
+        <button class="carousel-btn" data-dir="1" data-target="galleryGrid" aria-label="Next">›</button>
+      </div>
+    </div>
+    <div class="carousel-track" id="galleryGrid"></div>
+  </section>
+
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <div class="lightbox-close">Close ×</div>
+    <img id="lightboxImg" src="" alt="">
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="profile-footer">
+    <span class="footer-brand">Black Room — Miami</span>
+    <a href="/residents.html" class="footer-back">← Back to Residents</a>
+  </footer>
+
+  <script>
+    const RESIDENTS = {
+      zamurai: {
+        number: 'Resident — 001',
+        name: 'Zamurai',
+        tagline: 'Argentine DJ & Producer · Miami',
+        images: [
+          '/images/residents/zamurai-1.jpg',
+          '/images/residents/zam-1.jpg',
+          '/images/residents/zam-2.jpg',
+          '/images/residents/zam-3.jpg',
+          '/images/residents/zam-4.jpg',
+          '/images/residents/zam-5.jpg',
+          '/images/residents/zam-6.jpg',
+          '/images/residents/zam-7.jpg',
+          '/images/residents/zam-8.jpg',
+          '/images/residents/zam-9.jpg',
+          '/images/residents/zam-10.jpg',
+          '/images/residents/zamurai-2.jpg',
+          '/images/residents/zamurai-3.jpg'
+        ],
+        bio: [
+          'Zamurai is Argentine DJ and producer who has crafted a sound as precise and versatile as it is visceral. She channels raw emotion through hypnotic rhythms and deep grooves that come alive on the dance floor. Over the past few years she has left her mark on clubs, basements, and warehouses across Argentina and the United States.',
+          'With Latin roots and a lifelong passion for movement and music, her sets balance tension and release — rooted in techno, always flirting with trance, tribal sounds, and bass-heavy textures.',
+          'Creator of <em>Digital Funk</em>, a radio/podcast space that celebrates musical expansion and real connection between artists from around the world.'
+        ],
+        links: [
+          { icon: 'fab fa-instagram', label: 'Instagram', url: 'https://www.instagram.com/zamuraii' },
+          { icon: 'fab fa-soundcloud', label: 'SoundCloud', url: 'https://on.soundcloud.com/JPmQOLtt6QLGVBI7xV' }
+        ],
+        videos: [
+          { src: '/videos/zamurai/zam-extract.mp4', vertical: false },
+          { src: '/videos/zamurai/zam-clip-1.mp4', vertical: false },
+          { src: '/videos/zamurai/zam-clip-2.mp4', vertical: false },
+          { src: '/videos/zamurai/zam-clip-3.mp4', vertical: false },
+          { src: '/videos/zamurai/zam-clip-5.mp4', vertical: false },
+          { src: '/videos/zamurai/zam-clip-6.mp4', vertical: false },
+          { src: '/videos/zamurai/zam-vertical.mp4', vertical: true }
+        ],
+        logos: [
+          { src: '/images/residents/logos/zam-avatar-1.png', bg: 'black', label: 'Avatar 1' },
+          { src: '/images/residents/logos/zam-avatar-2.png', bg: 'black', label: 'Avatar 2' }
+        ]
+      },
+      proletar: {
+        number: 'Resident — 002',
+        name: 'PROLETAR',
+        tagline: 'Romanian-born · Miami-based',
+        images: [
+          '/images/residents/proletar-1.jpg',
+          '/images/residents/proletar-2.jpg',
+          '/images/residents/proletar-3.jpg'
+        ],
+        bio: [
+          '24 year old Romanian-born, Miami-based PROLETAR is Black Room\'s second ever resident and a force to be reckoned with in South Florida\'s underground. With nearly half a decade of experience playing clubs, bars, warehouses, festivals and everything in between, they boast a sizable resume spanning two continents — with gigs like Space\'s The Ground and Floyd, iiiPoints, iiiJoints, Fetichista in Romania, and SAGEWERK in Germany.',
+          'They\'ve provided support for artists like Henry Brooks, Francois X, Cera Khin, MCMLXXXV, and more.'
+        ],
+        links: [
+          { icon: 'fab fa-instagram', label: 'Instagram', url: 'https://www.instagram.com/proletar.ro?igsh=cWI2cXV5enJnbmhk' },
+          { icon: 'fab fa-soundcloud', label: 'SoundCloud', url: 'https://on.soundcloud.com/8dMiv4b9vgLbVuyzC4' }
+        ]
+      },
+      dadrev: {
+        number: 'Resident — 003',
+        name: 'Dadrev',
+        tagline: 'Colombian-born DJ & Producer · Miami',
+        featuredVideo: '_R7cNxItSX4',
+        images: [
+          '/images/residents/dadrev-1.jpg',
+          '/images/residents/dadrev-2.jpg',
+          '/images/residents/dadrev-3.jpg',
+          '/images/residents/dadrev-4.jpg',
+          '/images/residents/dadrev-5.jpg',
+          '/images/residents/dadrev-6.jpg',
+          '/images/residents/dadrev-7.jpg',
+          '/images/residents/dadrev-8.jpg',
+          '/images/residents/dadrev-9.jpg',
+          '/images/residents/dadrev-10.jpg'
+        ],
+        bio: [
+          'Born in Bogotá, Colombia, Dadrev developed a love for music from an early age — especially electronic music. Having been producing for over 8 years, he made the switch to techno after stumbling into an underground rave in Miami. He has shared the stage with Gravedgr, Neon Graveyard, Tanja Miju, Pisapia, Gianni Di Bernardo, Niotech, and many more.',
+          'He has played at notable clubs across Miami, New York, Philadelphia, and Tampa, as well as Mexico, Colombia, Chile, and beyond. His music has been supported by Charlie Sparks, Caravel, Vendex, Lee Ann Roberts, and many others.',
+          'Specializing in Schranz, Hard Techno, and Hypnotic Groovy Techno, Dadrev makes it his mission to keep the dance floor energetic and leave ravers begging for more.'
+        ],
+        links: [
+          { icon: 'fab fa-instagram', label: 'Instagram', url: 'https://www.instagram.com/dadrev_' },
+          { icon: 'fas fa-music', label: 'Bandcamp', url: 'https://dadrev1.bandcamp.com' }
+        ],
+        videos: [
+          { src: '/videos/dadrev/dadrev-promo-1.mp4', vertical: false },
+          { src: '/videos/dadrev/dadrev-promo-2.mp4', vertical: false },
+          { src: '/videos/dadrev/dadrev-clip-3.mp4', vertical: false },
+          { src: '/videos/dadrev/dadrev-crowd-2.mp4', vertical: false },
+          { src: '/videos/dadrev/dadrev-vertical.mp4', vertical: true }
+        ],
+        logos: [
+          { src: '/images/residents/logos/dadrev_lettering_white.png', bg: 'black', label: 'Lettering' },
+          { src: '/images/residents/logos/dadrev_symbol_white.png', bg: 'black', label: 'Symbol' },
+          { src: '/images/residents/logos/dadrev_lettering_black.png', bg: 'white', label: 'Lettering' },
+          { src: '/images/residents/logos/dadrev_symbol_black.png', bg: 'white', label: 'Symbol' }
+        ]
+      },
+      domnrob: {
+        number: 'Resident — 004',
+        name: 'DOMNROB',
+        tagline: 'Venezuelan Duo · Founders of Black Room',
+        images: [
+          '/images/residents/domnrob-1.jpg',
+          '/images/residents/dom-1.jpg',
+          '/images/residents/dom-2.jpg',
+          '/images/residents/dom-3.jpg',
+          '/images/residents/dom-4.jpg',
+          '/images/residents/dom-5.jpg',
+          '/images/residents/dom-6.jpg',
+          '/images/residents/dom-7.jpg',
+          '/images/residents/dom-8.jpg',
+          '/images/residents/dom-9.jpg',
+          '/images/residents/dom-10.jpg',
+          '/images/residents/dom-11.jpg',
+          '/images/residents/dom-12.jpg',
+          '/images/residents/domnrob-2.jpg',
+          '/images/residents/domnrob-3.jpg'
+        ],
+        bio: [
+          'Meet DOMNROB — the dynamic duo from Venezuela now taking the Miami scene by storm. Their sets blend hyper, psy, and industrial sounds into an immersive experience that hits different every time. Beyond the decks, these 24 and 23-year-olds are dedicated event promoters and the founders of Black Room, the techno radio and collective.',
+          'They have shared the stage with ALIGNMENT, FATIMA HAJJI, BLK, PISAPIA, KANDER, DON WOEZIK, NEON GRAVEYARD, and many others — building a reputation for infectious energy and pulsating beats that leave crowds craving more.'
+        ],
+        links: [
+          { icon: 'fab fa-instagram', label: 'Instagram', url: 'https://www.instagram.com/domnrob' },
+          { icon: 'fab fa-soundcloud', label: 'SoundCloud', url: 'https://on.soundcloud.com/mcKbmAryXFUUYEcUHu' },
+          { icon: 'fab fa-youtube', label: 'YouTube', url: 'https://youtube.com/@domnrob.' }
+        ],
+        videos: [
+          { src: '/videos/domnrob/dom-cadzow.mp4', vertical: false },
+          { src: '/videos/domnrob/dom-kxchr.mp4', vertical: false },
+          { src: '/videos/domnrob/dom-bloodfeast.mp4', vertical: false },
+          { src: '/videos/domnrob/dom-clubspace.mp4', vertical: false },
+          { src: '/videos/domnrob/dom-kemistry.mp4', vertical: false },
+          { src: '/videos/domnrob/dom-bouncy.mp4', vertical: false },
+          { src: '/videos/domnrob/dom-m2miami.mp4', vertical: false },
+          { src: '/videos/domnrob/dom-orlando.mp4', vertical: false }
+        ],
+        logos: [
+          { src: '/images/residents/logos/domnrob-logo.png', bg: 'black', label: 'Logo' },
+          { src: '/images/residents/logos/domnrob-textured.png', bg: 'black', label: 'Textured Logo' }
+        ]
+      }
+    };
+
+    function init() {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      const data = RESIDENTS[id];
+
+      if (!data) {
+        document.body.innerHTML = `
+          <div class="not-found">
+            <h1>Resident not found</h1>
+            <a href="/residents.html" style="font-family:Space Mono,monospace;font-size:0.6rem;letter-spacing:.2em;color:#555;text-decoration:none;text-transform:uppercase;">← Back to Residents</a>
+          </div>`;
+        return;
+      }
+
+      document.title = `Black Room — ${data.name}`;
+
+      document.getElementById('heroImg').src = data.images[0];
+      document.getElementById('heroImg').alt = data.name;
+      document.getElementById('heroNumber').textContent = data.number;
+      document.getElementById('heroName').textContent = data.name;
+      document.getElementById('heroTagline').textContent = data.tagline;
+
+      const bioDiv = document.getElementById('bioText');
+      bioDiv.innerHTML = data.bio.map(p => `<p>${p}</p>`).join('');
+
+      const linksDiv = document.getElementById('bioLinks');
+      linksDiv.innerHTML = data.links.map(l =>
+        `<a class="bio-link" href="${l.url}" target="_blank" rel="noopener">
+          <i class="${l.icon}"></i> ${l.label}
+        </a>`
+      ).join('');
+
+      if (data.featuredVideo) {
+        const id = data.featuredVideo.includes('http')
+          ? (data.featuredVideo.match(/(?:youtu\.be\/|v=|\/embed\/)([\w-]{11})/) || [])[1]
+          : data.featuredVideo;
+        if (id) {
+          document.getElementById('featuredVideoSection').style.display = 'block';
+          document.getElementById('featuredVideoIframe').src =
+            `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&autoplay=1&mute=1&playsinline=1&loop=1&playlist=${id}`;
+        }
+      }
+
+      const grid = document.getElementById('galleryGrid');
+      grid.innerHTML = data.images.map((src, i) =>
+        `<div class="gallery-item" onclick="openLightbox('${src}')">
+          <img src="${src}" alt="${data.name} ${i + 1}" loading="lazy">
+        </div>`
+      ).join('');
+
+      if (data.videos && data.videos.length) {
+        document.getElementById('videosSection').style.display = 'block';
+        document.getElementById('videosGrid').innerHTML = data.videos.map(v =>
+          `<div class="video-item${v.vertical ? ' vertical' : ''}">
+            <video data-src="${v.src}" controls muted loop playsinline preload="none" webkit-playsinline></video>
+          </div>`
+        ).join('');
+      }
+
+      if (data.logos && data.logos.length) {
+        document.getElementById('logosSection').style.display = 'block';
+        document.getElementById('logosGrid').innerHTML = data.logos.map(l => {
+          return `<div class="logo-tile bg-${l.bg}">
+            <img src="${l.src}" alt="${data.name} ${l.label}">
+            <a class="dl" href="${l.src}" download>↓ Download</a>
+          </div>`;
+        }).join('');
+      }
+
+      initCarousels();
+      initVideoAutoplay();
+    }
+
+    function initVideoAutoplay() {
+      const videos = document.querySelectorAll('#videosGrid video');
+      if (!videos.length || !('IntersectionObserver' in window)) {
+        /* Fallback: just attach src so they're playable */
+        videos.forEach(v => { if (v.dataset.src && !v.src) v.src = v.dataset.src; });
+        return;
+      }
+
+      videos.forEach(v => {
+        v.muted = true;
+        v.setAttribute('muted', '');
+        v.playsInline = true;
+      });
+
+      const ensureSrc = (v) => {
+        if (v.dataset.src && !v.src) {
+          v.src = v.dataset.src;
+          v.load();
+        }
+      };
+
+      /* Track which video is most-visible inside the carousel viewport */
+      const visibility = new Map();
+      videos.forEach(v => visibility.set(v, 0));
+
+      const pickActive = () => {
+        let best = null, bestRatio = 0;
+        visibility.forEach((ratio, vid) => {
+          if (ratio > bestRatio) { bestRatio = ratio; best = vid; }
+        });
+        videos.forEach(v => {
+          if (v === best && bestRatio > 0.4) {
+            ensureSrc(v);
+            if (v.paused) v.play().catch(() => {});
+          } else {
+            if (!v.paused) v.pause();
+          }
+        });
+      };
+
+      const io = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          visibility.set(e.target, e.intersectionRatio);
+          /* Pre-attach src for any video even partially visible so the play button works */
+          if (e.intersectionRatio > 0.05) ensureSrc(e.target);
+        });
+        pickActive();
+      }, { threshold: [0, 0.05, 0.25, 0.5, 0.75, 1] });
+
+      videos.forEach(v => io.observe(v));
+
+      /* Also: if the user taps the native play button, attach src on demand */
+      videos.forEach(v => {
+        v.addEventListener('play', () => ensureSrc(v));
+        v.addEventListener('click', () => ensureSrc(v));
+        v.addEventListener('volumechange', () => {
+          if (!v.muted) v.dataset.userUnmuted = '1';
+        });
+      });
+    }
+
+    function initCarousels() {
+      document.querySelectorAll('.carousel-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const track = document.getElementById(btn.dataset.target);
+          if (!track) return;
+          const item = track.querySelector('*');
+          const step = item ? item.getBoundingClientRect().width + 2 : track.clientWidth * 0.8;
+          track.scrollBy({ left: step * parseInt(btn.dataset.dir, 10), behavior: 'smooth' });
+        });
+      });
+
+      document.querySelectorAll('.carousel-track').forEach(track => {
+        const update = () => {
+          const section = track.closest('.carousel-section');
+          if (!section) return;
+          const [prev, next] = section.querySelectorAll('.carousel-btn');
+          const max = track.scrollWidth - track.clientWidth - 2;
+          if (prev) prev.disabled = track.scrollLeft <= 2;
+          if (next) next.disabled = track.scrollLeft >= max;
+        };
+        track.addEventListener('scroll', update, { passive: true });
+        window.addEventListener('resize', update);
+        setTimeout(update, 100);
+
+        /* ── AUTOPLAY ── */
+        const AUTOPLAY_MS = 4500;
+        let timer = null;
+        let paused = false;
+
+        const step = () => {
+          if (paused) return;
+          const item = track.querySelector('*');
+          if (!item) return;
+          const stride = item.getBoundingClientRect().width + (parseFloat(getComputedStyle(track).gap) || 2);
+          const max = track.scrollWidth - track.clientWidth - 2;
+          if (track.scrollLeft >= max - 1) {
+            track.scrollTo({ left: 0, behavior: 'smooth' });
+          } else {
+            track.scrollBy({ left: stride, behavior: 'smooth' });
+          }
+        };
+        const start = () => { if (!timer) timer = setInterval(step, AUTOPLAY_MS); };
+        const stop  = () => { if (timer) { clearInterval(timer); timer = null; } };
+        const pauseTemp = (ms = 7000) => {
+          paused = true;
+          clearTimeout(track._resumeTimer);
+          track._resumeTimer = setTimeout(() => { paused = false; }, ms);
+        };
+
+        track.addEventListener('mouseenter', () => { paused = true; });
+        track.addEventListener('mouseleave', () => { paused = false; });
+        track.addEventListener('touchstart', () => pauseTemp(), { passive: true });
+        track.addEventListener('wheel', () => pauseTemp(), { passive: true });
+
+        const section = track.closest('.carousel-section');
+        if (section) {
+          section.querySelectorAll('.carousel-btn').forEach(btn => {
+            btn.addEventListener('click', () => pauseTemp());
+          });
+        }
+
+        /* Only run autoplay when section is visible */
+        if ('IntersectionObserver' in window) {
+          new IntersectionObserver(entries => {
+            entries.forEach(e => e.isIntersecting ? start() : stop());
+          }, { threshold: 0.2 }).observe(track);
+        } else {
+          start();
+        }
+      });
+    }
+
+    function openLightbox(src) {
+      document.getElementById('lightboxImg').src = src;
+      document.getElementById('lightbox').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeLightbox();
+    });
+
+    init();
+  </script>
+  <script src="/js/global-header.js"></script>
+</body>
+</html>

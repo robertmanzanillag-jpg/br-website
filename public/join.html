@@ -1,0 +1,975 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Join the Team — Black Room</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      :root {
+        --accent: #ffffff;
+        --accent-dim: #888;
+        --border: #222;
+        --card-bg: #0a0a0a;
+        --glow: rgba(255,255,255,0.12);
+        --neon: #00ffaa;
+      }
+
+      html, body { background: #000; }
+
+      body {
+        color: #fff;
+        font-family: "Inter", sans-serif;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 20px 80px;
+        overflow-x: hidden;
+        position: relative;
+      }
+
+      /* ── ANIMATED BACKGROUND ──────────────────── */
+      .bg-layer {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background:
+          radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.07) 0%, transparent 55%),
+          radial-gradient(ellipse at 20% 100%, rgba(0,255,170,0.04) 0%, transparent 55%),
+          radial-gradient(ellipse at 80% 60%, rgba(255,255,255,0.03) 0%, transparent 60%),
+          #000;
+      }
+
+      .bg-grid {
+        position: fixed;
+        inset: -2px;
+        z-index: 0;
+        background-image:
+          linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+        background-size: 48px 48px;
+        animation: gridDrift 30s linear infinite;
+        opacity: 0.45;
+        pointer-events: none;
+        mask-image: radial-gradient(ellipse at center, #000 35%, transparent 80%);
+      }
+
+      @keyframes gridDrift {
+        from { background-position: 0 0, 0 0; }
+        to   { background-position: 48px 48px, 48px 48px; }
+      }
+
+      .scanlines {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+          to bottom,
+          transparent 0,
+          transparent 3px,
+          rgba(255,255,255,0.015) 3px,
+          rgba(255,255,255,0.015) 4px
+        );
+        mix-blend-mode: overlay;
+      }
+
+      .scan-sweep {
+        position: fixed;
+        left: 0;
+        right: 0;
+        height: 80px;
+        z-index: 1;
+        pointer-events: none;
+        background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.06), transparent);
+        animation: sweep 6s linear infinite;
+      }
+
+      @keyframes sweep {
+        from { top: -80px; }
+        to   { top: 100vh; }
+      }
+
+      .floating-particles {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+
+      .particle {
+        position: absolute;
+        width: 2px; height: 2px;
+        background: rgba(255,255,255,0.5);
+        border-radius: 50%;
+        animation: float 22s infinite linear;
+        box-shadow: 0 0 6px rgba(255,255,255,0.4);
+      }
+
+      @keyframes float {
+        0%   { transform: translateY(105vh) translateX(0); opacity: 0; }
+        10%  { opacity: 1; }
+        90%  { opacity: 1; }
+        100% { transform: translateY(-10vh) translateX(60px); opacity: 0; }
+      }
+
+      /* ── HEADER ──────────────────── */
+      .logo {
+        width: 100px;
+        margin-bottom: 1.5rem;
+        position: relative;
+        z-index: 2;
+        filter: drop-shadow(0 0 20px rgba(255,255,255,0.18));
+        animation: logoFloat 5s ease-in-out infinite, logoEntry 1s ease-out;
+      }
+
+      @keyframes logoFloat {
+        0%, 100% { transform: translateY(0); }
+        50%      { transform: translateY(-6px); }
+      }
+
+      @keyframes logoEntry {
+        from { opacity: 0; transform: translateY(-30px) scale(0.8); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+      }
+
+      .page-title {
+        font-family: 'Space Mono', monospace;
+        font-size: 1.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4em;
+        text-align: center;
+        margin-bottom: 0.4rem;
+        position: relative;
+        z-index: 2;
+        animation: titleEntry 1s ease-out 0.2s both;
+      }
+
+      .page-title .glitch {
+        position: relative;
+        display: inline-block;
+      }
+      .page-title .glitch::before,
+      .page-title .glitch::after {
+        content: attr(data-text);
+        position: absolute;
+        left: 0; top: 0;
+        width: 100%;
+        opacity: 0.8;
+        pointer-events: none;
+      }
+      .page-title .glitch::before {
+        color: #00ffaa;
+        animation: glitchA 5s infinite steps(1, end);
+        clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
+      }
+      .page-title .glitch::after {
+        color: #ff0080;
+        animation: glitchB 5s infinite steps(1, end);
+        clip-path: polygon(0 66%, 100% 66%, 100% 100%, 0 100%);
+      }
+      @keyframes glitchA {
+        0%, 92%, 100% { transform: translate(0,0); opacity: 0; }
+        93%           { transform: translate(-2px,-1px); opacity: 0.6; }
+        95%           { transform: translate(2px,1px); opacity: 0.6; }
+        97%           { transform: translate(-1px,1px); opacity: 0.6; }
+      }
+      @keyframes glitchB {
+        0%, 92%, 100% { transform: translate(0,0); opacity: 0; }
+        93%           { transform: translate(2px,1px); opacity: 0.6; }
+        95%           { transform: translate(-2px,-1px); opacity: 0.6; }
+        97%           { transform: translate(1px,-1px); opacity: 0.6; }
+      }
+
+      @keyframes titleEntry {
+        from { opacity: 0; letter-spacing: 1em; filter: blur(8px); }
+        to   { opacity: 1; letter-spacing: 0.4em; filter: blur(0); }
+      }
+
+      .page-subtitle {
+        color: var(--accent-dim);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3em;
+        margin-bottom: 2.5rem;
+        text-align: center;
+        position: relative;
+        z-index: 2;
+        animation: titleEntry 1s ease-out 0.4s both;
+      }
+
+      .page-subtitle::after {
+        content: '_';
+        animation: blink 1.1s steps(2) infinite;
+        margin-left: 4px;
+        color: var(--neon);
+      }
+
+      @keyframes blink { 50% { opacity: 0; } }
+
+      /* ── ROLE TOGGLE ──────────────────── */
+      .role-toggle {
+        display: flex;
+        margin-bottom: 2rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        position: relative;
+        z-index: 2;
+        max-width: 460px;
+        width: 100%;
+        overflow: hidden;
+        animation: titleEntry 1s ease-out 0.6s both;
+      }
+
+      .role-toggle::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(135deg, #fff 0%, #ddd 100%);
+        transition: transform 0.45s cubic-bezier(0.65,0,0.35,1);
+        z-index: 0;
+      }
+
+      .role-toggle[data-active="ambassador"]::before {
+        transform: translateX(100%);
+      }
+
+      .role-btn {
+        flex: 1;
+        padding: 1rem 1.5rem;
+        background: transparent;
+        border: none;
+        color: var(--accent-dim);
+        font-family: 'Space Mono', monospace;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        cursor: pointer;
+        transition: color 0.3s ease;
+        position: relative;
+        z-index: 1;
+      }
+
+      .role-btn i { margin-right: 0.5rem; }
+
+      .role-btn.active { color: #000; }
+
+      .role-btn:not(.active):hover { color: #fff; }
+
+      /* ── CARD ──────────────────── */
+      .application-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        max-width: 540px;
+        width: 100%;
+        position: relative;
+        z-index: 2;
+        animation: cardEntry 1s ease-out 0.8s both;
+        box-shadow: 0 25px 80px rgba(0,0,0,0.7);
+      }
+
+      @keyframes cardEntry {
+        from { opacity: 0; transform: translateY(40px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      .application-card::before {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        background: linear-gradient(120deg, transparent, rgba(255,255,255,0.25), transparent);
+        background-size: 200% 100%;
+        animation: borderShine 4s linear infinite;
+        z-index: -1;
+      }
+
+      @keyframes borderShine {
+        from { background-position: 200% 0; }
+        to   { background-position: -200% 0; }
+      }
+
+      .corner {
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border: 1px solid #fff;
+        animation: cornerPulse 2.5s ease-in-out infinite;
+      }
+      .corner.tl { top: -1px; left: -1px;  border-right: none; border-bottom: none; }
+      .corner.tr { top: -1px; right: -1px; border-left: none; border-bottom: none; animation-delay: 0.6s; }
+      .corner.bl { bottom: -1px; left: -1px;  border-right: none; border-top: none; animation-delay: 1.2s; }
+      .corner.br { bottom: -1px; right: -1px; border-left: none; border-top: none; animation-delay: 1.8s; }
+
+      @keyframes cornerPulse {
+        0%, 100% { box-shadow: 0 0 0 rgba(255,255,255,0); border-color: #fff; }
+        50%      { box-shadow: 0 0 12px rgba(255,255,255,0.5); border-color: #fff; }
+      }
+
+      .card-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .card-header h2 {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+      .card-header h2 i { margin-right: 0.6rem; }
+
+      .status {
+        font-size: 0.65rem;
+        font-family: 'Space Mono', monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        padding: 0.3rem 0.6rem;
+        border: 1px solid rgba(0,255,170,0.4);
+        color: var(--neon);
+        position: relative;
+      }
+      .status::before {
+        content: '';
+        display: inline-block;
+        width: 6px; height: 6px;
+        background: var(--neon);
+        border-radius: 50%;
+        margin-right: 6px;
+        box-shadow: 0 0 8px var(--neon);
+        animation: livePulse 1.4s ease-in-out infinite;
+      }
+      @keyframes livePulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50%      { opacity: 0.4; transform: scale(0.7); }
+      }
+
+      .card-body {
+        padding: 1.75rem;
+        position: relative;
+      }
+
+      /* ── FORM ──────────────────── */
+      .form-group {
+        margin-bottom: 1.25rem;
+        animation: fieldRise 0.5s ease-out both;
+      }
+      .form-group:nth-child(1) { animation-delay: 0.05s; }
+      .form-group:nth-child(2) { animation-delay: 0.10s; }
+      .form-group:nth-child(3) { animation-delay: 0.15s; }
+      .form-group:nth-child(4) { animation-delay: 0.20s; }
+      .form-group:nth-child(5) { animation-delay: 0.25s; }
+      .form-group:nth-child(6) { animation-delay: 0.30s; }
+      .form-group:nth-child(7) { animation-delay: 0.35s; }
+      .form-group:nth-child(8) { animation-delay: 0.40s; }
+
+      @keyframes fieldRise {
+        from { opacity: 0; transform: translateY(12px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      .form-group label {
+        display: block;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: #ccc;
+        margin-bottom: 0.5rem;
+        transition: color 0.25s ease;
+      }
+
+      .required { color: #ff4466; margin-left: 0.25rem; animation: requiredPulse 2s ease-in-out infinite; }
+      @keyframes requiredPulse {
+        0%, 100% { opacity: 1; }
+        50%      { opacity: 0.4; }
+      }
+
+      .input-wrap { position: relative; }
+
+      .form-group input,
+      .form-group select,
+      .form-group textarea,
+      .conditional textarea {
+        width: 100%;
+        background: #000;
+        border: 1px solid var(--border);
+        color: #fff;
+        padding: 0.85rem 1rem;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.95rem;
+        transition: all 0.25s ease;
+        position: relative;
+        z-index: 1;
+      }
+
+      .form-group input::placeholder,
+      .form-group textarea::placeholder,
+      .conditional textarea::placeholder { color: #555; }
+
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus,
+      .conditional textarea:focus {
+        outline: none;
+        border-color: #fff;
+        background: #050505;
+        box-shadow:
+          0 0 0 3px rgba(255,255,255,0.04),
+          0 0 22px rgba(255,255,255,0.08) inset;
+      }
+
+      .input-wrap::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--neon), #fff);
+        transition: width 0.4s ease, left 0.4s ease;
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      .input-wrap:focus-within::after {
+        width: 100%;
+        left: 0;
+      }
+
+      .form-group textarea { resize: vertical; min-height: 90px; }
+
+      /* ── RADIO ──────────────────── */
+      .radio-group {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+      }
+
+      .radio-option {
+        flex: 1;
+        min-width: 100px;
+        position: relative;
+      }
+
+      .radio-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .radio-option label {
+        display: block;
+        padding: 0.85rem 1rem;
+        border: 1px solid var(--border);
+        background: #000;
+        color: #ccc;
+        text-align: center;
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.85rem;
+        margin: 0;
+        transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+      }
+
+      .radio-option:hover label {
+        border-color: #555;
+        color: #fff;
+        transform: translateY(-1px);
+      }
+
+      .radio-option input[type="radio"]:checked + label {
+        background: #fff;
+        color: #000;
+        border-color: #fff;
+        font-weight: 600;
+      }
+
+      /* ── CONDITIONAL ──────────────────── */
+      .conditional {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.45s ease, opacity 0.35s ease, margin 0.35s ease;
+        opacity: 0;
+        margin: 0;
+      }
+
+      .conditional.show {
+        max-height: 250px;
+        opacity: 1;
+        margin-bottom: 1.25rem;
+      }
+
+      /* ── DIVIDERS ──────────────────── */
+      .form-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+        margin: 1.5rem 0;
+        position: relative;
+      }
+      .form-divider::after {
+        content: '';
+        position: absolute;
+        left: 50%; top: -2px;
+        width: 5px; height: 5px;
+        background: #fff;
+        border-radius: 50%;
+        transform: translateX(-50%);
+        box-shadow: 0 0 10px rgba(255,255,255,0.7);
+      }
+
+      .section-label {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        color: #fff;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+      }
+
+      .section-label::before, .section-label::after {
+        content: '';
+        flex: 1; height: 1px;
+        background: linear-gradient(90deg, rgba(255,255,255,0.3), transparent);
+      }
+      .section-label::after {
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3));
+      }
+
+      /* ── SUBMIT BUTTON ──────────────────── */
+      .submit-btn {
+        width: 100%;
+        padding: 1.1rem;
+        background: #fff;
+        color: #000;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.25em;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        margin-top: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+      }
+
+      .submit-btn::before {
+        content: '';
+        position: absolute;
+        top: 0; left: -150%;
+        width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0,0,0,0.18), transparent);
+        animation: btnSheen 3.5s linear infinite;
+      }
+      @keyframes btnSheen {
+        0%   { left: -150%; }
+        60%  { left: 150%; }
+        100% { left: 150%; }
+      }
+
+      .submit-btn:hover {
+        box-shadow: 0 0 35px var(--glow), 0 0 60px rgba(0,255,170,0.18);
+        transform: translateY(-2px);
+        background: linear-gradient(135deg, #fff, #d8d8d8);
+      }
+
+      .submit-btn:hover .arrow { transform: translateX(6px); }
+
+      .submit-btn .arrow { transition: transform 0.3s ease; }
+
+      .submit-btn:active { transform: translateY(0); }
+
+      .submit-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      /* ── SUCCESS ──────────────────── */
+      .success-message {
+        display: none;
+        text-align: center;
+        padding: 2.5rem 1rem;
+        animation: successIn 0.6s ease-out;
+      }
+
+      @keyframes successIn {
+        from { opacity: 0; transform: scale(0.9); }
+        to   { opacity: 1; transform: scale(1); }
+      }
+
+      .success-message .check-circle {
+        width: 70px; height: 70px;
+        border: 2px solid var(--neon);
+        border-radius: 50%;
+        margin: 0 auto 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        animation: checkPulse 2s ease-in-out infinite;
+      }
+      .success-message .check-circle i {
+        color: var(--neon);
+        font-size: 2rem;
+      }
+      @keyframes checkPulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(0,255,170,0.5); }
+        50%      { box-shadow: 0 0 0 14px rgba(0,255,170,0); }
+      }
+
+      .success-message h3 {
+        font-family: 'Space Mono', monospace;
+        font-size: 1.2rem;
+        text-transform: uppercase;
+        letter-spacing: 0.25em;
+        margin-bottom: 0.6rem;
+      }
+
+      .success-message p {
+        color: #888;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        max-width: 360px;
+        margin: 0 auto;
+      }
+
+      /* ── FORM SWITCH ──────────────────── */
+      .role-form {
+        display: none;
+        animation: formSlide 0.45s cubic-bezier(0.65,0,0.35,1);
+      }
+      .role-form.active { display: block; }
+
+      @keyframes formSlide {
+        from { opacity: 0; transform: translateX(20px); }
+        to   { opacity: 1; transform: translateX(0); }
+      }
+
+      /* ── RESPONSIVE ──────────────────── */
+      @media (max-width: 480px) {
+        .page-title { font-size: 1.2rem; letter-spacing: 0.25em; }
+        .role-btn { font-size: 0.65rem; padding: 0.85rem 0.5rem; letter-spacing: 0.15em; }
+        .radio-option { min-width: 100%; }
+        .card-body { padding: 1.25rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-layer"></div>
+    <div class="bg-grid"></div>
+    <div class="scanlines"></div>
+    <div class="scan-sweep"></div>
+    <div class="floating-particles" id="particles"></div>
+
+    <img src="/images/br-logo-valentine.png" alt="Black Room" class="logo">
+
+    <h1 class="page-title">
+      <span class="glitch" data-text="Join the Team">Join the Team</span>
+    </h1>
+    <p class="page-subtitle">Black Room</p>
+
+    <div class="role-toggle" id="roleToggle" data-active="promoter">
+      <button type="button" class="role-btn active" data-role="promoter">
+        <i class="fas fa-bullhorn"></i> Promoter
+      </button>
+      <button type="button" class="role-btn" data-role="ambassador">
+        <i class="fas fa-star"></i> Ambassador
+      </button>
+    </div>
+
+    <div class="application-card">
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+
+      <div class="card-header">
+        <h2 id="formTitle"><i class="fas fa-bullhorn"></i> Promoter Application</h2>
+        <div class="status">Open</div>
+      </div>
+
+      <div class="card-body" id="cardBody">
+        <!-- PROMOTER FORM -->
+        <form id="promoterForm" class="role-form active" data-role="promoter">
+          <div class="section-label">Personal Info</div>
+
+          <div class="form-group">
+            <label>Full Name <span class="required">*</span></label>
+            <div class="input-wrap">
+              <input type="text" name="fullName" placeholder="First and last name" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Instagram Handle <span class="required">*</span></label>
+            <div class="input-wrap">
+              <input type="text" name="instagram" placeholder="@yourusername" required>
+            </div>
+          </div>
+
+          <div class="form-divider"></div>
+          <div class="section-label">Experience</div>
+
+          <div class="form-group">
+            <label>Have you worked as a promoter before? <span class="required">*</span></label>
+            <div class="radio-group">
+              <div class="radio-option">
+                <input type="radio" name="experience" id="exp-yes" value="yes" required>
+                <label for="exp-yes">Yes</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="experience" id="exp-no" value="no">
+                <label for="exp-no">No</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="conditional" id="experienceWhereWrap">
+            <label style="display:block;font-family:'Space Mono',monospace;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.15em;color:#ccc;margin-bottom:0.5rem;">Where? Which venues / brands?</label>
+            <div class="input-wrap">
+              <textarea name="experienceWhere" placeholder="Club names, brands, dates..."></textarea>
+            </div>
+          </div>
+
+          <div class="form-divider"></div>
+          <div class="section-label">Contact</div>
+
+          <div class="form-group">
+            <label>Phone Number <span class="required">*</span></label>
+            <div class="input-wrap">
+              <input type="tel" name="phone" placeholder="+1 (305) 000-0000" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Email Address <span class="required">*</span></label>
+            <div class="input-wrap">
+              <input type="email" name="email" placeholder="you@email.com" required>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn">
+            <i class="fas fa-paper-plane"></i>
+            <span>Submit Application</span>
+            <span class="arrow">→</span>
+          </button>
+        </form>
+
+        <!-- AMBASSADOR FORM -->
+        <form id="ambassadorForm" class="role-form" data-role="ambassador">
+          <div class="section-label">Personal Info</div>
+
+          <div class="form-group">
+            <label>Full Name <span class="required">*</span></label>
+            <div class="input-wrap">
+              <input type="text" name="fullName" placeholder="First and last name" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Instagram Handle <span class="required">*</span></label>
+            <div class="input-wrap">
+              <input type="text" name="instagram" placeholder="@yourusername" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Phone Number <span class="required">*</span></label>
+            <div class="input-wrap">
+              <input type="tel" name="phone" placeholder="+1 (305) 000-0000" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Email Address <span class="required">*</span></label>
+            <div class="input-wrap">
+              <input type="email" name="email" placeholder="you@email.com" required>
+            </div>
+          </div>
+
+          <div class="form-divider"></div>
+          <div class="section-label">Commitment</div>
+
+          <div class="form-group">
+            <label>Can you represent the brand on social media? <span class="required">*</span></label>
+            <div class="radio-group">
+              <div class="radio-option">
+                <input type="radio" name="canRepresent" id="rep-yes" value="yes" required>
+                <label for="rep-yes">Yes</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="canRepresent" id="rep-no" value="no">
+                <label for="rep-no">No</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Can you attend shoots at least once a month? <span class="required">*</span></label>
+            <div class="radio-group">
+              <div class="radio-option">
+                <input type="radio" name="canAttendShoots" id="shoot-yes" value="yes" required>
+                <label for="shoot-yes">Yes</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="canAttendShoots" id="shoot-no" value="no">
+                <label for="shoot-no">No</label>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn">
+            <i class="fas fa-paper-plane"></i>
+            <span>Submit Application</span>
+            <span class="arrow">→</span>
+          </button>
+        </form>
+
+        <div class="success-message" id="successMessage">
+          <div class="check-circle"><i class="fas fa-check"></i></div>
+          <h3>Application Received</h3>
+          <p>Thanks for applying to Black Room. We'll review your info and get back to you on Instagram.</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Floating particles
+      (function () {
+        const container = document.getElementById('particles');
+        for (let i = 0; i < 36; i++) {
+          const p = document.createElement('div');
+          p.className = 'particle';
+          p.style.left = Math.random() * 100 + '%';
+          p.style.animationDelay = (Math.random() * 22) + 's';
+          p.style.animationDuration = (16 + Math.random() * 14) + 's';
+          p.style.opacity = 0.25 + Math.random() * 0.6;
+          container.appendChild(p);
+        }
+      })();
+
+      // Role toggle
+      const roleToggle = document.getElementById('roleToggle');
+      const roleBtns   = document.querySelectorAll('.role-btn');
+      const forms      = document.querySelectorAll('.role-form');
+      const formTitle  = document.getElementById('formTitle');
+      const successEl  = document.getElementById('successMessage');
+      const titles = {
+        promoter:   '<i class="fas fa-bullhorn"></i> Promoter Application',
+        ambassador: '<i class="fas fa-star"></i> Ambassador Application'
+      };
+
+      roleBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const role = btn.dataset.role;
+          if (roleToggle.dataset.active === role) return;
+          roleToggle.dataset.active = role;
+
+          roleBtns.forEach(b => b.classList.toggle('active', b === btn));
+
+          // animate title swap
+          formTitle.style.opacity = '0';
+          formTitle.style.transform = 'translateY(-6px)';
+          setTimeout(() => {
+            formTitle.innerHTML = titles[role];
+            formTitle.style.opacity = '1';
+            formTitle.style.transform = 'translateY(0)';
+          }, 180);
+
+          // swap forms with restart of slide animation
+          forms.forEach(f => {
+            const isActive = f.dataset.role === role;
+            f.classList.toggle('active', isActive);
+            f.style.display = isActive ? 'block' : 'none';
+            if (isActive) {
+              f.style.animation = 'none';
+              void f.offsetWidth; // reflow
+              f.style.animation = '';
+            }
+          });
+
+          successEl.style.display = 'none';
+        });
+      });
+
+      // Conditional "where" textarea
+      document.querySelectorAll('input[name="experience"]').forEach(r => {
+        r.addEventListener('change', () => {
+          const wrap = document.getElementById('experienceWhereWrap');
+          const isYes = document.querySelector('input[name="experience"]:checked')?.value === 'yes';
+          wrap.classList.toggle('show', isYes);
+        });
+      });
+
+      // Auto-prepend @ for instagram
+      document.querySelectorAll('input[name="instagram"]').forEach(inp => {
+        inp.addEventListener('blur', () => {
+          let v = inp.value.trim();
+          if (v && !v.startsWith('@')) inp.value = '@' + v;
+        });
+      });
+
+      // Submit handler (shared)
+      async function handleSubmit(form) {
+        const submitBtn = form.querySelector('.submit-btn');
+        const originalHTML = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Submitting...</span>';
+
+        const role = form.dataset.role;
+        const data = { role };
+        new FormData(form).forEach((v, k) => { data[k] = (v || '').toString().trim(); });
+
+        try {
+          const res = await fetch('/api/team-application', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          if (res.ok) {
+            forms.forEach(f => f.style.display = 'none');
+            successEl.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } else {
+            const err = await res.json().catch(() => ({}));
+            alert(err.error || 'Error submitting form. Please try again.');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalHTML;
+          }
+        } catch (e) {
+          alert('Error submitting form. Please try again.');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalHTML;
+        }
+      }
+
+      document.getElementById('promoterForm').addEventListener('submit', e => { e.preventDefault();   handleSubmit(e.target); });
+      document.getElementById('ambassadorForm').addEventListener('submit', e => { e.preventDefault(); handleSubmit(e.target); });
+    </script>
+  </body>
+</html>

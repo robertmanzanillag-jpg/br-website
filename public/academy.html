@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Black Room Academy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    :root {
+      --bg-primary: #000000;
+      --bg-card: #111111;
+      --text-primary: #ffffff;
+      --text-secondary: #888888;
+      --border-color: #222222;
+      --accent: #ffffff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Hero Section */
+    .hero {
+      min-height: 70vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 2rem 4rem;
+      position: relative;
+      background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 100%),
+                  url('/images/academy-bg.jpg') center/cover no-repeat;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+    }
+
+    .hero-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    .hero-title {
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(2.5rem, 8vw, 5rem);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-description {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+      margin: 0 auto 2rem;
+      line-height: 1.8;
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 2.5rem;
+      border: 1px solid var(--accent);
+      color: var(--text-primary);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .hero-cta::before,
+    .hero-cta::after {
+      content: '';
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border: 1px solid var(--text-secondary);
+      transition: border-color 0.3s ease;
+    }
+
+    .hero-cta::before {
+      top: -4px;
+      left: -4px;
+      border-width: 1px 0 0 1px;
+    }
+
+    .hero-cta::after {
+      bottom: -4px;
+      right: -4px;
+      border-width: 0 1px 1px 0;
+    }
+
+    .hero-cta:hover {
+      background: var(--accent);
+      color: var(--bg-primary);
+    }
+
+    .hero-cta:hover::before,
+    .hero-cta:hover::after {
+      border-color: var(--accent);
+    }
+
+    /* Main Content */
+    main {
+      padding: 4rem 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-title {
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Course Card - Industrial Style */
+    .course-section {
+      margin-bottom: 5rem;
+    }
+
+    .course-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      max-width: 600px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .course-card::before,
+    .course-card::after,
+    .course-card .corner-bl,
+    .course-card .corner-br {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border: 1px solid var(--text-secondary);
+      transition: border-color 0.3s ease;
+    }
+
+    .course-card::before {
+      top: -6px;
+      left: -6px;
+      border-width: 1px 0 0 1px;
+    }
+
+    .course-card::after {
+      top: -6px;
+      right: -6px;
+      border-width: 1px 1px 0 0;
+    }
+
+    .course-card .corner-bl {
+      bottom: -6px;
+      left: -6px;
+      border-width: 0 0 1px 1px;
+    }
+
+    .course-card .corner-br {
+      bottom: -6px;
+      right: -6px;
+      border-width: 0 1px 1px 0;
+    }
+
+    .course-card:hover::before,
+    .course-card:hover::after,
+    .course-card:hover .corner-bl,
+    .course-card:hover .corner-br {
+      border-color: var(--accent);
+    }
+
+    .course-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .course-type {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .course-price {
+      font-family: 'Space Mono', monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .course-body {
+      padding: 2rem 1.5rem;
+    }
+
+    .course-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .course-features {
+      list-style: none;
+    }
+
+    .course-features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .course-features li:last-child {
+      border-bottom: none;
+    }
+
+    .course-features li i {
+      color: var(--accent);
+      font-size: 0.75rem;
+      margin-top: 0.3rem;
+    }
+
+    .course-footer {
+      padding: 1.5rem;
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+    }
+
+    .enroll-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1rem 2rem;
+      background: var(--accent);
+      color: var(--bg-primary);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+
+    .enroll-btn:hover {
+      background: var(--text-secondary);
+    }
+
+    /* Process Section */
+    .process-section {
+      margin-bottom: 5rem;
+    }
+
+    .process-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+
+    .process-step {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 1.5rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .process-step::before,
+    .process-step::after {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border: 1px solid var(--text-secondary);
+    }
+
+    .process-step::before {
+      top: -4px;
+      left: -4px;
+      border-width: 1px 0 0 1px;
+    }
+
+    .process-step::after {
+      bottom: -4px;
+      right: -4px;
+      border-width: 0 1px 1px 0;
+    }
+
+    .step-number {
+      font-family: 'Space Mono', monospace;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+    }
+
+    .step-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.5rem;
+    }
+
+    .step-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Registration Section */
+    .registration-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 3rem;
+      position: relative;
+    }
+
+    .registration-section::before,
+    .registration-section::after,
+    .registration-section .corner-bl,
+    .registration-section .corner-br {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border: 1px solid var(--text-secondary);
+    }
+
+    .registration-section::before {
+      top: -6px;
+      left: -6px;
+      border-width: 1px 0 0 1px;
+    }
+
+    .registration-section::after {
+      top: -6px;
+      right: -6px;
+      border-width: 1px 1px 0 0;
+    }
+
+    .registration-section .corner-bl {
+      bottom: -6px;
+      left: -6px;
+      border-width: 0 0 1px 1px;
+    }
+
+    .registration-section .corner-br {
+      bottom: -6px;
+      right: -6px;
+      border-width: 0 1px 1px 0;
+    }
+
+    .registration-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .registration-header h2 {
+      font-family: 'Space Mono', monospace;
+      font-size: 1.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .registration-header p {
+      color: var(--text-secondary);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .form-group label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+    }
+
+    .form-group input,
+    .form-group select {
+      padding: 1rem;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .form-group input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .submit-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 1.25rem;
+      background: var(--accent);
+      color: var(--bg-primary);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 1rem;
+    }
+
+    .submit-button:hover {
+      background: var(--text-secondary);
+    }
+
+    .submit-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Error Notification */
+    .error-notification {
+      display: none;
+      background: rgba(230, 57, 70, 0.1);
+      border: 1px solid #e63946;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .error-notification h4 {
+      color: #e63946;
+      font-family: 'Space Mono', monospace;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 3rem 2rem;
+      border-top: 1px solid var(--border-color);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      letter-spacing: 1px;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .process-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .hero {
+        padding: 100px 1.5rem 3rem;
+        min-height: 60vh;
+      }
+
+      main {
+        padding: 3rem 1.5rem;
+      }
+
+      .process-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .registration-section {
+        padding: 2rem 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <p class="hero-label">Education Program</p>
+      <h1 class="hero-title">Black Room Academy</h1>
+      <p class="hero-description">
+        Black Room Academy is the latest creation from the Black Room team. Our academy exists to strengthen our mission: revolutionizing Miami's techno scene through education that goes beyond just teaching how to play.
+      </p>
+      <a href="#registration" class="hero-cta">
+        <i class="fas fa-play"></i>
+        Start Your Journey
+      </a>
+    </div>
+  </section>
+
+  <main>
+    <!-- Course Section -->
+    <section class="course-section">
+      <div class="section-header">
+        <p class="section-label">Choose Your Path</p>
+        <h2 class="section-title">DJ Training Program</h2>
+      </div>
+
+      <div class="course-card">
+        <div class="corner-bl"></div>
+        <div class="corner-br"></div>
+        <div class="course-header">
+          <span class="course-type">Basic Course</span>
+          <span class="course-price">$400</span>
+        </div>
+        <div class="course-body">
+          <h3 class="course-title">Fundamentals of DJing</h3>
+          <ul class="course-features">
+          </ul>
+        </div>
+        <div class="course-footer">
+          <a href="#registration" class="enroll-btn">
+            Enroll Now <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Process Section -->
+    <section class="process-section">
+      <div class="section-header">
+        <p class="section-label">The Journey</p>
+        <h2 class="section-title">How It Works</h2>
+      </div>
+
+      <div class="process-grid">
+        <div class="process-step">
+          <div class="step-number">01</div>
+          <h4 class="step-title">Register</h4>
+          <p class="step-desc">Fill out the form below with your information and course preference</p>
+        </div>
+        <div class="process-step">
+          <div class="step-number">02</div>
+          <h4 class="step-title">Confirmation</h4>
+          <p class="step-desc">Receive a comprehensive course guide via email</p>
+        </div>
+        <div class="process-step">
+          <div class="step-number">03</div>
+          <h4 class="step-title">Waitlist</h4>
+          <p class="step-desc">Get placed on the waiting list for the next available course</p>
+        </div>
+        <div class="process-step">
+          <div class="step-number">04</div>
+          <h4 class="step-title">Learn</h4>
+          <p class="step-desc">Start your journey to becoming a professional DJ</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Registration Section -->
+    <section class="registration-section" id="registration">
+      <div class="corner-bl"></div>
+      <div class="corner-br"></div>
+      
+      <div class="registration-header">
+        <h2>Ready to Start?</h2>
+        <p>Join the next generation of Miami's techno scene</p>
+      </div>
+
+      <!-- Error Notification -->
+      <div id="error-notification" class="error-notification">
+        <h4>Registration Failed</h4>
+        <p id="error-message"></p>
+      </div>
+
+      <form id="academy-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+          </div>
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
+          </div>
+          <div class="form-group">
+            <label for="course">Choose Your Course</label>
+            <select id="course" name="course" required>
+              <option value="">Select a course</option>
+              <option value="basic">Basic Course - $400</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <button type="submit" id="submit-btn" class="submit-button">
+              <span class="button-text">
+                <i class="fas fa-paper-plane"></i>
+                Join the Academy
+              </span>
+              <span class="button-loading" style="display: none;">
+                <i class="fas fa-spinner fa-spin"></i>
+                Submitting...
+              </span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    &copy; 2026 Black Room. All rights reserved.
+  </footer>
+
+  <!-- Global Header -->
+  <script src="/js/global-header.js"></script>
+
+  <script>
+    function setupAcademyForm() {
+      const form = document.getElementById('academy-form');
+      const submitBtn = document.getElementById('submit-btn');
+      const errorNotification = document.getElementById('error-notification');
+      const errorMessage = document.getElementById('error-message');
+
+      if (!form || !submitBtn) {
+        console.error('Form elements not found');
+        return;
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (errorNotification) {
+          errorNotification.style.display = 'none';
+        }
+        
+        const buttonText = submitBtn.querySelector('.button-text');
+        const buttonLoading = submitBtn.querySelector('.button-loading');
+        
+        if (buttonText) buttonText.style.display = 'none';
+        if (buttonLoading) buttonLoading.style.display = 'flex';
+        submitBtn.disabled = true;
+
+        try {
+          const formData = new FormData(form);
+          const response = await fetch('/api/course-checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: formData.get('name'),
+              email: formData.get('email'),
+              phone: formData.get('phone'),
+              course: formData.get('course')
+            })
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.url) {
+            // Redirect to Stripe secure checkout
+            window.location.href = data.url;
+          } else {
+            if (errorMessage && errorNotification) {
+              errorMessage.textContent = data.error || data.message || 'An error occurred. Please try again.';
+              errorNotification.style.display = 'block';
+              errorNotification.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
+        } catch (error) {
+          console.error('Error submitting form:', error);
+          if (errorMessage && errorNotification) {
+            errorMessage.textContent = 'Network error. Please check your connection and try again.';
+            errorNotification.style.display = 'block';
+          }
+        } finally {
+          if (buttonText) buttonText.style.display = 'flex';
+          if (buttonLoading) buttonLoading.style.display = 'none';
+          submitBtn.disabled = false;
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(setupAcademyForm, 100);
+    });
+  </script>
+
+  <script src="/js/cart.js"></script>
+</body>
+</html>

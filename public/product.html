@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Product – Black Room</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link rel="stylesheet" href="/css/main.css" />
+    <script src="/js/global-header.js"></script>
+    <style>
+      body {
+        background: #000;
+        color: #fff;
+        font-family: "Inter", sans-serif;
+        padding-top: 80px;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 4rem 2rem;
+      }
+
+      .product-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        align-items: start;
+      }
+
+      .gallery-main {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+
+      /* Corner brackets */
+      .gallery-main::before, .gallery-main::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-color: rgba(255,255,255,0.2);
+        border-style: solid;
+      }
+      .gallery-main::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+      .gallery-main::after { top: -1px; right: -1px; border-width: 1px 1px 0 0; }
+
+      .corner-bl, .corner-br {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-color: rgba(255,255,255,0.2);
+        border-style: solid;
+      }
+      .corner-bl { bottom: -1px; left: -1px; border-width: 0 0 1px 1px; }
+      .corner-br { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+
+      .gallery-main img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+
+      .gallery-thumbs {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .thumb {
+        width: 80px;
+        height: 80px;
+        border: 1px solid rgba(255,255,255,0.1);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem;
+      }
+
+      .thumb.active { border-color: #fff; }
+
+      .thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+      .product-name {
+        font-family: 'Space Mono', monospace;
+        font-size: 2.5rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 0.5rem;
+      }
+
+      .product-price {
+        font-family: 'Space Mono', monospace;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 3rem;
+      }
+
+      .section-title {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: #888;
+        margin-bottom: 1rem;
+      }
+
+      .sizes { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem; }
+
+      .size-btn {
+        width: 45px;
+        height: 45px;
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.2);
+        color: #fff;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .size-btn:hover { border-color: #fff; }
+      .size-btn.active { background: #fff; color: #000; border-color: #fff; }
+
+      .add-btn {
+        width: 100%;
+        padding: 1.2rem;
+        background: #fff;
+        color: #000;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .add-btn:hover:not(:disabled) { background: #ccc; }
+      .add-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+      .recommended-section { margin-top: 6rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 3rem; }
+      .rec-title { font-family: 'Space Mono', monospace; font-size: 1.2rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2rem; }
+      .rec-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+
+      /* Hover flip effect for recommended cards */
+      .rec-card {
+        border: 1px solid rgba(255,255,255,0.05);
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .rec-card:hover {
+        border-color: rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.02);
+      }
+      .rec-image-container {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        position: relative;
+        overflow: hidden;
+      }
+      .rec-image-container img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        position: absolute;
+        transition: opacity 0.3s ease;
+      }
+      .rec-image-container .img-back {
+        opacity: 0;
+      }
+      .rec-card:hover .rec-image-container .img-front {
+        opacity: 0;
+      }
+      .rec-card:hover .rec-image-container .img-back {
+        opacity: 1;
+      }
+      .rec-name {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      @media (max-width: 900px) {
+        .product-layout { grid-template-columns: 1fr; gap: 3rem; }
+        .rec-grid { grid-template-columns: repeat(2, 1fr); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="product-layout">
+        <div class="gallery">
+          <div class="gallery-main">
+            <div class="corner-bl"></div><div class="corner-br"></div>
+            <img id="main-img" src="" alt="Product" />
+          </div>
+          <div class="gallery-thumbs" id="thumbs"></div>
+        </div>
+
+        <div class="product-details">
+          <h1 class="product-name" id="name"></h1>
+          <div class="product-price" id="price"></div>
+
+          <div class="section-title">Select Size</div>
+          <div class="sizes" id="sizes"></div>
+
+          <button class="add-btn" id="add" onclick="addCart()" disabled>Select Size</button>
+        </div>
+      </div>
+
+      <div class="recommended-section">
+        <h2 class="rec-title">Recommended</h2>
+        <div class="rec-grid" id="rec-grid"></div>
+      </div>
+    </div>
+
+    <script>
+      const products = {
+        "red-room-tshirt": {name:"RED ROOM T-SHIRT",price:55,images:{front:"/images/products/red-room-front.jpg",back:"/images/products/red-room-back.jpg"},sizes:["S","M","L","XL"]},
+        "electric-tshirt": {name:"ELECTRIC T-SHIRT",price:55,images:{front:"/images/products/electric-front.jpg",back:"/images/products/electric-back.jpg"},sizes:["S","M","L","XL"]},
+        "phoenix-tshirt": {name:"PHOENIX T-SHIRT",price:55,images:{front:"/images/products/phoenix-front.jpg",back:"/images/products/phoenix-back.jpg"},sizes:["S","M","L","XL"]},
+        "timeless-tshirt": {name:"TIMELESS T-SHIRT",price:55,images:{front:"/images/products/timeless-front.jpg",back:"/images/products/timeless-back.png"},sizes:["S","M","L","XL"]}
+      };
+
+      let p, sz;
+      const id = new URLSearchParams(location.search).get('id');
+      p = products[id];
+
+      if(p) {
+        document.title = `${p.name} – Black Room`;
+        document.getElementById('name').textContent = p.name;
+        document.getElementById('price').textContent = `$${p.price.toFixed(2)}`;
+        document.getElementById('main-img').src = p.images.front;
+        document.getElementById('thumbs').innerHTML = Object.entries(p.images).map(([k,v]) => 
+          `<div class="thumb" onclick="setImg('${v}', this)"><img src="${v}"/></div>`
+        ).join('');
+        document.getElementById('sizes').innerHTML = p.sizes.map(s => 
+          `<button class="size-btn" onclick="setSz('${s}',this)">${s}</button>`
+        ).join('');
+      }
+
+      function setImg(src, el) {
+        document.getElementById('main-img').src = src;
+        document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+      }
+
+      function setSz(s, el) {
+        sz = s;
+        document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('add').disabled = false;
+        document.getElementById('add').textContent = 'Add to Cart';
+      }
+
+      function addCart() {
+        let c = JSON.parse(localStorage.getItem('br_cart')||'[]');
+        c.push({id, name:p.name, price:p.price, size:sz, image:p.images.front, qty:1});
+        localStorage.setItem('br_cart', JSON.stringify(c));
+        window.location.href = '/cart.html';
+      }
+
+      // Recommended
+      document.getElementById('rec-grid').innerHTML = Object.entries(products).filter(([k])=>k!==id).slice(0,4).map(([k, pr]) => `
+        <div class="rec-card" onclick="window.location.href='/product.html?id=${k}'">
+          <div class="rec-image-container">
+            <img src="${pr.images.front}" class="img-front" alt="${pr.name} Front"/>
+            <img src="${pr.images.back}" class="img-back" alt="${pr.name} Back"/>
+          </div>
+          <div class="rec-name">${pr.name}</div>
+        </div>
+      `).join('');
+    </script>
+    <script src="/js/cart.js"></script>
+  </body>
+</html>

@@ -1,0 +1,128 @@
+[
+  {
+    "id": "high-voltage-jan16",
+    "title": "HIGH VOLTAGE - JAN 16",
+    "date": "JAN 16, 2026",
+    "location": "Miami, FL",
+    "folder": "high-voltage-jan16",
+    "zohoFolder": "HIGH VOLTAGE - JAN 16",
+    "zohoParent": "2026"
+  },
+  {
+    "id": "variance-jan9",
+    "title": "VARIANCE - JAN 9th",
+    "date": "JAN 9, 2026",
+    "location": "Miami, FL",
+    "folder": "variance-jan9",
+    "zohoFolder": "VARIANCE - JAN 9th",
+    "zohoParent": "2026"
+  },
+  {
+    "id": "variance-dec12",
+    "title": "VARIANCE - DEC 12th",
+    "date": "DEC 12, 2025",
+    "location": "Miami, FL",
+    "folder": "variance-dec12",
+    "zohoFolder": "VARIANCE - DEC 12th",
+    "zohoParent": "main"
+  },
+  {
+    "id": "colosseum-3-sep05",
+    "title": "COLOSSEUM III EDITION",
+    "date": "SEP 5, 2025",
+    "location": "Miami, FL",
+    "folder": "colosseum-3-sep05",
+    "zohoFolder": "COLOSSEUM III EDITION 09/05",
+    "zohoParent": "main"
+  },
+  {
+    "id": "red-room-aug23",
+    "title": "RED ROOM",
+    "date": "AUG 23, 2025",
+    "location": "Miami, FL",
+    "folder": "red-room-aug23",
+    "zohoFolder": "08/23 RED ROOM",
+    "zohoParent": "main"
+  },
+  {
+    "id": "red-room-xl-afters",
+    "title": "RED ROOM XL AFTERS",
+    "date": "AUG 2025",
+    "location": "Miami, FL",
+    "folder": "red-room-xl-afters",
+    "zohoFolder": "RED ROOM XL AFTERS ANDREW",
+    "zohoParent": "main"
+  },
+  {
+    "id": "blood-feast",
+    "title": "BLOOD FEAST",
+    "date": "2025",
+    "location": "Miami, FL",
+    "folder": "blood-feast",
+    "zohoFolder": "BLOOD FEAST",
+    "zohoParent": "main"
+  },
+  {
+    "id": "cadzow",
+    "title": "CADZOW",
+    "date": "2025",
+    "location": "Miami, FL",
+    "folder": "cadzow",
+    "zohoFolder": "CADZOW",
+    "zohoParent": "main"
+  },
+  {
+    "id": "colosseum-2",
+    "title": "COLOSSEUM II EDITION",
+    "date": "JUL 25, 2025",
+    "location": "Miami, FL",
+    "folder": "colosseum-2",
+    "zohoFolder": "COLOSSEUM II EDITION",
+    "zohoParent": "main"
+  },
+  {
+    "id": "colosseum-1",
+    "title": "COLOSSEUM I EDITION",
+    "date": "JUL 10, 2025",
+    "location": "Miami, FL",
+    "folder": "colosseum-1",
+    "zohoFolder": "COLOSSEUM I EDITION",
+    "zohoParent": "main"
+  },
+  {
+    "id": "beebo",
+    "title": "BEEBO",
+    "date": "JUN 22, 2025",
+    "location": "Miami, FL",
+    "folder": "beebo",
+    "zohoFolder": "BEEBO",
+    "zohoParent": "main"
+  },
+  {
+    "id": "kx-chr-briela-veneno",
+    "title": "KX CHR & BRIELA VENENO",
+    "date": "JUN 7, 2025",
+    "location": "Miami, FL",
+    "folder": "kx-chr-briela-veneno",
+    "zohoFolder": "KX CHR & BRIELA VENENO CONTENT",
+    "zohoParent": "main"
+  },
+  {
+    "id": "rave-material",
+    "title": "RAVE MATERIAL",
+    "date": "APR 14, 2025",
+    "location": "Miami, FL",
+    "folder": "rave-material",
+    "zohoFolder": "RAVE MATERIAL",
+    "zohoParent": "main"
+  },
+  {
+    "id": "12-hour-rave",
+    "title": "12 HOUR RAVE",
+    "date": "2025",
+    "location": "Miami, FL",
+    "folder": "12-hour-rave",
+    "zohoFolder": "12 HOUR RAVE",
+    "zohoParent": "main"
+  }
+]

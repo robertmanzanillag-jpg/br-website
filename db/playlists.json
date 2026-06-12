@@ -1,0 +1,67 @@
+[
+  {
+    "id": "1754521992547",
+    "name": "HARDTECHNO",
+    "description": "",
+    "userId": "robert.manzanillag@gmail.com",
+    "videos": [
+      {
+        "videoId": "ZhU1SN66TKI",
+        "title": "NAOMI LUNA - Hard Groove DJ Set at Black Room Radio | JULY 24-25",
+        "addedAt": "2025-08-06T23:15:43.521Z"
+      },
+      {
+        "videoId": "sfyYG4wQOAI",
+        "title": "PVR - DJ Set at Black Room Radio | NOV 03-25",
+        "addedAt": "2026-01-27T07:00:00.000Z"
+      },
+      {
+        "videoId": "h89TY5Mbg4M",
+        "title": "DIANA FRANCO - DJ Set at Black Room Radio x Techno Collective | OCT 30-25",
+        "addedAt": "2026-01-27T07:01:00.000Z"
+      },
+      {
+        "videoId": "lHTZ1QfXAo8",
+        "title": "CREAM - Industrial / Hard Techno DJ Set at Black Room Radio | OCT 27-25",
+        "addedAt": "2026-01-27T07:02:00.000Z"
+      },
+      {
+        "videoId": "7FrdvQCv1Uk",
+        "title": "MOODSWING - DJ Set at The Black Room Radio Miami [Techno Mix] 03/14/24",
+        "addedAt": "2026-01-27T06:49:58.373Z"
+      }
+    ],
+    "createdAt": "2025-08-06T23:13:12.547Z",
+    "updatedAt": "2026-01-27T06:49:58.373Z"
+  },
+  {
+    "id": "1754522153677",
+    "name": "HYPNOTIC",
+    "description": "Hypnotic and dark techno mixes",
+    "userId": "robert.manzanillag@gmail.com",
+    "videos": [
+      {
+        "videoId": "7QK-ZHSLrGw",
+        "title": "VYPER - DJ Set at Black Room Radio | JULY 24-25",
+        "addedAt": "2025-08-06T23:15:53.837Z"
+      },
+      {
+        "videoId": "FNguu751V7U",
+        "title": "KXAH - DJ Set at The Black Room Radio [Dark Techno Mix] 05/31/24",
+        "addedAt": "2025-08-06T23:16:08.866Z"
+      },
+      {
+        "videoId": "d-p1JetaPuQ",
+        "title": "PRAUZE - DJ Set at Black Room Radio | SEP 11-2025",
+        "addedAt": "2026-01-27T07:03:00.000Z"
+      },
+      {
+        "videoId": "Ap-zeRIoCdY",
+        "title": "Black Room Radio Miami - Fu 3",
+        "addedAt": "2026-01-27T07:04:00.000Z"
+      }
+    ],
+    "createdAt": "2025-08-06T23:15:53.677Z",
+    "updatedAt": "2026-01-27T07:04:00.000Z"
+  }
+]

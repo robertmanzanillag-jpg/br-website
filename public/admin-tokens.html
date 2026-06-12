@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Tokens - Black Room</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .page-container {
+            position: relative;
+            min-height: 100vh;
+            z-index: 1;
+        }
+
+        .tour-map-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.15;
+        }
+
+        .tour-map-bg svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .page-header {
+            padding: 100px 40px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .page-header h1 {
+            font-family: 'Space Mono', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-header p {
+            color: #888;
+            font-size: 14px;
+            letter-spacing: 0.05em;
+        }
+
+        .admin-nav {
+            display: flex;
+            gap: 16px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .admin-nav a {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 10px 20px;
+            border: 1px solid #333;
+            background: transparent;
+            color: #888;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .admin-nav a::before,
+        .admin-nav a::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-color: #333;
+            border-style: solid;
+            transition: border-color 0.3s ease;
+        }
+
+        .admin-nav a::before {
+            top: -1px;
+            left: -1px;
+            border-width: 1px 0 0 1px;
+        }
+
+        .admin-nav a::after {
+            bottom: -1px;
+            right: -1px;
+            border-width: 0 1px 1px 0;
+        }
+
+        .admin-nav a:hover {
+            color: #fff;
+            border-color: #fff;
+        }
+
+        .admin-nav a:hover::before,
+        .admin-nav a:hover::after {
+            border-color: #fff;
+        }
+
+        .admin-nav a.active {
+            color: #fff;
+            border-color: #fff;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 40px 60px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: start;
+            position: relative;
+            z-index: 1;
+        }
+
+        .section-card {
+            background: rgba(17, 17, 17, 0.9);
+            border: 1px solid #222;
+            padding: 30px;
+            position: relative;
+        }
+
+        .section-card::before,
+        .section-card::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-color: #333;
+            border-style: solid;
+            transition: border-color 0.3s ease;
+        }
+
+        .section-card::before {
+            top: -1px;
+            left: -1px;
+            border-width: 1px 0 0 1px;
+        }
+
+        .section-card::after {
+            bottom: -1px;
+            right: -1px;
+            border-width: 0 1px 1px 0;
+        }
+
+        .section-card:hover::before,
+        .section-card:hover::after {
+            border-color: #555;
+        }
+
+        .section-title {
+            font-family: 'Space Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: #fff;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-subtitle {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 24px;
+            letter-spacing: 0.05em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #333;
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input::placeholder {
+            color: #555;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #fff;
+        }
+
+        .form-group select option {
+            background: #111;
+            color: #fff;
+        }
+
+        .form-group small {
+            display: block;
+            color: #555;
+            font-size: 11px;
+            margin-top: 6px;
+        }
+
+        .form-group input[type="file"] {
+            padding: 10px;
+            border-style: dashed;
+        }
+
+        .calculation-preview {
+            background: #0a0a0a;
+            border: 1px solid #222;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .calculation-preview h3 {
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 16px;
+        }
+
+        .calculation-preview p {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .calculation-preview p strong {
+            color: #888;
+        }
+
+        .calculation-preview p span {
+            font-family: 'Space Mono', monospace;
+            color: #fff;
+        }
+
+        .search-section {
+            background: #0a0a0a;
+            border: 1px solid #222;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .search-section h3 {
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 16px;
+        }
+
+        .btn {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 10px 20px;
+            border: 1px solid #333;
+            background: transparent;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            position: relative;
+        }
+
+        .btn::before,
+        .btn::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-color: #333;
+            border-style: solid;
+            transition: border-color 0.3s ease;
+        }
+
+        .btn::before {
+            top: -1px;
+            left: -1px;
+            border-width: 1px 0 0 1px;
+        }
+
+        .btn::after {
+            bottom: -1px;
+            right: -1px;
+            border-width: 0 1px 1px 0;
+        }
+
+        .btn:hover {
+            color: #fff;
+            border-color: #fff;
+        }
+
+        .btn:hover::before,
+        .btn:hover::after {
+            border-color: #fff;
+        }
+
+        .btn-primary {
+            background: #fff;
+            color: #000;
+            border-color: #fff;
+            width: 100%;
+            margin-top: 24px;
+            padding: 14px 24px;
+        }
+
+        .btn-primary:hover {
+            background: #888;
+            color: #000;
+        }
+
+        .btn-primary::before,
+        .btn-primary::after {
+            border-color: #fff;
+        }
+
+        .btn-search {
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .header-actions .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .batches-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .batch-item {
+            background: #0a0a0a;
+            border: 1px solid #222;
+            padding: 20px;
+            position: relative;
+        }
+
+        .batch-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #333;
+        }
+
+        .batch-content {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 16px;
+        }
+
+        .batch-image {
+            width: 100px;
+            height: 100px;
+            flex-shrink: 0;
+            background: #111;
+            border: 1px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .batch-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .batch-image:hover img {
+            transform: scale(1.05);
+        }
+
+        .batch-details {
+            flex: 1;
+        }
+
+        .batch-name {
+            font-family: 'Space Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .batch-info {
+            color: #666;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        .batch-info span {
+            display: block;
+        }
+
+        .batch-stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .batch-stat {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            color: #888;
+        }
+
+        .batch-stat strong {
+            color: #fff;
+        }
+
+        .batch-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding-top: 16px;
+            border-top: 1px solid #222;
+        }
+
+        .batch-actions .btn {
+            font-size: 10px;
+            padding: 8px 14px;
+        }
+
+        .message {
+            padding: 14px 18px;
+            border: 1px solid #333;
+            margin-bottom: 20px;
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 0.05em;
+        }
+
+        .message.success {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: #555;
+            color: #fff;
+        }
+
+        .message.error {
+            background: rgba(255, 255, 255, 0.02);
+            border-color: #444;
+            color: #888;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 0.1em;
+        }
+
+        .no-batches {
+            text-align: center;
+            color: #555;
+            padding: 60px 20px;
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 0.1em;
+        }
+
+        .error {
+            text-align: center;
+            color: #888;
+            padding: 40px;
+        }
+
+        #image_preview {
+            max-width: 180px;
+            max-height: 180px;
+            object-fit: cover;
+            border: 1px solid #333;
+            margin-top: 12px;
+        }
+
+        #image_info {
+            font-size: 11px;
+            margin-top: 8px;
+        }
+
+        #search_result {
+            margin-top: 16px;
+            padding: 16px;
+            background: #111;
+            border: 1px solid #222;
+        }
+
+        #search_product_info h4 {
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            margin-bottom: 12px;
+            color: #888;
+        }
+
+        #search_product_info p {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        #search_product_info p strong {
+            color: #888;
+        }
+
+        #search_product_image {
+            max-width: 150px;
+            margin-top: 12px;
+            border: 1px solid #333;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 90vh;
+            object-fit: contain;
+            border: 1px solid #333;
+        }
+
+        .close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-family: 'Space Mono', monospace;
+            font-size: 32px;
+            color: #888;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close:hover {
+            color: #fff;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                padding: 0 20px 40px;
+            }
+
+            .page-header {
+                padding: 100px 20px 30px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .batch-content {
+                flex-direction: column;
+            }
+
+            .batch-image {
+                width: 100%;
+                max-width: 150px;
+            }
+
+            .header-actions {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="tour-map-bg">
+        <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+            <defs>
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
+            </defs>
+            <g fill="none" stroke="#ff0000" stroke-width="0.5" opacity="0.6" filter="url(#glow)">
+                <path d="M100,200 Q200,150 300,180 T500,160 T700,200 T900,150" />
+                <path d="M150,400 Q300,350 450,380 T750,360 T950,400" />
+                <path d="M50,600 Q200,550 400,580 T700,560 T1000,600" />
+                <circle cx="300" cy="180" r="3" fill="#ff0000"/>
+                <circle cx="500" cy="160" r="3" fill="#ff0000"/>
+                <circle cx="700" cy="200" r="3" fill="#ff0000"/>
+                <circle cx="450" cy="380" r="3" fill="#ff0000"/>
+                <circle cx="750" cy="360" r="3" fill="#ff0000"/>
+                <circle cx="400" cy="580" r="3" fill="#ff0000"/>
+                <text x="300" y="210" fill="#ff0000" font-size="10" font-family="Space Mono">MIAMI</text>
+                <text x="500" y="145" fill="#ff0000" font-size="10" font-family="Space Mono">NYC</text>
+                <text x="700" y="230" fill="#ff0000" font-size="10" font-family="Space Mono">LA</text>
+                <text x="450" y="410" fill="#ff0000" font-size="10" font-family="Space Mono">CDMX</text>
+                <text x="750" y="345" fill="#ff0000" font-size="10" font-family="Space Mono">LIMA</text>
+                <text x="400" y="610" fill="#ff0000" font-size="10" font-family="Space Mono">SAO PAULO</text>
+            </g>
+            <g fill="none" stroke="#ff0000" stroke-width="0.3" opacity="0.3">
+                <path d="M1100,100 Q1200,150 1300,120 T1500,140 T1700,100" />
+                <path d="M1050,300 Q1200,250 1400,280 T1650,260 T1850,300" />
+                <path d="M1000,500 Q1200,450 1450,480 T1700,460 T1900,500" />
+                <circle cx="1300" cy="120" r="3" fill="#ff0000"/>
+                <circle cx="1500" cy="140" r="3" fill="#ff0000"/>
+                <circle cx="1400" cy="280" r="3" fill="#ff0000"/>
+                <circle cx="1650" cy="260" r="3" fill="#ff0000"/>
+                <circle cx="1450" cy="480" r="3" fill="#ff0000"/>
+                <text x="1300" y="100" fill="#ff0000" font-size="10" font-family="Space Mono">BERLIN</text>
+                <text x="1500" y="165" fill="#ff0000" font-size="10" font-family="Space Mono">LONDON</text>
+                <text x="1400" y="310" fill="#ff0000" font-size="10" font-family="Space Mono">PARIS</text>
+                <text x="1650" y="245" fill="#ff0000" font-size="10" font-family="Space Mono">AMSTERDAM</text>
+                <text x="1450" y="510" fill="#ff0000" font-size="10" font-family="Space Mono">TOKYO</text>
+            </g>
+        </svg>
+    </div>
+
+    <div class="page-container">
+        <script src="/js/responsive-header.js"></script>
+
+        <div class="page-header">
+            <h1>TOKEN MANAGEMENT</h1>
+            <p>Create and manage Black Room product tokens</p>
+            <nav class="admin-nav">
+                <a href="/admin.html">Dashboard</a>
+                <a href="/admin-tokens.html" class="active">Tokens</a>
+                <a href="/admin/link-stats.html">Link Stats</a>
+                <a href="/admin/builder.html">Bio Builder</a>
+                <a href="/admin/analytics.html">Analytics</a>
+                <a href="/">Back to Site</a>
+            </nav>
+        </div>
+
+        <div class="container">
+            <div class="section-card">
+                <h2 class="section-title">CREATE TOKEN BATCH</h2>
+                <p class="section-subtitle">Generate new product tokens for distribution</p>
+
+                <form id="batch-form">
+                    <div class="form-group">
+                        <label for="product">Product Type *</label>
+                        <select id="product" name="product" required>
+                            <option value="">Select Product</option>
+                            <option value="T-Shirt">T-Shirt</option>
+                            <option value="Hoodie">Hoodie</option>
+                            <option value="Cap">Cap</option>
+                            <option value="Tank Top">Tank Top</option>
+                            <option value="Jacket">Jacket</option>
+                            <option value="Accessories">Accessories</option>
+                            <option value="Limited Edition">Limited Edition</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="drop_name">Drop Name *</label>
+                        <input type="text" id="drop_name" name="drop_name" placeholder="e.g., Season 2" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="variant">Variant</label>
+                        <input type="text" id="variant" name="variant" placeholder="e.g., Red Square">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="serial_from">Serial From *</label>
+                        <input type="number" id="serial_from" name="serial_from" placeholder="50" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="serial_to">Serial To *</label>
+                        <input type="number" id="serial_to" name="serial_to" placeholder="100" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tokens_per_item">Tokens Per Item *</label>
+                        <input type="number" id="tokens_per_item" name="tokens_per_item" value="1" min="1" max="10" required>
+                        <small>How many tokens per physical item</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="size">Size *</label>
+                        <select id="size" name="size" required>
+                            <option value="">Select Size</option>
+                            <option value="XS">XS</option>
+                            <option value="S">S</option>
+                            <option value="M">M</option>
+                            <option value="L">L</option>
+                            <option value="XL">XL</option>
+                            <option value="XXL">XXL</option>
+                            <option value="One Size">One Size</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="color">Color *</label>
+                        <select id="color" name="color" required>
+                            <option value="">Select Color</option>
+                            <option value="Black">Black</option>
+                            <option value="White">White</option>
+                            <option value="Red">Red</option>
+                            <option value="Blue">Blue</option>
+                            <option value="Green">Green</option>
+                            <option value="Yellow">Yellow</option>
+                            <option value="Purple">Purple</option>
+                            <option value="Pink">Pink</option>
+                            <option value="Orange">Orange</option>
+                            <option value="Gray">Gray</option>
+                            <option value="Black/Red">Black/Red</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="image">Product Image (Optional)</label>
+                        <input type="file" id="image" name="image" accept="image/*">
+                        <div id="image_preview_container">
+                            <img id="image_preview" style="display: none;" alt="Image Preview">
+                            <p id="image_info" style="display: none;"></p>
+                        </div>
+                    </div>
+
+                    <div class="calculation-preview">
+                        <h3>Batch Calculation</h3>
+                        <p><strong>Physical Items:</strong> <span id="items_count">0</span></p>
+                        <p><strong>Tokens per Item:</strong> <span id="tokens_per_display">1</span></p>
+                        <p><strong>Total Tokens:</strong> <span id="total_tokens">0</span></p>
+                    </div>
+
+                    <div class="search-section">
+                        <h3>Search Product by Code</h3>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="search_code">Product Code</label>
+                            <input type="text" id="search_code" placeholder="e.g., S2-RSQ-7GJ4KQ">
+                        </div>
+                        <button type="button" onclick="searchProductByCode()" class="btn btn-search">Search</button>
+                        <div id="search_result" style="display: none;">
+                            <div id="search_product_info"></div>
+                            <img id="search_product_image" style="display: none;" alt="Product Image">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">CREATE BATCH</button>
+                </form>
+            </div>
+
+            <div class="section-card">
+                <div class="header-actions">
+                    <h2 class="section-title">TOKEN BATCHES</h2>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary" id="refreshVideosBtn" onclick="refreshYouTubeVideos()">Refresh YouTube Videos</button>
+                        <button type="button" class="btn" onclick="runDiagnostic()">Diagnostic</button>
+                        <button type="button" class="btn" onclick="loadBatches()">Reload</button>
+                    </div>
+                </div>
+                <div id="batches-container">
+                    <div class="loading">Loading batches...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="imageModal" class="modal">
+        <span class="close" onclick="closeImageModal()">&times;</span>
+        <div class="modal-content">
+            <img id="modalImage" src="" alt="">
+        </div>
+    </div>
+
+    <script>
+        let currentEditingBatchId = null;
+        let imageBase64 = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing page...');
+            loadBatches();
+            setupFormListeners();
+            updateCalculation();
+            console.log('Page initialized successfully');
+        });
+
+        async function refreshYouTubeVideos() {
+            const btn = document.getElementById('refreshVideosBtn');
+            btn.disabled = true;
+            btn.textContent = 'Refreshing...';
+            try {
+                const res = await fetch('/api/admin/refresh-videos', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    alert(`✅ ${data.message}`);
+                } else {
+                    alert('❌ Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (err) {
+                alert('❌ Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Refresh YouTube Videos';
+            }
+        }
+
+        function setupFormListeners() {
+            ['serial_from', 'serial_to', 'tokens_per_item'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updateCalculation);
+            });
+            document.getElementById('image').addEventListener('change', handleImagePreview);
+            document.getElementById('batch-form').addEventListener('submit', handleFormSubmit);
+        }
+
+        function updateCalculation() {
+            const serialFrom = parseInt(document.getElementById('serial_from').value) || 0;
+            const serialTo = parseInt(document.getElementById('serial_to').value) || 0;
+            const tokensPerItem = parseInt(document.getElementById('tokens_per_item').value) || 1;
+            const itemsCount = Math.max(0, serialTo - serialFrom + 1);
+            const totalTokens = itemsCount * tokensPerItem;
+            document.getElementById('items_count').textContent = itemsCount;
+            document.getElementById('tokens_per_display').textContent = tokensPerItem;
+            document.getElementById('total_tokens').textContent = totalTokens;
+        }
+
+        function handleImagePreview(event) {
+            const file = event.target.files[0];
+            const preview = document.getElementById('image_preview');
+            const info = document.getElementById('image_info');
+
+            if (file) {
+                if (file.size > 10 * 1024 * 1024) {
+                    showMessage('Image is too large. Maximum 10MB.', 'error');
+                    event.target.value = '';
+                    clearImagePreview();
+                    return;
+                }
+
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff', 'image/svg+xml'];
+                const fileType = file.type.toLowerCase();
+                const isValidType = validTypes.includes(fileType) || fileType.startsWith('image/');
+
+                if (!isValidType) {
+                    showMessage('Invalid file type. Use JPG, PNG, GIF, WebP, BMP, TIFF, or SVG.', 'error');
+                    event.target.value = '';
+                    clearImagePreview();
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const imageData = e.target.result;
+                        preview.style.display = 'block';
+                        preview.src = imageData;
+                        imageBase64 = imageData;
+
+                        const existingError = document.querySelector('.image-preview-error');
+                        if (existingError) existingError.remove();
+
+                        const testImg = new Image();
+                        testImg.onload = function() {
+                            info.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB) - ${testImg.width}x${testImg.height}px`;
+                            info.style.display = 'block';
+                            info.style.color = '#888';
+                            showMessage('Image loaded successfully', 'success');
+                        };
+                        testImg.onerror = function() {
+                            showMessage('Error loading image. Check format.', 'error');
+                            info.textContent = `${file.name} - Format error`;
+                            info.style.color = '#666';
+                        };
+                        testImg.src = imageData;
+                    } catch (error) {
+                        showMessage('Error processing image: ' + error.message, 'error');
+                        clearImagePreview();
+                    }
+                };
+                reader.onerror = function(error) {
+                    showMessage('Error reading image file.', 'error');
+                    clearImagePreview();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                clearImagePreview();
+            }
+        }
+
+        function clearImagePreview() {
+            const preview = document.getElementById('image_preview');
+            const info = document.getElementById('image_info');
+            preview.style.display = 'none';
+            preview.src = '';
+            info.style.display = 'none';
+            info.textContent = '';
+            document.getElementById('image').value = '';
+            imageBase64 = null;
+        }
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const submitBtn = document.querySelector('.btn-primary');
+            const originalText = submitBtn.textContent;
+
+            try {
+                const isEditing = currentEditingBatchId !== null;
+                const actionText = isEditing ? 'Updating' : 'Creating';
+                const endpoint = isEditing ? `/admin/tokens/batch/${currentEditingBatchId}` : '/admin/tokens/create';
+                const method = isEditing ? 'PUT' : 'POST';
+
+                submitBtn.textContent = `${actionText}...`;
+                submitBtn.disabled = true;
+
+                const requiredFields = isEditing 
+                    ? ['product', 'drop_name'] 
+                    : ['product', 'drop_name', 'serial_from', 'serial_to', 'size', 'color'];
+
+                for (const fieldId of requiredFields) {
+                    const field = document.getElementById(fieldId);
+                    if (field && !field.value.trim()) {
+                        throw new Error(`Field "${fieldId}" is required`);
+                    }
+                }
+
+                const formData = {
+                    product: document.getElementById('product').value,
+                    drop_name: document.getElementById('drop_name').value,
+                    variant: document.getElementById('variant').value || ''
+                };
+
+                if (!isEditing) {
+                    formData.serial_from = parseInt(document.getElementById('serial_from').value);
+                    formData.serial_to = parseInt(document.getElementById('serial_to').value);
+                    formData.tokens_per_item = parseInt(document.getElementById('tokens_per_item').value) || 1;
+                    formData.size = document.getElementById('size').value;
+                    formData.color = document.getElementById('color').value;
+                }
+
+                if (imageBase64) {
+                    formData.image = imageBase64;
+                }
+
+                const response = await fetch(endpoint, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                let result;
+                try {
+                    result = await response.json();
+                } catch (parseError) {
+                    throw new Error('Server returned invalid response');
+                }
+
+                if (response.ok && result.ok) {
+                    showMessage(isEditing ? 'Batch updated successfully' : 'Batch created successfully', 'success');
+                    document.getElementById('batch-form').reset();
+                    clearImagePreview();
+                    currentEditingBatchId = null;
+                    submitBtn.textContent = 'CREATE BATCH';
+
+                    const fieldsToShow = ['serial_from', 'serial_to', 'tokens_per_item', 'size', 'color'];
+                    fieldsToShow.forEach(fieldId => {
+                        const field = document.getElementById(fieldId);
+                        const formGroup = field?.closest('.form-group');
+                        if (formGroup) formGroup.style.display = 'block';
+                        if (field) field.setAttribute('required', 'required');
+                    });
+
+                    updateCalculation();
+                    await loadBatches();
+                } else {
+                    throw new Error(result.error || 'Unknown error');
+                }
+            } catch (error) {
+                showMessage('Error: ' + error.message, 'error');
+            } finally {
+                submitBtn.textContent = currentEditingBatchId ? 'UPDATE BATCH' : 'CREATE BATCH';
+                submitBtn.disabled = false;
+            }
+        }
+
+        async function loadBatches() {
+            const container = document.getElementById('batches-container');
+            container.innerHTML = '<div class="loading">Loading batches...</div>';
+
+            try {
+                const response = await fetch('/admin/tokens/batches');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                const batches = Array.isArray(data) ? data : (data.batches || []);
+
+                if (!batches || batches.length === 0) {
+                    container.innerHTML = '<div class="no-batches">NO BATCHES CREATED YET</div>';
+                    return;
+                }
+
+                container.innerHTML = '<div class="batches-list"></div>';
+                const list = container.querySelector('.batches-list');
+
+                batches.forEach(batch => {
+                    const imageUrl = batch.image_url && batch.image_url.trim() !== '' 
+                        ? batch.image_url 
+                        : '/api/storage/images/logo.png';
+
+                    const batchHtml = `
+                        <div class="batch-item">
+                            <div class="batch-content">
+                                <div class="batch-image" onclick="showImageModal('${imageUrl}', '${batch.drop_name || 'Batch Image'}')">
+                                    <img src="${imageUrl}" 
+                                         alt="${batch.drop_name || 'Batch'}" 
+                                         onerror="handleImageError(this, ${batch.id})"
+                                         data-original-url="${batch.image_url || ''}"
+                                         data-has-custom="${batch.has_custom_image || false}"
+                                         data-fallback-level="0">
+                                </div>
+                                <div class="batch-details">
+                                    <div class="batch-name">${batch.drop_name || 'Unnamed'} - ${batch.variant || 'Standard'}</div>
+                                    <div class="batch-info">
+                                        <span>${batch.product || 'Product'} | ${batch.size || '-'} | ${batch.color || '-'}</span>
+                                    </div>
+                                    <div class="batch-stats">
+                                        <span class="batch-stat">TOKENS: <strong>${batch.token_count || 0}</strong></span>
+                                        <span class="batch-stat">CLAIMED: <strong>${batch.claimed_count || 0}</strong></span>
+                                        <span class="batch-stat">AVAILABLE: <strong>${batch.available_count || 0}</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="batch-actions">
+                                <button class="btn" onclick="editBatch(${batch.id})">Edit</button>
+                                <button class="btn" onclick="exportBatch(${batch.id})">Export CSV</button>
+                                <button class="btn" onclick="deleteBatch(${batch.id})">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                    list.innerHTML += batchHtml;
+                });
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="error">
+                        Error loading batches: ${error.message}
+                        <br><button onclick="loadBatches()" class="btn" style="margin-top: 10px;">Try Again</button>
+                    </div>
+                `;
+            }
+        }
+
+        function handleImageError(img, batchId) {
+            if (img.dataset.errorHandled === 'true') return;
+            
+            const fallbackLevel = parseInt(img.getAttribute('data-fallback-level') || '0');
+            
+            if (fallbackLevel >= 4) {
+                img.onerror = null;
+                img.dataset.errorHandled = 'true';
+                img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMTExIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJTcGFjZSBNb25vIiBmb250LXNpemU9IjEwIiBmaWxsPSIjNTU1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tk8gSU1BR0U8L3RleHQ+PC9zdmc+';
+                return;
+            }
+
+            img.setAttribute('data-fallback-level', String(fallbackLevel + 1));
+
+            let nextFallback;
+            switch (fallbackLevel) {
+                case 0: nextFallback = '/api/storage/images/logo.png'; break;
+                case 1: nextFallback = '/images/logo.png'; break;
+                case 2: nextFallback = '/api/storage/product-images/logo.png'; break;
+                default:
+                    nextFallback = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMTExIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJTcGFjZSBNb25vIiBmb250LXNpemU9IjEwIiBmaWxsPSIjNTU1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tk8gSU1BR0U8L3RleHQ+PC9zdmc+';
+            }
+
+            setTimeout(() => {
+                if (img && img.parentNode && img.dataset.errorHandled !== 'true') {
+                    img.src = nextFallback;
+                }
+            }, 200);
+        }
+
+        function showImageModal(imageUrl, title) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modal.style.display = 'block';
+            modalImg.src = imageUrl;
+            modalImg.alt = title;
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').style.display = 'none';
+            document.getElementById('modalImage').src = '';
+        }
+
+        async function exportBatch(id) {
+            try {
+                showMessage('Exporting CSV...', 'success');
+                const response = await fetch(`/admin/tokens/batch/${id}/export`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `batch_${id}_tokens.csv`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                showMessage('CSV exported successfully', 'success');
+            } catch (error) {
+                showMessage('Error exporting CSV: ' + error.message, 'error');
+            }
+        }
+
+        async function editBatch(id) {
+            showMessage('Loading batch data...', 'success');
+            try {
+                const response = await fetch(`/admin/tokens/batch/${id}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const batch = await response.json();
+
+                document.getElementById('batch-form').reset();
+                clearImagePreview();
+
+                document.getElementById('product').value = batch.product || '';
+                document.getElementById('drop_name').value = batch.drop_name || '';
+                document.getElementById('variant').value = batch.variant || '';
+
+                const fieldsToHide = ['serial_from', 'serial_to', 'tokens_per_item', 'size', 'color'];
+                fieldsToHide.forEach(fieldId => {
+                    const field = document.getElementById(fieldId);
+                    const formGroup = field?.closest('.form-group');
+                    if (formGroup) formGroup.style.display = 'none';
+                    if (field) field.removeAttribute('required');
+                });
+
+                const imagePreview = document.getElementById('image_preview');
+                const imageInfo = document.getElementById('image_info');
+
+                if (batch.image_url && batch.image_url !== '/api/storage/images/logo.png') {
+                    imagePreview.src = batch.image_url;
+                    imagePreview.style.display = 'block';
+                    imageInfo.textContent = 'Current batch image';
+                    imageInfo.style.display = 'block';
+                }
+
+                currentEditingBatchId = id;
+                document.querySelector('.btn-primary').textContent = 'UPDATE BATCH';
+
+                document.getElementById('items_count').textContent = 'Edit mode';
+                document.getElementById('tokens_per_display').textContent = '-';
+                document.getElementById('total_tokens').textContent = batch.token_count || '0';
+
+                document.querySelector('.section-card').scrollIntoView({ behavior: 'smooth' });
+                showMessage('Batch loaded. Modify fields and click UPDATE BATCH.', 'success');
+            } catch (error) {
+                showMessage('Error loading batch: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteBatch(id) {
+            if (!confirm('Delete this batch? This cannot be undone.')) return;
+
+            try {
+                showMessage('Deleting batch...', 'success');
+                const response = await fetch(`/admin/tokens/batch/${id}`, { method: 'DELETE' });
+                
+                let result;
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    if (response.ok) result = { ok: true };
+                    else throw new Error('Server error');
+                }
+
+                if (response.ok && result.ok) {
+                    showMessage('Batch deleted successfully', 'success');
+                    await loadBatches();
+                } else {
+                    throw new Error(result.error || 'Error deleting batch');
+                }
+            } catch (error) {
+                showMessage('Error deleting batch: ' + error.message, 'error');
+            }
+        }
+
+        async function runDiagnostic() {
+            try {
+                showMessage('Running diagnostic...', 'success');
+                const response = await fetch('/admin/tokens/diagnostic');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const diagnostic = await response.json();
+                
+                let message = 'DIAGNOSTIC COMPLETE:\n\n';
+                message += `Database: ${diagnostic.database ? 'OK' : 'Error'}\n`;
+                message += `Total Batches: ${diagnostic.totalBatches || 0}\n`;
+                message += `Total Tokens: ${diagnostic.totalTokens || 0}\n`;
+                message += `Available: ${diagnostic.availableTokens || 0}\n`;
+                message += `Claimed: ${diagnostic.claimedTokens || 0}`;
+                
+                alert(message);
+            } catch (error) {
+                showMessage('Error running diagnostic: ' + error.message, 'error');
+            }
+        }
+
+        async function searchProductByCode() {
+            const codeInput = document.getElementById('search_code');
+            const resultDiv = document.getElementById('search_result');
+            const infoDiv = document.getElementById('search_product_info');
+            const imageDiv = document.getElementById('search_product_image');
+
+            const code = codeInput.value.trim();
+            if (!code) {
+                showMessage('Please enter a code to search', 'error');
+                return;
+            }
+
+            try {
+                showMessage('Searching...', 'success');
+                const response = await fetch(`/admin/tokens/products/${encodeURIComponent(code)}`);
+                const result = await response.json();
+
+                if (response.ok && result.ok) {
+                    infoDiv.innerHTML = `
+                        <h4>Product Found</h4>
+                        <p><strong>Code:</strong> ${result.code}</p>
+                        <p><strong>Product:</strong> ${result.product}</p>
+                        <p><strong>Drop:</strong> ${result.drop_name}</p>
+                        <p><strong>Variant:</strong> ${result.variant || 'N/A'}</p>
+                        <p><strong>Size:</strong> ${result.size}</p>
+                        <p><strong>Color:</strong> ${result.color}</p>
+                        <p><strong>Serial:</strong> ${result.serial}</p>
+                        <p><strong>Status:</strong> ${result.status}</p>
+                    `;
+
+                    if (result.image_url) {
+                        imageDiv.src = result.image_url;
+                        imageDiv.style.display = 'block';
+                    } else {
+                        imageDiv.style.display = 'none';
+                    }
+
+                    resultDiv.style.display = 'block';
+                    showMessage('Product found', 'success');
+                } else {
+                    infoDiv.innerHTML = '<h4>Product not found</h4>';
+                    imageDiv.style.display = 'none';
+                    resultDiv.style.display = 'block';
+                    showMessage('Product not found', 'error');
+                }
+            } catch (error) {
+                showMessage('Error searching: ' + error.message, 'error');
+            }
+        }
+
+        function showMessage(text, type = 'success') {
+            const formSection = document.querySelector('.section-card');
+            const existingMessages = document.querySelectorAll('.message');
+            existingMessages.forEach(msg => msg.remove());
+
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            message.textContent = text;
+
+            if (formSection) {
+                formSection.insertBefore(message, formSection.firstChild.nextSibling);
+            }
+
+            setTimeout(() => {
+                const allMessages = document.querySelectorAll('.message');
+                allMessages.forEach(msg => msg.remove());
+            }, 5000);
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('imageModal');
+            if (event.target === modal) closeImageModal();
+        };
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') closeImageModal();
+        });
+    </script>
+</body>
+</html>

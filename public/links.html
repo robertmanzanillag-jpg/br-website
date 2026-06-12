@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Black Room - Links</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #000;
+      min-height: 100vh;
+      color: #fff;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .bg-image {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('/images/links-bg.png') center center / cover no-repeat;
+      opacity: 0.4;
+      z-index: 0;
+    }
+
+    .bg-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.9) 100%);
+      z-index: 1;
+    }
+
+    .container {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 50px 20px 80px;
+      min-height: 100vh;
+    }
+
+    .logo {
+      width: 120px;
+      height: auto;
+      margin-bottom: 20px;
+      filter: brightness(1.1);
+    }
+
+    .profile-section {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .profile-name {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: 6px;
+      margin-bottom: 8px;
+      text-shadow: 0 2px 20px rgba(255,255,255,0.2);
+    }
+
+    .profile-bio {
+      font-size: 14px;
+      color: #999;
+      font-weight: 400;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .social-icons {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    .social-icons a {
+      color: #666;
+      font-size: 22px;
+      transition: all 0.2s ease;
+    }
+
+    .social-icons a:hover {
+      color: #fff;
+      transform: scale(1.1);
+    }
+
+    .links-container {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .link-button {
+      display: flex;
+      align-items: center;
+      position: relative;
+      background: rgba(15, 15, 15, 0.9);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 0;
+      text-decoration: none;
+      color: #fff;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .link-button:hover {
+      background: rgba(25, 25, 25, 0.95);
+      border-color: rgba(255, 23, 68, 0.3);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 40px rgba(255, 23, 68, 0.15);
+    }
+
+    .link-button.style-filled {
+      border: none;
+    }
+
+    .link-button.style-outline {
+      background: transparent;
+      border-width: 2px;
+    }
+
+    .link-button.style-soft {
+      border: none;
+    }
+
+    .link-button:active { transform: translateY(-1px); }
+
+    .link-preview {
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .link-preview::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      opacity: 0.15;
+    }
+
+    .link-preview.ticket::before,
+    .link-preview.shop::before,
+    .link-preview.academy::before,
+    .link-preview.chat::before,
+    .link-preview.tiktok::before,
+    .link-preview.instagram::before,
+    .link-preview.youtube::before,
+    .link-preview.spotify::before { 
+      background: linear-gradient(135deg, #333, #111); 
+      opacity: 0.4; 
+    }
+
+    .link-preview i {
+      position: relative;
+      z-index: 1;
+    }
+
+    .link-preview.ticket i,
+    .link-preview.shop i,
+    .link-preview.academy i,
+    .link-preview.chat i,
+    .link-preview.tiktok i,
+    .link-preview.instagram i,
+    .link-preview.youtube i,
+    .link-preview.spotify i { 
+      color: #fff; 
+    }
+
+    .link-content {
+      flex: 1;
+      padding: 16px 20px 16px 16px;
+      text-align: left;
+    }
+
+    .link-title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .link-subtitle {
+      font-size: 12px;
+      color: #666;
+      font-weight: 400;
+    }
+
+    .link-arrow {
+      color: #333;
+      font-size: 14px;
+      margin-right: 20px;
+      transition: all 0.3s;
+    }
+
+    .link-button:hover .link-arrow {
+      color: #fff;
+      transform: translateX(3px);
+    }
+
+    /* Progress Bar / Sold Out - Industrial Design */
+    .link-button.has-progress {
+      padding-bottom: 28px;
+    }
+    
+    .link-progress-wrapper {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 24px;
+      background: #000;
+      border-top: 1px solid #333;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 10px;
+    }
+    
+    .link-progress-container {
+      flex: 1;
+      height: 8px;
+      background: #111;
+      border: 1px solid #333;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .link-progress-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 9.5%,
+        #333 9.5%,
+        #333 10%
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+    
+    .link-progress-bar {
+      height: 100%;
+      background: linear-gradient(180deg, #fff 0%, #888 50%, #fff 100%);
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
+    
+    .link-progress-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #fff;
+      text-transform: uppercase;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .link-progress-label::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: #fff;
+      animation: progress-pulse 1s ease-in-out infinite;
+    }
+    
+    @keyframes progress-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    
+    .link-progress-percent {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      color: #888;
+      letter-spacing: 1px;
+      min-width: 32px;
+      text-align: right;
+    }
+
+    .header-element {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .header-element h3 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .header-element p {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .divider-element {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 0;
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .divider-text {
+      font-size: 11px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .divider-dots {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px 0;
+    }
+
+    .divider-dots span {
+      width: 6px;
+      height: 6px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+    }
+
+    .promo-banner {
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .promo-banner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 100%);
+      pointer-events: none;
+    }
+
+    .promo-banner:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 40px rgba(255, 23, 68, 0.3);
+    }
+
+    .promo-badge {
+      display: inline-block;
+      background: rgba(0,0,0,0.3);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+
+    .promo-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    .promo-code-container {
+      margin-top: 12px;
+    }
+
+    .promo-code {
+      display: inline-block;
+      background: rgba(0,0,0,0.4);
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      border: 1px dashed rgba(255,255,255,0.3);
+    }
+
+    .video-card {
+      border-radius: 16px;
+      overflow: hidden;
+      background: rgba(15, 15, 15, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .video-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 40px rgba(255, 23, 68, 0.15);
+      border-color: rgba(255, 23, 68, 0.3);
+    }
+
+    .video-thumb {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .video-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .video-play {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px;
+      height: 60px;
+      background: rgba(255, 23, 68, 0.9);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      transition: all 0.3s;
+      box-shadow: 0 4px 20px rgba(255,255,255,0.2);
+    }
+
+    .video-card:hover .video-play {
+      transform: translate(-50%, -50%) scale(1.1);
+      background: #fff;
+      color: #000;
+    }
+
+    .video-info {
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .video-info i {
+      color: #fff;
+    }
+
+    .video-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .image-banner {
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .image-banner:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    .image-banner img {
+      width: 100%;
+      display: block;
+    }
+
+    .countdown-element {
+      background: rgba(15, 15, 15, 0.9);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .countdown-element:hover {
+      border-color: rgba(255, 23, 68, 0.3);
+      transform: translateY(-3px);
+    }
+
+    .countdown-title {
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+
+    .countdown-boxes {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .countdown-box {
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 16px 20px;
+      min-width: 70px;
+    }
+
+    .countdown-number {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .countdown-label {
+      font-size: 10px;
+      color: #666;
+      text-transform: uppercase;
+      margin-top: 6px;
+      letter-spacing: 1px;
+    }
+
+    .playlist-element {
+      background: rgba(15, 15, 15, 0.9);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .playlist-element:hover {
+      border-color: rgba(255, 23, 68, 0.3);
+      transform: translateY(-3px);
+    }
+
+    .playlist-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+
+    .playlist-icon.spotify { background: #333; }
+    .playlist-icon.soundcloud { background: #333; }
+    .playlist-icon.apple { background: #333; }
+
+    .playlist-info {
+      flex: 1;
+    }
+
+    .playlist-info h4 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .playlist-info p {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .playlist-play {
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      transition: all 0.3s;
+    }
+
+    .playlist-element:hover .playlist-play {
+      background: #fff;
+      color: #000;
+    }
+
+    /* Banner Element */
+    .banner-element {
+      border-radius: 20px;
+      padding: 32px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      background-size: cover;
+      background-position: center;
+    }
+    
+    .banner-element::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      pointer-events: none;
+    }
+    
+    .banner-element:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 15px 50px rgba(0,0,0,0.5);
+    }
+    
+    .banner-element.gradient-purple,
+    .banner-element.gradient-red,
+    .banner-element.gradient-blue,
+    .banner-element.gradient-gold,
+    .banner-element.dark,
+    .banner-element.neon { 
+      background: linear-gradient(135deg, #222 0%, #111 100%); 
+      border: 1px solid rgba(255,255,255,0.1); 
+    }
+    
+    .banner-content {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .banner-headline {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    
+    .banner-desc {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    
+    .banner-cta {
+      display: inline-block;
+      padding: 12px 32px;
+      background: #fff;
+      color: #000;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 30px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .banner-element:hover .banner-cta {
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    
+    /* Social Row Element */
+    .social-row {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      padding: 20px 0;
+      flex-wrap: wrap;
+    }
+    
+    .social-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #fff;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    
+    .social-btn:hover {
+      transform: translateY(-4px) scale(1.1);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    }
+    
+    .social-btn.instagram,
+    .social-btn.tiktok,
+    .social-btn.youtube,
+    .social-btn.spotify,
+    .social-btn.soundcloud,
+    .social-btn.twitter,
+    .social-btn.facebook,
+    .social-btn.discord,
+    .social-btn.whatsapp,
+    .social-btn.telegram,
+    .social-btn.linkedin,
+    .social-btn.twitch { 
+      background: #222; 
+      border: 1px solid rgba(255,255,255,0.1); 
+    }
+
+    .video-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.95);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .video-modal.active { display: flex; }
+
+    .video-modal-content {
+      width: 100%;
+      max-width: 800px;
+      position: relative;
+    }
+
+    .video-modal-close {
+      position: absolute;
+      top: -40px;
+      right: 0;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .video-modal iframe {
+      width: 100%;
+      aspect-ratio: 16/9;
+      border: none;
+      border-radius: 12px;
+    }
+
+    .footer {
+      margin-top: 50px;
+      text-align: center;
+    }
+
+    .footer p {
+      color: #333;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Tablet */
+    @media (max-width: 768px) {
+      .container { 
+        padding: 40px 20px 70px; 
+      }
+      .logo { 
+        width: 110px; 
+      }
+      .profile-name { 
+        font-size: 28px; 
+        letter-spacing: 5px; 
+      }
+      .profile-bio {
+        font-size: 13px;
+      }
+      .links-container {
+        max-width: 100%;
+        gap: 14px;
+      }
+      .link-preview { 
+        width: 75px; 
+        height: 75px; 
+        font-size: 26px; 
+      }
+      .link-content { 
+        padding: 15px 18px 15px 14px; 
+      }
+      .link-title { 
+        font-size: 15px; 
+      }
+      .promo-banner { 
+        padding: 24px 20px; 
+      }
+      .video-embed iframe {
+        border-radius: 10px;
+      }
+      .countdown-boxes { 
+        gap: 10px; 
+      }
+      .countdown-box { 
+        padding: 14px 16px; 
+        min-width: 65px; 
+      }
+      .countdown-number { 
+        font-size: 26px; 
+      }
+      .countdown-label {
+        font-size: 9px;
+      }
+      .video-modal-content {
+        width: 95%;
+        padding: 0;
+      }
+    }
+    
+    /* Mobile */
+    @media (max-width: 480px) {
+      .container { 
+        padding: 35px 14px 60px; 
+      }
+      .logo { 
+        width: 90px; 
+      }
+      .profile-section {
+        margin-bottom: 30px;
+      }
+      .profile-name { 
+        font-size: 24px; 
+        letter-spacing: 3px; 
+      }
+      .profile-bio {
+        font-size: 12px;
+        letter-spacing: 1.5px;
+      }
+      .links-container {
+        gap: 12px;
+      }
+      .link-button {
+        border-radius: 14px;
+      }
+      .link-preview { 
+        width: 65px; 
+        height: 65px; 
+        font-size: 22px; 
+      }
+      .link-content { 
+        padding: 12px 14px 12px 12px; 
+      }
+      .link-title { 
+        font-size: 14px; 
+      }
+      .link-subtitle {
+        font-size: 11px;
+      }
+      .link-arrow { 
+        margin-right: 14px;
+        font-size: 14px;
+      }
+      .promo-banner { 
+        padding: 18px 16px;
+        border-radius: 14px;
+      }
+      .promo-title { 
+        font-size: 16px; 
+      }
+      .promo-discount {
+        font-size: 10px;
+        padding: 4px 8px;
+      }
+      .promo-code-label {
+        font-size: 10px;
+      }
+      .promo-code {
+        font-size: 18px;
+      }
+      .header-element {
+        padding: 15px 0;
+      }
+      .header-element h2 {
+        font-size: 18px;
+      }
+      .countdown-boxes { 
+        gap: 6px; 
+      }
+      .countdown-box { 
+        padding: 10px 12px; 
+        min-width: 55px;
+        border-radius: 10px;
+      }
+      .countdown-number { 
+        font-size: 22px; 
+      }
+      .countdown-label {
+        font-size: 8px;
+      }
+      .video-embed {
+        border-radius: 12px;
+      }
+      .video-embed iframe {
+        border-radius: 10px;
+      }
+      .playlist-embed iframe {
+        height: 280px;
+      }
+      .image-banner img {
+        border-radius: 12px;
+      }
+      .footer {
+        margin-top: 40px;
+      }
+      .footer p {
+        font-size: 10px;
+      }
+    }
+    
+    /* Very small mobile */
+    @media (max-width: 360px) {
+      .container { 
+        padding: 30px 12px 50px; 
+      }
+      .logo { 
+        width: 80px; 
+      }
+      .profile-name { 
+        font-size: 20px; 
+        letter-spacing: 2px; 
+      }
+      .profile-bio {
+        font-size: 11px;
+        letter-spacing: 1px;
+      }
+      .link-preview { 
+        width: 55px; 
+        height: 55px; 
+        font-size: 18px; 
+      }
+      .link-content { 
+        padding: 10px 12px 10px 10px; 
+      }
+      .link-title { 
+        font-size: 13px; 
+      }
+      .link-subtitle {
+        font-size: 10px;
+      }
+      .promo-banner { 
+        padding: 15px 14px; 
+      }
+      .promo-title { 
+        font-size: 14px; 
+      }
+      .countdown-box { 
+        padding: 8px 10px; 
+        min-width: 48px; 
+      }
+      .countdown-number { 
+        font-size: 18px; 
+      }
+      .countdown-label {
+        font-size: 7px;
+      }
+      .header-element h2 {
+        font-size: 16px;
+      }
+    }
+    
+    /* Landscape phone */
+    @media (max-height: 500px) and (orientation: landscape) {
+      .container {
+        padding: 20px 30px 40px;
+      }
+      .logo {
+        width: 80px;
+        margin-bottom: 10px;
+      }
+      .profile-section {
+        margin-bottom: 20px;
+      }
+      .profile-name {
+        font-size: 22px;
+      }
+      .links-container {
+        max-width: 600px;
+        gap: 10px;
+      }
+      .link-preview {
+        width: 55px;
+        height: 55px;
+        font-size: 20px;
+      }
+      .link-content {
+        padding: 10px 12px 10px 10px;
+      }
+      .link-title {
+        font-size: 13px;
+      }
+    }
+  </style>
+  <script src="https://unpkg.com/@barba/core@2.9.7/dist/barba.umd.js"></script>
+  <script src="/js/global-header.js"></script>
+</head>
+<body data-barba="wrapper">
+  <main data-barba="container" data-barba-namespace="links">
+  <!-- Header injected by global-header.js -->
+  <div class="bg-image"></div>
+  <div class="bg-overlay"></div>
+  
+  <div class="container">
+    <img src="/images/logo.png" alt="Black Room" class="logo">
+    
+    <div class="profile-section">
+      <h1 class="profile-name">BLACK ROOM</h1>
+      <p class="profile-bio">Techno raves and radio</p>
+      <div class="social-icons">
+        <a href="https://instagram.com/blackroom.us" target="_blank" rel="noopener" title="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://tiktok.com/@blackroom.us" target="_blank" rel="noopener" title="TikTok"><i class="fab fa-tiktok"></i></a>
+        <a href="https://youtube.com/@BlackRoomMiami" target="_blank" rel="noopener" title="YouTube"><i class="fab fa-youtube"></i></a>
+      </div>
+    </div>
+
+    <div class="links-container" id="links-container"></div>
+
+    <div class="footer">
+      <p>Miami's Underground Techno</p>
+    </div>
+  </div>
+
+  <div class="video-modal" id="videoModal" onclick="closeVideoModal(event)">
+    <div class="video-modal-content">
+      <button class="video-modal-close" onclick="closeVideoModal()">&times;</button>
+      <iframe id="videoFrame" src="" allowfullscreen></iframe>
+    </div>
+  </div>
+
+  <script>
+    const BRAND_ICONS = ['instagram', 'tiktok', 'youtube', 'spotify', 'twitter', 'facebook', 'discord', 'twitch', 'soundcloud', 'apple', 'whatsapp', 'telegram', 'linkedin', 'pinterest', 'snapchat', 'reddit', 'patreon', 'paypal', 'github', 'dribbble', 'behance', 'medium', 'vimeo', 'mixcloud'];
+
+    const previewStyles = {
+      'ticket': 'ticket',
+      'ticket-alt': 'ticket',
+      'shopping-bag': 'shop',
+      'store': 'shop',
+      'graduation-cap': 'academy',
+      'comments': 'chat',
+      'whatsapp': 'chat',
+      'tiktok': 'tiktok',
+      'instagram': 'instagram',
+      'youtube': 'youtube',
+      'spotify': 'spotify'
+    };
+
+    let countdownIntervals = [];
+
+    function renderElements(elements) {
+      countdownIntervals.forEach(i => clearInterval(i));
+      countdownIntervals = [];
+
+      const container = document.getElementById('links-container');
+      if (!elements.length) {
+        container.innerHTML = '<p style="text-align:center;color:#666">No links available</p>';
+        return;
+      }
+      
+      container.innerHTML = elements.map(el => {
+        const type = el.element_type;
+        const meta = el.metadata || {};
+
+        if (type === 'header') return renderHeader(el);
+        if (type === 'divider') return renderDivider(el, meta);
+        if (type === 'promo') return renderPromo(el, meta);
+        if (type === 'video') return renderVideo(el, meta);
+        if (type === 'image') return renderImage(el, meta);
+        if (type === 'countdown') return renderCountdown(el, meta);
+        if (type === 'playlist') return renderPlaylist(el, meta);
+        if (type === 'banner') return renderBanner(el, meta);
+        if (type === 'social') return renderSocialRow(el, meta);
+        return renderLink(el, meta);
+      }).join('');
+
+      initCountdowns();
+    }
+
+    function renderLink(link, meta) {
+      const safeUrl = (link.url || '').replace(/'/g, "\\'");
+      const icon = link.icon || 'link';
+      const isBrand = BRAND_ICONS.includes(icon);
+      const iconClass = isBrand ? `fab fa-${icon}` : `fas fa-${icon}`;
+      const style = meta.style || 'filled';
+      const color = meta.color || '#0f0f0f';
+      const showProgress = meta.show_progress || false;
+      const progressPercent = meta.progress_percent || 0;
+      const progressLabel = meta.progress_label || '';
+
+      let styleClass = '';
+      let inlineStyle = '';
+      
+      if (style === 'filled') {
+        inlineStyle = `background:${color};`;
+      } else if (style === 'outline') {
+        styleClass = 'style-outline';
+        inlineStyle = `border-color:${color};`;
+      } else if (style === 'soft') {
+        styleClass = 'style-soft';
+        inlineStyle = `background:${color}22;`;
+      }
+      
+      if (showProgress) {
+        styleClass += ' has-progress';
+      }
+
+      const progressBar = showProgress ? `
+        <div class="link-progress-wrapper">
+          ${progressLabel ? `<div class="link-progress-label">${progressLabel}</div>` : ''}
+          <div class="link-progress-container">
+            <div class="link-progress-bar" style="width: ${progressPercent}%"></div>
+          </div>
+          <div class="link-progress-percent">${progressPercent}%</div>
+        </div>
+      ` : '';
+
+      const isExternal = safeUrl && !safeUrl.startsWith('/') && !safeUrl.startsWith(window.location.origin);
+      const target = isExternal ? '_blank' : '_self';
+      
+      return `
+        <a href="/go/${link.id}" ${isExternal ? 'target="_blank" rel="noopener noreferrer"' : ''} class="link-button ${styleClass}" style="${inlineStyle}">
+          <div class="link-preview ${previewStyles[icon] || ''}">
+            <i class="${iconClass}"></i>
+          </div>
+          <div class="link-content">
+            <div class="link-title">${link.title}</div>
+            ${link.subtitle ? `<div class="link-subtitle">${link.subtitle}</div>` : ''}
+          </div>
+          <i class="fas fa-chevron-right link-arrow"></i>
+          ${progressBar}
+        </a>
+      `;
+    }
+
+    function renderHeader(el) {
+      return `
+        <div class="header-element">
+          <h3>${el.title || ''}</h3>
+          ${el.subtitle ? `<p>${el.subtitle}</p>` : ''}
+        </div>
+      `;
+    }
+
+    function renderDivider(el, meta) {
+      const style = meta.divider_style || 'line';
+      
+      if (style === 'dots') {
+        return `<div class="divider-dots"><span></span><span></span><span></span></div>`;
+      }
+      
+      if (style === 'text' && meta.divider_text) {
+        return `
+          <div class="divider-element">
+            <div class="divider-line"></div>
+            <span class="divider-text">${meta.divider_text}</span>
+            <div class="divider-line"></div>
+          </div>
+        `;
+      }
+      
+      return `<div class="divider-element"><div class="divider-line" style="flex:1;"></div></div>`;
+    }
+
+    function renderPromo(promo, meta) {
+      const safeUrl = (promo.url || '').replace(/'/g, "\\'");
+      const bgColor = meta.promo_bg_color || '#222';
+      
+      return `
+        <div class="promo-banner" style="background:linear-gradient(135deg, ${bgColor}, ${adjustColor(bgColor, -30)})" onclick="trackClick(${promo.id}, '${safeUrl}')">
+          ${meta.discount_label ? `<div class="promo-badge">${meta.discount_label}</div>` : ''}
+          <div class="promo-title">${promo.title}</div>
+          ${meta.promo_code ? `<div class="promo-code-container"><div class="promo-code">${meta.promo_code}</div></div>` : ''}
+        </div>
+      `;
+    }
+
+    function renderVideo(video, meta) {
+      const platform = meta.video_platform || 'youtube';
+      const videoId = meta.video_id || '';
+      let thumb = meta.video_thumbnail;
+      
+      if (!thumb && platform === 'youtube' && videoId) {
+        thumb = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+      }
+      
+      return `
+        <div class="video-card" onclick="openVideo('${platform}', '${videoId}', ${video.id})">
+          <div class="video-thumb">
+            ${thumb ? `<img src="${thumb}" alt="${video.title}" onerror="this.style.display='none'">` : ''}
+            <div class="video-play"><i class="fas fa-play"></i></div>
+          </div>
+          <div class="video-info">
+            <i class="fab fa-${platform}"></i>
+            <span class="video-title">${video.title}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderImage(el, meta) {
+      const imgUrl = meta.image_url;
+      const linkUrl = el.url;
+      const alt = meta.image_alt || '';
+      
+      if (!imgUrl) return '';
+      
+      const onclick = linkUrl ? `onclick="trackClick(${el.id}, '${linkUrl.replace(/'/g, "\\'")}')"` : '';
+      
+      return `
+        <div class="image-banner" ${onclick}>
+          <img src="${imgUrl}" alt="${alt}">
+        </div>
+      `;
+    }
+
+    function renderCountdown(el, meta) {
+      const targetDate = meta.countdown_date;
+      const safeUrl = (el.url || '').replace(/'/g, "\\'");
+      const onclick = el.url ? `onclick="trackClick(${el.id}, '${safeUrl}')"` : '';
+      
+      return `
+        <div class="countdown-element" ${onclick} data-countdown="${targetDate}" data-id="${el.id}">
+          <div class="countdown-title">${el.title || 'Countdown'}</div>
+          <div class="countdown-boxes">
+            <div class="countdown-box">
+              <div class="countdown-number" data-days>--</div>
+              <div class="countdown-label">Days</div>
+            </div>
+            <div class="countdown-box">
+              <div class="countdown-number" data-hours>--</div>
+              <div class="countdown-label">Hours</div>
+            </div>
+            <div class="countdown-box">
+              <div class="countdown-number" data-minutes>--</div>
+              <div class="countdown-label">Min</div>
+            </div>
+            <div class="countdown-box">
+              <div class="countdown-number" data-seconds>--</div>
+              <div class="countdown-label">Sec</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPlaylist(el, meta) {
+      const platform = meta.playlist_platform || 'spotify';
+      const safeUrl = (el.url || '').replace(/'/g, "\\'");
+      const platformNames = { spotify: 'Spotify', soundcloud: 'SoundCloud', apple: 'Apple Music' };
+      const platformIcons = { spotify: 'fab fa-spotify', soundcloud: 'fab fa-soundcloud', apple: 'fab fa-apple' };
+      
+      return `
+        <div class="playlist-element" onclick="trackClick(${el.id}, '${safeUrl}')">
+          <div class="playlist-icon ${platform}">
+            <i class="${platformIcons[platform]}"></i>
+          </div>
+          <div class="playlist-info">
+            <h4>${el.title}</h4>
+            <p>${platformNames[platform]} Playlist</p>
+          </div>
+          <div class="playlist-play">
+            <i class="fas fa-play"></i>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderBanner(el, meta) {
+      const safeUrl = (el.url || '').replace(/'/g, "\\'");
+      const style = meta.banner_style || 'gradient-purple';
+      const bgImage = meta.banner_bg_image;
+      const onclick = el.url ? `onclick="trackClick(${el.id}, '${safeUrl}')"` : '';
+      
+      let bgStyle = '';
+      if (bgImage) {
+        bgStyle = `style="background-image: url('${bgImage}')"`;
+      }
+      
+      return `
+        <div class="banner-element ${bgImage ? '' : style}" ${bgStyle} ${onclick}>
+          <div class="banner-content">
+            <h2 class="banner-headline">${el.title || 'Banner'}</h2>
+            ${meta.banner_desc ? `<p class="banner-desc">${meta.banner_desc}</p>` : ''}
+            ${meta.banner_cta ? `<span class="banner-cta">${meta.banner_cta}</span>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSocialRow(el, meta) {
+      const links = meta.social_links || {};
+      const networks = Object.keys(links);
+      
+      if (networks.length === 0) return '';
+      
+      return `
+        <div class="social-row">
+          ${networks.map(network => {
+            const url = links[network];
+            const safeUrl = (url || '').replace(/'/g, "\\'");
+            return `
+              <a href="${url}" target="_blank" class="social-btn ${network}" onclick="event.stopPropagation(); trackClick(${el.id}, '${safeUrl}')">
+                <i class="fab fa-${network}"></i>
+              </a>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function initCountdowns() {
+      document.querySelectorAll('[data-countdown]').forEach(el => {
+        const targetDate = new Date(el.dataset.countdown);
+        
+        function updateCountdown() {
+          const now = new Date();
+          const diff = targetDate - now;
+          
+          if (diff <= 0) {
+            el.querySelector('[data-days]').textContent = '00';
+            el.querySelector('[data-hours]').textContent = '00';
+            el.querySelector('[data-minutes]').textContent = '00';
+            el.querySelector('[data-seconds]').textContent = '00';
+            return;
+          }
+          
+          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+          
+          el.querySelector('[data-days]').textContent = String(days).padStart(2, '0');
+          el.querySelector('[data-hours]').textContent = String(hours).padStart(2, '0');
+          el.querySelector('[data-minutes]').textContent = String(minutes).padStart(2, '0');
+          el.querySelector('[data-seconds]').textContent = String(seconds).padStart(2, '0');
+        }
+        
+        updateCountdown();
+        countdownIntervals.push(setInterval(updateCountdown, 1000));
+      });
+    }
+
+    function adjustColor(color, amount) {
+      const hex = color.replace('#', '');
+      const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
+      const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
+      const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount));
+      return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+    }
+
+    function trackClickOnly(elementId) {
+      const clickData = {
+        referrer: document.referrer || 'direct',
+        screenWidth: window.screen.width,
+        screenHeight: window.screen.height,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: navigator.language,
+        userAgent: navigator.userAgent
+      };
+
+      const trackingUrl = `/api/bio-elements/${elementId}/click`;
+      
+      // Use sendBeacon for non-blocking tracking (best for link clicks)
+      try {
+        const blob = new Blob([JSON.stringify(clickData)], { type: 'application/json' });
+        navigator.sendBeacon(trackingUrl, blob);
+      } catch (e) {
+        // Fallback: fire and forget fetch
+        fetch(trackingUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(clickData),
+          keepalive: true
+        }).catch(() => {});
+      }
+    }
+
+    async function trackClick(elementId, url) {
+      trackClickOnly(elementId);
+
+      if (url) {
+        const isExternal = !url.startsWith('/') && !url.startsWith(window.location.origin);
+        if (isExternal) {
+          window.open(url, '_blank');
+        } else {
+          window.location.href = url;
+        }
+      }
+    }
+
+    function openVideo(platform, videoId, elementId) {
+      const modal = document.getElementById('videoModal');
+      const frame = document.getElementById('videoFrame');
+      
+      trackClick(elementId, null);
+      
+      if (platform === 'youtube') {
+        frame.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+      } else if (platform === 'vimeo') {
+        frame.src = `https://player.vimeo.com/video/${videoId}?autoplay=1`;
+      }
+      
+      modal.classList.add('active');
+    }
+
+    function closeVideoModal(event) {
+      if (event && event.target !== event.currentTarget && !event.target.classList.contains('video-modal-close')) return;
+      const modal = document.getElementById('videoModal');
+      const frame = document.getElementById('videoFrame');
+      modal.classList.remove('active');
+      frame.src = '';
+    }
+
+    fetch('/api/bio-elements')
+      .then(r => r.json())
+      .then(renderElements)
+      .catch(() => {
+        document.getElementById('links-container').innerHTML = 
+          '<p style="text-align:center;color:#666">Error loading links</p>';
+      });
+  </script>
+  <script src="/js/page-transitions.js"></script>
+  </main>
+</body>
+</html>

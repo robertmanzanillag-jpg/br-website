@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Black Room Piece</title>
+
+    <!-- OpenGraph meta tags for sharing -->
+    <meta property="og:title" content="Black Room Piece" id="og-title">
+    <meta property="og:description" content="Authentic Black Room merchandise piece" id="og-description">
+    <meta property="og:image" content="/images/logo.png" id="og-image">
+    <meta property="og:type" content="product">
+    <meta property="og:url" content="" id="og-url">
+
+    <!-- Twitter Card meta tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Black Room Piece" id="twitter-title">
+    <meta name="twitter:description" content="Authentic Black Room merchandise piece" id="twitter-description">
+    <meta name="twitter:image" content="/images/logo.png" id="twitter-image">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #0d0d0d;
+            --bg-tertiary: #1a1a1a;
+            --text-color: #e0e0e0;
+            --text-accent: #a0a0a0;
+            --accent-primary: #fff;
+            --border-color: #282828;
+            --success-color: #4CAF50;
+            --warning-color: #ff9800;
+            --neon-glow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: url("https://images.unsplash.com/photo-1549490349-86641884489a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 90%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--neon-glow);
+            backdrop-filter: blur(20px);
+        }
+
+        .token-image {
+            width: 100%;
+            height: 400px;
+            background: var(--bg-tertiary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .token-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .status-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.claimed {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .status-badge.available {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .token-content {
+            padding: 2rem;
+        }
+
+        .token-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .token-title {
+            color: var(--accent-primary);
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .token-subtitle {
+            color: var(--text-accent);
+            font-size: 1.1rem;
+        }
+
+        .token-details {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .detail-label {
+            color: var(--text-accent);
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        .token-code-display {
+            background: var(--bg-tertiary);
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .code-label {
+            color: var(--text-accent);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .code-value {
+            color: var(--accent-primary);
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .btn {
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--text-accent);
+            transform: translateY(-2px);
+        }
+
+        .btn.secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn.secondary:hover {
+            background: var(--border-color);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .spinner {
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--accent-primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        .error-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .error-state i {
+            font-size: 4rem;
+            color: var(--text-accent);
+            margin-bottom: 1.5rem;
+            opacity: 0.5;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                margin: 1rem;
+            }
+
+            .token-content {
+                padding: 1.5rem;
+            }
+
+            .token-title {
+                font-size: 1.5rem;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Loading piece details...</p>
+        </div>
+
+        <div id="token-display" style="display: none;">
+            <div class="token-image">
+                <img id="token-img" src="" alt="Token">
+                <div class="status-badge" id="status-badge"></div>
+            </div>
+
+            <div class="token-content">
+                <div class="token-header">
+                    <h1 class="token-title" id="token-title"></h1>
+                    <p class="token-subtitle" id="token-subtitle"></p>
+                </div>
+
+                <div class="token-details" id="token-details">
+                    <!-- Details will be populated by JavaScript -->
+                </div>
+
+                <div class="token-code-display">
+                    <div class="code-label">Piece Code</div>
+                    <div class="code-value" id="token-code"></div>
+                </div>
+
+                <div class="actions">
+                    <a href="/claim" class="btn">
+                        <i class="fas fa-plus-circle"></i>
+                        Claim a Piece
+                    </a>
+                    <a href="/" class="btn secondary">
+                        <i class="fas fa-home"></i>
+                        Black Room
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="error-state" id="error-state" style="display: none;">
+            <i class="fas fa-search"></i>
+            <h2>Piece not found</h2>
+            <p>This piece doesn't exist or the code is invalid.</p>
+            <div style="margin-top: 2rem;">
+                <a href="/claim" class="btn">
+                    <i class="fas fa-plus-circle"></i>
+                    Claim a Piece
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get token code from URL
+        const pathParts = window.location.pathname.split('/');
+        const tokenCode = pathParts[pathParts.length - 1];
+
+        // Load token data on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (tokenCode) {
+                loadToken(tokenCode);
+            } else {
+                showError();
+            }
+        });
+
+        async function loadToken(code) {
+            try {
+                const response = await fetch(`/api/tokens/${code}`);
+
+                if (!response.ok) {
+                    throw new Error('Token not found');
+                }
+
+                const token = await response.json();
+                displayToken(token);
+                updateMetaTags(token);
+
+            } catch (error) {
+                console.error('Error loading token:', error);
+                showError();
+            }
+        }
+
+        function displayToken(token) {
+            const loading = document.getElementById('loading');
+            const display = document.getElementById('token-display');
+
+            // Hide loading
+            loading.style.display = 'none';
+
+            // Populate token data
+            document.getElementById('token-img').src = token.image_url || 'images/logo.png';
+            document.getElementById('token-title').textContent = `${token.product} #${token.serial}`;
+
+            const subtitle = [token.drop_name];
+            if (token.variant) subtitle.push(token.variant);
+            document.getElementById('token-subtitle').textContent = subtitle.join(' • ');
+
+            document.getElementById('token-code').textContent = token.token_code;
+
+            // Status badge
+            const statusBadge = document.getElementById('status-badge');
+            statusBadge.textContent = token.status === 'claimed' ? 'Owned' : 'Available';
+            statusBadge.className = `status-badge ${token.status}`;
+
+            // Details
+            const detailsContainer = document.getElementById('token-details');
+            const details = [];
+
+            if (token.size) details.push({ label: 'Size', value: token.size });
+            if (token.color) details.push({ label: 'Color', value: token.color });
+            details.push({ label: 'Drop', value: token.drop_name });
+            if (token.variant) details.push({ label: 'Variant', value: token.variant });
+            details.push({ label: 'Serial', value: `#${token.serial}` });
+
+            detailsContainer.innerHTML = details.map(detail => `
+                <div class="detail-row">
+                    <span class="detail-label">${detail.label}</span>
+                    <span class="detail-value">${detail.value}</span>
+                </div>
+            `).join('');
+
+            // Show display
+            display.style.display = 'block';
+        }
+
+        function updateMetaTags(token) {
+            const title = `${token.product} #${token.serial} - ${token.drop_name}`;
+            const description = `Authentic Black Room ${token.product} from ${token.drop_name}${token.variant ? ' - ' + token.variant : ''}`;
+            const imageUrl = token.image_url || '/images/logo.png';
+            const currentUrl = window.location.href;
+
+            // Update page title
+            document.title = title;
+            document.getElementById('page-title').textContent = title;
+
+            // Update OpenGraph tags
+            document.getElementById('og-title').content = title;
+            document.getElementById('og-description').content = description;
+            document.getElementById('og-image').content = imageUrl;
+            document.getElementById('og-url').content = currentUrl;
+
+            // Update Twitter Card tags
+            document.getElementById('twitter-title').content = title;
+            document.getElementById('twitter-description').content = description;
+            document.getElementById('twitter-image').content = imageUrl;
+        }
+
+        function showError() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error-state').style.display = 'block';
+        }
+    </script>
+<script src="/js/responsive-header.js"></script>
+</body>
+</html>

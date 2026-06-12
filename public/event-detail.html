@@ -1,0 +1,487 @@
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Evento - Black Room</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link rel="stylesheet" href="/css/main.css" />
+    <style>
+      :root {
+        --bg-primary: #000000;
+        --bg-secondary: #0a0a0a;
+        --bg-tertiary: #111111;
+        --text-color: #ffffff;
+        --text-accent: #888888;
+        --accent-primary: #fff;
+        --border-color: #222222;
+        --button-primary-bg: #fff;
+        --button-primary-text: #000;
+        --button-primary-hover: #eee;
+        --shadow-dark: 0 4px 20px rgba(0, 0, 0, 0.6);
+        --font-primary: "Inter", sans-serif;
+        --font-display: "Space Mono", monospace;
+      }
+
+      body {
+        background-color: var(--bg-primary);
+        color: var(--text-color);
+        font-family: var(--font-primary);
+        line-height: 1.6;
+      }
+      header {
+        font-family: var(--font-display);
+        font-weight: 500;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 3rem;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+      }
+      .logo img {
+        height: 55px;
+      }
+      .nav-left ul,
+      .nav-right ul {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+        list-style: none;
+      }
+      nav a,
+      nav button {
+        background: none;
+        border: none;
+        color: var(--text-accent);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 1rem;
+        padding: 0.5rem 0;
+        position: relative;
+        cursor: pointer;
+        transition: color 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      nav a::after {
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 2px;
+        background: var(--accent-primary);
+        bottom: -2px;
+        left: 50%;
+        transform: translateX(-50%);
+        transition: width 0.4s ease;
+      }
+      nav a:hover,
+      nav button:hover,
+      nav a.active {
+        color: var(--accent-primary);
+      }
+      nav a.active::after,
+      nav a:hover::after {
+        width: 100%;
+      }
+      main {
+        padding-top: 120px;
+        min-height: 100vh;
+      }
+      .event-detail-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+      .event-hero {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 3rem;
+        margin-bottom: 3rem;
+      }
+      .event-image-section {
+        position: relative;
+      }
+      .event-main-image {
+        width: 100%;
+        height: 500px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+      }
+      .back-button {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1.2rem;
+        transition: background-color 0.3s ease;
+      }
+      .back-button:hover {
+        background: rgba(0, 0, 0, 0.9);
+      }
+      .ticket-purchase-box {
+        background: var(--bg-tertiary);
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        padding: 2rem;
+        height: fit-content;
+        position: sticky;
+        top: 140px;
+      }
+      .event-info {
+        margin-bottom: 2rem;
+      }
+      .event-title {
+        font-family: var(--font-display);
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--accent-primary);
+        margin-bottom: 1rem;
+        line-height: 1.2;
+      }
+      .event-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+      }
+      .event-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-accent);
+        font-size: 1.1rem;
+      }
+      .event-meta-item i {
+        width: 20px;
+        color: var(--accent-primary);
+      }
+      .event-description {
+        font-size: 1.1rem;
+        line-height: 1.7;
+        color: var(--text-color);
+        margin-bottom: 2rem;
+      }
+      .ticket-box-title {
+        font-family: var(--font-display);
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--accent-primary);
+        margin-bottom: 1.5rem;
+        text-align: center;
+        text-transform: uppercase;
+      }
+      .ticket-info {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+      .ticket-price {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--accent-primary);
+        margin-bottom: 0.5rem;
+      }
+      .ticket-note {
+        color: var(--text-accent);
+        font-size: 0.9rem;
+      }
+      .buy-ticket-btn {
+        width: 100%;
+        background: var(--button-primary-bg);
+        color: var(--button-primary-text);
+        border: none;
+        padding: 1.2rem 2rem;
+        font-size: 1.2rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: block;
+        text-align: center;
+      }
+      .buy-ticket-btn:hover {
+        background: var(--button-primary-hover);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-dark);
+      }
+      .event-gallery {
+        margin-top: 3rem;
+      }
+      .gallery-title {
+        font-family: var(--font-display);
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--accent-primary);
+        margin-bottom: 1.5rem;
+        text-transform: uppercase;
+      }
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+      }
+      .gallery-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        cursor: pointer;
+        transition: transform 0.3s ease;
+      }
+      .gallery-image:hover {
+        transform: scale(1.05);
+      }
+      .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 50vh;
+        gap: 1rem;
+      }
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid var(--border-color);
+        border-top-color: var(--accent-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .error-container {
+        text-align: center;
+        padding: 3rem;
+        background: var(--bg-tertiary);
+        border-radius: 8px;
+        margin: 2rem 0;
+      }
+      .error-title {
+        font-size: 1.5rem;
+        color: var(--accent-primary);
+        margin-bottom: 1rem;
+      }
+      .error-message {
+        color: var(--text-accent);
+        margin-bottom: 2rem;
+      }
+      .error-button {
+        background: var(--button-primary-bg);
+        color: var(--button-primary-text);
+        border: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+      }
+      @media (max-width: 768px) {
+        .event-hero {
+          grid-template-columns: 1fr;
+          gap: 2rem;
+        }
+        .ticket-purchase-box {
+          position: static;
+        }
+        .event-title {
+          font-size: 2rem;
+        }
+        header {
+          padding: 1rem 1.5rem;
+        }
+      }
+    </style>
+    <script src="js/responsive-header.js"></script>
+  </head>
+  <body>
+    <!-- Header injected by responsive-header.js -->
+    <div class="legacy-header" style="display:none">
+      <div class="header-left">
+        <a class="logo" href="index.html"
+          ><img src="images/logo.png" alt="Black Room Logo"
+        /></a>
+        <nav class="nav-left">
+          <ul>
+            <li><a href="events.html">Events</a></li>
+            <li><a href="videos.html">Videos</a></li>
+            <li><a href="shop.html">Shop</a></li>
+          </ul>
+        </nav>
+      </div>
+      <nav class="nav-right"><ul id="nav-right"></ul></nav>
+    </header>
+    <main>
+      <div class="event-detail-container" id="event-container">
+        <div class="loading-container">
+          <div class="loading-spinner"></div>
+          <p>Cargando evento...</p>
+        </div>
+      </div>
+    </main>
+    <script>
+      const eventContainer = document.getElementById("event-container");
+      let currentEvent = null;
+
+      async function loadEventDetails() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const eventId = urlParams.get("id");
+
+        if (!eventId) {
+          showError("ID de evento no encontrado", "events.html");
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/events");
+          if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+          }
+
+          const events = await response.json();
+          currentEvent = events.find((e) => e.id == eventId);
+
+          if (!currentEvent) {
+            showError("Evento no encontrado", "events.html");
+            return;
+          }
+
+          renderEventDetails(currentEvent);
+        } catch (error) {
+          console.error("Error loading event:", error);
+          showError("Error al cargar el evento", "events.html");
+        }
+      }
+
+      function showError(message, backUrl = "events.html") {
+        eventContainer.innerHTML = `
+          <div class="error-container">
+            <h2 class="error-title">¡Oops!</h2>
+            <p class="error-message">${message}</p>
+            <a href="${backUrl}" class="error-button">Volver a Eventos</a>
+          </div>
+        `;
+      }
+
+      function renderEventDetails(event) {
+        const imageUrl =
+          event.image ||
+          "https://via.placeholder.com/800x500/0d0d0d/282828?text=Black+Room";
+
+        eventContainer.innerHTML = `
+          <div class="event-hero">
+            <div class="event-image-section">
+              <button class="back-button" onclick="history.back()">
+                <i class="fas fa-arrow-left"></i>
+              </button>
+              <img src="${imageUrl}" alt="${event.name}" class="event-main-image">
+            </div>
+            
+            <div class="ticket-purchase-box">
+              <h3 class="ticket-box-title">Buy Tickets</h3>
+              <div class="ticket-info">
+                <div class="ticket-price">
+                  ${event.price > 0 ? `$${event.price.toFixed(2)} USD` : "Ver precios"}
+                </div>
+                <p class="ticket-note">
+                  ${event.isPoshEvent ? "Gestionado por Posh.vip" : "Entrada general"}
+                </p>
+              </div>
+              <a href="${event.ticketLink || "#"}" target="_blank" class="buy-ticket-btn">
+                <i class="fas fa-ticket-alt"></i> Comprar Tickets
+              </a>
+            </div>
+          </div>
+
+          <div class="event-info">
+            <h1 class="event-title">${event.name || "Evento sin título"}</h1>
+            
+            <div class="event-meta">
+              <div class="event-meta-item">
+                <i class="fas fa-calendar"></i>
+                <span>${event.date || "Fecha por confirmar"}</span>
+              </div>
+              <div class="event-meta-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>${event.location || "Ubicación por confirmar"}</span>
+              </div>
+              ${event.additionalInfo?.organizer ? `
+                <div class="event-meta-item">
+                  <i class="fas fa-user"></i>
+                  <span>${event.additionalInfo.organizer}</span>
+                </div>
+              ` : ""}
+            </div>
+
+            <div class="event-description">
+              ${
+                event.description &&
+                event.description !== "Descripción no disponible" &&
+                event.description !== "Sin descripción disponible"
+                  ? event.description
+                  : "Prepárate para una noche inolvidable en Black Room. Más detalles disponibles en la página de compra de tickets."
+              }
+            </div>
+          </div>
+
+          ${
+            event.images && event.images.length > 1
+              ? `
+            <div class="event-gallery">
+              <h3 class="gallery-title">Galería</h3>
+              <div class="gallery-grid">
+                ${event.images
+                  .map(
+                    (img) => `
+                  <img src="${img}" alt="Imagen del evento" class="gallery-image" onclick="window.open('${img}', '_blank')">
+                `
+                  )
+                  .join("")}
+              </div>
+            </div>
+          `
+              : ""
+          }
+        `;
+
+        // Update page title
+        document.title = `${event.name} - Black Room`;
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        loadEventDetails();
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery | BLACK ROOM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    :root {
+      --bg-primary: #000000;
+      --bg-card: #0a0a0a;
+      --text-primary: #ffffff;
+      --text-secondary: #888888;
+      --border: #222222;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    .gallery-page {
+      padding: 120px 2rem 4rem;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      margin-bottom: 4rem;
+      text-align: center;
+    }
+
+    .page-title {
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    .page-subtitle {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .event-gallery {
+      margin-bottom: 6rem;
+    }
+
+    .event-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+
+    .event-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .event-meta {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .event-meta::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: #fff;
+    }
+
+    .gallery-layout {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 1.5rem;
+    }
+
+    .main-image-container {
+      position: relative;
+      aspect-ratio: 16/10;
+      overflow: hidden;
+      background: var(--bg-card);
+    }
+
+    .main-image-container::before,
+    .main-image-container::after {
+      content: '';
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-color: rgba(255,255,255,0.3);
+      border-style: solid;
+      z-index: 2;
+      transition: border-color 0.3s ease;
+    }
+
+    .main-image-container::before {
+      top: 12px;
+      left: 12px;
+      border-width: 1px 0 0 1px;
+    }
+
+    .main-image-container::after {
+      top: 12px;
+      right: 12px;
+      border-width: 1px 1px 0 0;
+    }
+
+    .main-image-container .corner-bl,
+    .main-image-container .corner-br {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-color: rgba(255,255,255,0.3);
+      border-style: solid;
+      z-index: 2;
+    }
+
+    .main-image-container .corner-bl {
+      bottom: 12px;
+      left: 12px;
+      border-width: 0 0 1px 1px;
+    }
+
+    .main-image-container .corner-br {
+      bottom: 12px;
+      right: 12px;
+      border-width: 0 1px 1px 0;
+    }
+
+    .main-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      cursor: pointer;
+      transition: transform 0.5s ease;
+    }
+
+    .main-image:hover {
+      transform: scale(1.02);
+    }
+
+    .thumbnails-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+      max-height: 500px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #333 #111;
+    }
+
+    .thumbnails-grid::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .thumbnails-grid::-webkit-scrollbar-track {
+      background: #111;
+    }
+
+    .thumbnails-grid::-webkit-scrollbar-thumb {
+      background: #333;
+    }
+
+    .thumbnail {
+      aspect-ratio: 1;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+      border: 1px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    .thumbnail::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      transition: background 0.3s ease;
+    }
+
+    .thumbnail:hover::after,
+    .thumbnail.active::after {
+      background: transparent;
+    }
+
+    .thumbnail:hover,
+    .thumbnail.active {
+      border-color: #fff;
+    }
+
+    .thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .thumbnail:hover img {
+      transform: scale(1.05);
+    }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.95);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .lightbox.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    .lightbox-content {
+      position: relative;
+      max-width: 90vw;
+      max-height: 90vh;
+    }
+
+    .lightbox-image {
+      max-width: 100%;
+      max-height: 85vh;
+      object-fit: contain;
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: -50px;
+      right: 0;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 2rem;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .lightbox-close:hover {
+      transform: scale(1.2);
+    }
+
+    .lightbox-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1.2rem;
+    }
+
+    .lightbox-nav:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    .lightbox-prev { left: -70px; }
+    .lightbox-next { right: -70px; }
+
+    .lightbox-actions {
+      position: absolute;
+      bottom: -60px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .lightbox-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff;
+      padding: 0.75rem 1.5rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .lightbox-btn:hover {
+      background: #fff;
+      color: #000;
+    }
+
+    .lightbox-counter {
+      position: absolute;
+      bottom: -60px;
+      right: 0;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .share-menu {
+      position: absolute;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111;
+      border: 1px solid #333;
+      padding: 1rem;
+      display: none;
+      gap: 1rem;
+    }
+
+    .share-menu.active {
+      display: flex;
+    }
+
+    .share-menu a {
+      color: #fff;
+      font-size: 1.5rem;
+      transition: color 0.3s ease;
+    }
+
+    .share-menu a:hover {
+      color: #888;
+    }
+
+    @media (max-width: 900px) {
+      .gallery-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .thumbnails-grid {
+        grid-template-columns: repeat(4, 1fr);
+        max-height: none;
+      }
+
+      .lightbox-prev { left: 10px; }
+      .lightbox-next { right: 10px; }
+
+      .lightbox-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+        bottom: -100px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .gallery-page {
+        padding: 100px 1rem 3rem;
+      }
+
+      .thumbnails-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .event-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+
+      .lightbox-nav {
+        width: 40px;
+        height: 40px;
+      }
+    }
+
+    .no-events {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-secondary);
+    }
+
+    .no-events i {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.3;
+    }
+
+    .no-images-message {
+      text-align: center;
+      padding: 4rem 2rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    .no-images-message i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.4;
+    }
+
+    .no-images-message p {
+      font-family: 'Space Mono', monospace;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .no-images-message .folder-hint {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      color: #555;
+      display: block;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="global-header"></div>
+
+  <div class="gallery-page">
+    <div class="page-header">
+      <h1 class="page-title">Event Gallery</h1>
+      <p class="page-subtitle">Photos from our events</p>
+    </div>
+
+    <div id="galleries-container">
+      <div class="no-events">
+        <i class="fas fa-images"></i>
+        <p>Loading galleries...</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-content">
+      <button class="lightbox-close" onclick="closeLightbox()"><i class="fas fa-times"></i></button>
+      <button class="lightbox-nav lightbox-prev" onclick="navigateLightbox(-1)"><i class="fas fa-chevron-left"></i></button>
+      <img class="lightbox-image" id="lightbox-image" src="" alt="Gallery photo">
+      <button class="lightbox-nav lightbox-next" onclick="navigateLightbox(1)"><i class="fas fa-chevron-right"></i></button>
+      <div class="lightbox-actions">
+        <button class="lightbox-btn" onclick="downloadImage()"><i class="fas fa-download"></i> Download</button>
+        <button class="lightbox-btn" onclick="toggleShareMenu()"><i class="fas fa-share-alt"></i> Share</button>
+      </div>
+      <div class="share-menu" id="share-menu">
+        <a href="#" onclick="shareToFacebook()" title="Facebook"><i class="fab fa-facebook"></i></a>
+        <a href="#" onclick="shareToTwitter()" title="Twitter"><i class="fab fa-twitter"></i></a>
+        <a href="#" onclick="shareToWhatsApp()" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+      </div>
+      <div class="lightbox-counter" id="lightbox-counter">1 / 10</div>
+    </div>
+  </div>
+
+  <script src="/js/global-header.js"></script>
+  <script>
+    let galleryEvents = [];
+    let currentEventIndex = 0;
+    let currentImageIndex = 0;
+    let currentImages = [];
+
+    async function loadGalleries() {
+      const container = document.getElementById('galleries-container');
+      
+      try {
+        const res = await fetch('/api/gallery-events');
+        galleryEvents = await res.json();
+        
+        if (!galleryEvents || galleryEvents.length === 0) {
+          container.innerHTML = `
+            <div class="no-events">
+              <i class="fas fa-images"></i>
+              <p>No galleries available yet. Check back soon!</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = galleryEvents.map((event, eventIdx) => {
+          if (!event.hasImages || event.images.length === 0) {
+            return `
+              <div class="event-gallery" data-event-index="${eventIdx}">
+                <div class="event-header">
+                  <h2 class="event-title">${event.title}</h2>
+                  <div class="event-meta">${event.date} - ${event.location}</div>
+                </div>
+                <div class="no-images-message">
+                  <i class="fas fa-camera"></i>
+                  <p>Photos coming soon!</p>
+                  <span class="folder-hint">Folder: /public/images/gallery/${event.folder}/</span>
+                </div>
+              </div>
+            `;
+          }
+          
+          const randomMainIndex = Math.floor(Math.random() * event.images.length);
+          const mainImage = event.images[randomMainIndex];
+          
+          return `
+            <div class="event-gallery" data-event-index="${eventIdx}">
+              <div class="event-header">
+                <h2 class="event-title">${event.title}</h2>
+                <div class="event-meta">${event.date} - ${event.location}</div>
+              </div>
+              <div class="gallery-layout">
+                <div class="main-image-container">
+                  <img class="main-image" id="main-${eventIdx}" src="${mainImage}" alt="${event.title}" onclick="openLightbox(${eventIdx}, ${randomMainIndex})" onerror="this.src='/images/events/default-event.jpg'">
+                  <div class="corner-bl"></div>
+                  <div class="corner-br"></div>
+                </div>
+                <div class="thumbnails-grid">
+                  ${event.images.map((img, imgIdx) => `
+                    <div class="thumbnail ${imgIdx === randomMainIndex ? 'active' : ''}" 
+                         data-event="${eventIdx}" 
+                         data-index="${imgIdx}"
+                         onmouseenter="changeMainImage(${eventIdx}, ${imgIdx})"
+                         onclick="openLightbox(${eventIdx}, ${imgIdx})">
+                      <img src="${img}" alt="${event.title} photo ${imgIdx + 1}" onerror="this.parentElement.style.display='none'">
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      } catch (err) {
+        console.error('Error loading galleries:', err);
+        container.innerHTML = `
+          <div class="no-events">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error loading galleries. Please try again later.</p>
+          </div>
+        `;
+      }
+    }
+
+    function changeMainImage(eventIdx, imgIdx) {
+      const event = galleryEvents[eventIdx];
+      const mainImg = document.getElementById(`main-${eventIdx}`);
+      if (mainImg && event.images[imgIdx]) {
+        mainImg.src = event.images[imgIdx];
+      }
+      
+      const gallery = document.querySelector(`[data-event-index="${eventIdx}"]`);
+      gallery.querySelectorAll('.thumbnail').forEach((thumb, i) => {
+        thumb.classList.toggle('active', i === imgIdx);
+      });
+    }
+
+    function openLightbox(eventIdx, imgIdx) {
+      currentEventIndex = eventIdx;
+      currentImages = galleryEvents[eventIdx].images;
+      currentImageIndex = imgIdx;
+      
+      updateLightboxImage();
+      document.getElementById('lightbox').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('active');
+      document.getElementById('share-menu').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    function navigateLightbox(direction) {
+      currentImageIndex += direction;
+      if (currentImageIndex < 0) currentImageIndex = currentImages.length - 1;
+      if (currentImageIndex >= currentImages.length) currentImageIndex = 0;
+      updateLightboxImage();
+    }
+
+    function updateLightboxImage() {
+      const img = document.getElementById('lightbox-image');
+      img.src = currentImages[currentImageIndex];
+      document.getElementById('lightbox-counter').textContent = 
+        `${currentImageIndex + 1} / ${currentImages.length}`;
+    }
+
+    function downloadImage() {
+      const link = document.createElement('a');
+      link.href = currentImages[currentImageIndex];
+      link.download = `black-room-${galleryEvents[currentEventIndex].title.toLowerCase().replace(/\s+/g, '-')}-${currentImageIndex + 1}.jpg`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function toggleShareMenu() {
+      document.getElementById('share-menu').classList.toggle('active');
+    }
+
+    function shareToFacebook() {
+      const url = encodeURIComponent(window.location.href);
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+    }
+
+    function shareToTwitter() {
+      const url = encodeURIComponent(window.location.href);
+      const text = encodeURIComponent(`Check out photos from ${galleryEvents[currentEventIndex].title} at Black Room!`);
+      window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
+    }
+
+    function shareToWhatsApp() {
+      const url = encodeURIComponent(window.location.href);
+      const text = encodeURIComponent(`Check out photos from ${galleryEvents[currentEventIndex].title} at Black Room! ${window.location.href}`);
+      window.open(`https://wa.me/?text=${text}`, '_blank');
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (!document.getElementById('lightbox').classList.contains('active')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') navigateLightbox(-1);
+      if (e.key === 'ArrowRight') navigateLightbox(1);
+    });
+
+    document.getElementById('lightbox').addEventListener('click', (e) => {
+      if (e.target.id === 'lightbox') closeLightbox();
+    });
+
+    document.addEventListener('DOMContentLoaded', loadGalleries);
+  </script>
+</body>
+</html>

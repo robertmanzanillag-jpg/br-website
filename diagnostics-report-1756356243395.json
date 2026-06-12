@@ -1,0 +1,98 @@
+{
+  "timestamp": "2025-08-28T04:43:59.799Z",
+  "results": {
+    "database": {
+      "status": "connected",
+      "timestamp": "2025-08-28T04:44:03.014Z",
+      "database": "neondb",
+      "version": "PostgreSQL"
+    },
+    "poolStatus": {
+      "total": 2,
+      "idle": 1,
+      "waiting": 0
+    },
+    "tables": [
+      "batch_items",
+      "batches",
+      "tokens"
+    ],
+    "tables_status": "complete",
+    "dataIntegrity": {
+      "batches": 12,
+      "tokens": 361,
+      "batch_items": 349
+    },
+    "orphanedRecords": {
+      "tokens": 12,
+      "batch_items": 0
+    },
+    "duplicateTokens": [],
+    "tokenGeneration": {
+      "status": "working",
+      "samples": [
+        "TEST-HKNPB7",
+        "TEST-NRLVJV",
+        "TEST-XBE3CH",
+        "TEST-PLZVG7",
+        "TEST-MLWLK4"
+      ],
+      "uniqueCount": 5
+    },
+    "recentActivity": {
+      "batches": [
+        {
+          "name": "Hoodie - se2 - se3 (500-505)",
+          "created_at": "2025-08-28T04:38:20.832Z"
+        },
+        {
+          "name": "Tank Top - red11 - red11 (400-420)",
+          "created_at": "2025-08-28T04:28:59.993Z"
+        },
+        {
+          "name": "Tank Top - sea2 - tree (400-450)",
+          "created_at": "2025-08-28T03:59:27.081Z"
+        },
+        {
+          "name": "T-Shirt - sdsds - dsds (300-350)",
+          "created_at": "2025-08-28T03:55:04.083Z"
+        },
+        {
+          "name": "Jacket - red - red (300-350)",
+          "created_at": "2025-08-28T03:50:26.101Z"
+        }
+      ],
+      "claims": [
+        {
+          "token_code": "SE-SE3-8SBZAC",
+          "claimed_at": "2025-08-28T04:38:46.895Z",
+          "status": "claimed"
+        },
+        {
+          "token_code": "RE-RED-4BTXNB",
+          "claimed_at": "2025-08-28T04:29:23.223Z",
+          "status": "claimed"
+        },
+        {
+          "token_code": "SE-TRE-MY3BEH",
+          "claimed_at": "2025-08-28T03:59:48.394Z",
+          "status": "claimed"
+        },
+        {
+          "token_code": "SD-DSD-GMWJFE",
+          "claimed_at": "2025-08-28T03:55:40.773Z",
+          "status": "claimed"
+        },
+        {
+          "token_code": "RE-RED-38CJ7B",
+          "claimed_at": "2025-08-28T03:50:55.601Z",
+          "status": "claimed"
+        }
+      ]
+    },
+    "overallStatus": "issues_found",
+    "issues": [
+      "Registros huérfanos encontrados"
+    ]
+  }
+}

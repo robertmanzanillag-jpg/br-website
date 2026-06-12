@@ -1,0 +1,17 @@
+{
+  "isRunning": true,
+  "currentVideo": {
+    "videoId": "hxHeDG0ALX8",
+    "title": "SARA - DJ Set at Black Room Radio Latam America Tour Bogotá | MARCH 11-25",
+    "retryCount": 0
+  },
+  "totalVideos": 74,
+  "processedVideos": 76,
+  "successfulDownloads": 15,
+  "failedDownloads": 11,
+  "startTime": "2025-07-10T10:53:38.483Z",
+  "lastUpdate": "2025-07-11T06:35:27.298Z",
+  "sessionId": "session_1752214555338_ms8klyait",
+  "autoRestart": true,
+  "maxRetries": 3
+}

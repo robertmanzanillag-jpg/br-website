@@ -1,0 +1,44 @@
+[
+  {
+    "name": "robert",
+    "email": "rob_alex245@hotmail.com",
+    "phone": "3053216017",
+    "course": "basic",
+    "createdAt": "2025-07-30T22:36:42.271Z"
+  },
+  {
+    "name": "raf",
+    "email": "rob_alex245@hotmail.com",
+    "phone": "3053216017",
+    "course": "intermediate",
+    "createdAt": "2025-07-30T22:42:01.195Z"
+  },
+  {
+    "name": "Robert Manzanilla",
+    "email": "rob_alex24@hotmail.com",
+    "phone": "3053216017",
+    "course": "basic",
+    "createdAt": "2025-07-30T23:27:39.724Z"
+  },
+  {
+    "name": "ROBERT MANZANILLA",
+    "email": "rob_alex245@hotmail.com",
+    "phone": "3053216016",
+    "course": "basic",
+    "createdAt": "2025-07-31T03:33:36.381Z"
+  },
+  {
+    "name": "ROBERT MANZANILLA",
+    "email": "robert.manzanillag@gmail.com",
+    "phone": "3053216016",
+    "course": "basic",
+    "createdAt": "2025-07-31T03:34:32.247Z"
+  },
+  {
+    "name": "Robert Manzanilla",
+    "email": "rob_alex245@hotmail.com",
+    "phone": "3053216017",
+    "course": "basic",
+    "createdAt": "2025-07-31T20:53:08.220Z"
+  }
+]

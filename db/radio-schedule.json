@@ -1,0 +1,296 @@
+{
+  "description": "Weekly radio schedule for Black Room Radio. Add DJs for each day of the month.",
+  "currentMonth": "2026-02",
+  "schedule": [
+    {
+      "date": "2026-02-02",
+      "djs": [
+        {
+          "name": "ADELO",
+          "time": "8:00 PM",
+          "genre": "Melodic Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-03",
+      "djs": [
+        {
+          "name": "CREAM",
+          "time": "8:00 PM",
+          "genre": "Industrial / Hard Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-04",
+      "djs": [
+        {
+          "name": "HARDIN",
+          "time": "8:00 PM",
+          "genre": "Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-05",
+      "djs": [
+        {
+          "name": "NIGHTRIIIP",
+          "time": "8:00 PM",
+          "genre": "Dark Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-06",
+      "djs": [
+        {
+          "name": "DIANA FRANCO",
+          "time": "8:00 PM",
+          "genre": "Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-07",
+      "djs": [
+        {
+          "name": "SCHWARZ",
+          "time": "8:00 PM",
+          "genre": "Industrial Techno"
+        },
+        {
+          "name": "KRYZ",
+          "time": "10:00 PM",
+          "genre": "Hard Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-08",
+      "djs": [
+        {
+          "name": "DRO",
+          "time": "8:00 PM",
+          "genre": "Raw Techno / Hypnotic"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-09",
+      "djs": [
+        {
+          "name": "ALMENART",
+          "time": "8:00 PM",
+          "genre": "Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-10",
+      "djs": [
+        {
+          "name": "JULIEN",
+          "time": "8:00 PM",
+          "genre": "Deep Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-11",
+      "djs": [
+        {
+          "name": "FIUZA",
+          "time": "8:00 PM",
+          "genre": "Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-12",
+      "djs": [
+        {
+          "name": "JOSEFINA MUÑOZ",
+          "time": "8:00 PM",
+          "genre": "Techno Hipnotico / Hard Groove"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-13",
+      "djs": [
+        {
+          "name": "LULITH",
+          "time": "8:00 PM",
+          "genre": "Dark Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-14",
+      "djs": [
+        {
+          "name": "MAHA FOURAR",
+          "time": "8:00 PM",
+          "genre": "Melodic Techno"
+        },
+        {
+          "name": "GHOVVL",
+          "time": "10:00 PM",
+          "genre": "Industrial"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-15",
+      "djs": [
+        {
+          "name": "CARLO VENTO",
+          "time": "8:00 PM",
+          "genre": "Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-16",
+      "djs": [
+        {
+          "name": "STEFANO",
+          "time": "8:00 PM",
+          "genre": "Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-17",
+      "djs": [
+        {
+          "name": "ONEFIVE",
+          "time": "8:00 PM",
+          "genre": "Hard Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-18",
+      "djs": [
+        {
+          "name": "VIOLETA",
+          "time": "8:00 PM",
+          "genre": "Melodic Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-19",
+      "djs": [
+        {
+          "name": "REBEKAOS",
+          "time": "8:00 PM",
+          "genre": "Hard Groove"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-20",
+      "djs": [
+        {
+          "name": "PROJECT Z",
+          "time": "8:00 PM",
+          "genre": "Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-21",
+      "djs": [
+        {
+          "name": "SICK",
+          "time": "8:00 PM",
+          "genre": "Hard Techno"
+        },
+        {
+          "name": "CYPHSS",
+          "time": "10:00 PM",
+          "genre": "Industrial"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-22",
+      "djs": [
+        {
+          "name": "ANAÎNA",
+          "time": "8:00 PM",
+          "genre": "Organic Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-23",
+      "djs": [
+        {
+          "name": "CASJ",
+          "time": "8:00 PM",
+          "genre": "Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-24",
+      "djs": [
+        {
+          "name": "DELTA ECHO",
+          "time": "8:00 PM",
+          "genre": "Dark Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-25",
+      "djs": [
+        {
+          "name": "BOGOTROIT",
+          "time": "8:00 PM",
+          "genre": "Industrial Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-26",
+      "djs": [
+        {
+          "name": "BAHAMUNDI",
+          "time": "8:00 PM",
+          "genre": "Melodic Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-27",
+      "djs": [
+        {
+          "name": "DERRICK ANTONIO",
+          "time": "8:00 PM",
+          "genre": "Techno"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-28",
+      "djs": [
+        {
+          "name": "ADELO",
+          "time": "8:00 PM",
+          "genre": "Melodic Techno"
+        },
+        {
+          "name": "CREAM",
+          "time": "10:00 PM",
+          "genre": "Industrial / Hard Techno"
+        }
+      ]
+    }
+  ]
+}

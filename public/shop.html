@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Shop – Black Room</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link rel="stylesheet" href="/css/main.css" />
+    <script src="/js/global-header.js"></script>
+    <style>
+      body {
+        background: #000;
+        color: #fff;
+        font-family: "Inter", sans-serif;
+        min-height: 100vh;
+        padding-top: 80px;
+      }
+
+      main {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 4rem 3rem;
+      }
+
+      h1 {
+        font-family: 'Space Mono', monospace;
+        font-size: 3rem;
+        text-align: center;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-weight: 700;
+        color: #fff;
+      }
+
+      .shipping-info {
+        font-family: 'Space Mono', monospace;
+        text-align: center;
+        margin-bottom: 4rem;
+        color: #888;
+        font-size: 0.8rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .shipping-info strong {
+        color: #fff;
+        font-weight: 700;
+      }
+
+      .products {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+        padding: 0;
+      }
+
+      .product-card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        background: transparent;
+        cursor: pointer;
+        border: 1px solid rgba(255,255,255,0.05);
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+      }
+
+      .product-card:hover {
+        border-color: rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.02);
+      }
+
+      .product-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.75rem;
+        letter-spacing: 0.1em;
+      }
+
+      .product-card-category { color: #888; }
+      .product-card-price { color: #fff; font-weight: 700; }
+
+      .product-card-image {
+        position: relative;
+        aspect-ratio: 1/1;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .product-card-image img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        position: absolute;
+        transition: opacity 0.3s ease;
+      }
+
+      .product-card-image .img-back {
+        opacity: 0;
+      }
+
+      .product-card:hover .product-card-image .img-front {
+        opacity: 0;
+      }
+
+      .product-card:hover .product-card-image .img-back {
+        opacity: 1;
+      }
+
+      /* Corner brackets */
+      .product-card::before, .product-card::after {
+        content: '';
+        position: absolute;
+        width: 15px;
+        height: 15px;
+        border-color: rgba(255,255,255,0.2);
+        border-style: solid;
+        transition: border-color 0.3s ease;
+      }
+      .product-card::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+      .product-card::after { top: -1px; right: -1px; border-width: 1px 1px 0 0; }
+
+      .corner-bl, .corner-br {
+        position: absolute;
+        width: 15px;
+        height: 15px;
+        border-color: rgba(255,255,255,0.2);
+        border-style: solid;
+        transition: border-color 0.3s ease;
+      }
+      .corner-bl { bottom: -1px; left: -1px; border-width: 0 0 1px 1px; }
+      .corner-br { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+
+      .product-card:hover::before, .product-card:hover::after,
+      .product-card:hover .corner-bl, .product-card:hover .corner-br {
+        border-color: #fff;
+      }
+
+      .product-card-name {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 1rem;
+      }
+
+      .shop-btn {
+        width: 100%;
+        padding: 0.8rem;
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.2);
+        color: #fff;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.7rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .product-card:hover .shop-btn {
+        background: #fff;
+        color: #000;
+        border-color: #fff;
+      }
+
+      @media (max-width: 768px) {
+        main { padding: 2rem 1.5rem; }
+        h1 { font-size: 2rem; }
+        .products { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+      }
+      @media (max-width: 480px) {
+        .products { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Shop</h1>
+      <div class="shipping-info">
+        <strong>Free Shipping</strong> over $75 | <strong>Express</strong> $14.99
+      </div>
+      <div class="products" id="grid"></div>
+    </main>
+
+    <script>
+      const products = [
+        {id:"red-room-tshirt",name:"RED ROOM T-SHIRT",price:55,images:{front:"/images/products/red-room-front.jpg",back:"/images/products/red-room-back.jpg"}},
+        {id:"electric-tshirt",name:"ELECTRIC T-SHIRT",price:55,images:{front:"/images/products/electric-front.jpg",back:"/images/products/electric-back.jpg"}},
+        {id:"phoenix-tshirt",name:"PHOENIX T-SHIRT",price:55,images:{front:"/images/products/phoenix-front.jpg",back:"/images/products/phoenix-back.jpg"}},
+        {id:"timeless-tshirt",name:"TIMELESS T-SHIRT",price:55,images:{front:"/images/products/timeless-front.jpg",back:"/images/products/timeless-back.png"}}
+      ];
+
+      document.getElementById('grid').innerHTML = products.map(p => `
+        <div class="product-card" onclick="window.location.href='/product.html?id=${p.id}'">
+          <div class="corner-bl"></div><div class="corner-br"></div>
+          <div class="product-card-header">
+            <div class="product-card-category">T-SHIRT</div>
+            <div class="product-card-price">$${p.price}</div>
+          </div>
+          <div class="product-card-image">
+            <img src="${p.images.front}" class="img-front" alt="${p.name} Front"/>
+            <img src="${p.images.back}" class="img-back" alt="${p.name} Back"/>
+          </div>
+          <div class="product-card-name">${p.name}</div>
+          <button class="shop-btn">View Product</button>
+        </div>
+      `).join('');
+
+      // Handle return from Stripe checkout: confirm payment + trigger confirmation emails
+      (async function () {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('success') === 'true' && params.get('session_id')) {
+          const sessionId = params.get('session_id');
+          try {
+            const res = await fetch('/api/verify-payment/' + encodeURIComponent(sessionId));
+            const data = await res.json();
+            if (data && data.paid) {
+              try { localStorage.removeItem('cart'); } catch (e) {}
+              alert('Thank you! Your order is confirmed. A confirmation email has been sent to ' + (data.customerEmail || 'your email') + '.');
+            }
+          } catch (e) {
+            console.error('Payment verification error:', e);
+          }
+          // Clean the URL so a refresh does not re-run this
+          window.history.replaceState({}, document.title, '/shop.html');
+        }
+      })();
+    </script>
+    <script src="/js/cart.js"></script>
+    <script src="/js/analytics.js"></script>
+  </body>
+</html>

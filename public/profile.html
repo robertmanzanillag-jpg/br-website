@@ -1,0 +1,1586 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Profile – Black Room</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link rel="stylesheet" href="/css/main.css" />
+    <style>
+      :root {
+        --bg-primary: #000000;
+        --bg-secondary: #0a0a0a;
+        --bg-card: #111111;
+        --text-primary: #ffffff;
+        --text-secondary: #888888;
+        --accent: #ffffff;
+        --border: #222222;
+        --corner-size: 12px;
+        --error-color: #ff4d4d;
+        --success-color: #33ff99;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+        line-height: 1.6;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      #global-liquid-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+        background-image: url('/images/black-room-tour-map.png');
+        background-size: cover;
+        background-position: center;
+        filter: brightness(0.3) saturate(0.6);
+      }
+
+      .mono {
+        font-family: 'Space Mono', monospace;
+      }
+
+      .corner-tl, .corner-tr, .corner-bl, .corner-br {
+        position: absolute;
+        width: var(--corner-size);
+        height: var(--corner-size);
+        border-color: var(--text-secondary);
+        border-style: solid;
+        border-width: 0;
+        opacity: 0.5;
+        transition: opacity 0.3s ease;
+      }
+      .corner-tl { top: 8px; left: 8px; border-top-width: 1px; border-left-width: 1px; }
+      .corner-tr { top: 8px; right: 8px; border-top-width: 1px; border-right-width: 1px; }
+      .corner-bl { bottom: 8px; left: 8px; border-bottom-width: 1px; border-left-width: 1px; }
+      .corner-br { bottom: 8px; right: 8px; border-bottom-width: 1px; border-right-width: 1px; }
+
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 120px 2rem 4rem;
+      }
+
+      .profile-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin-bottom: 4rem;
+        padding: 3rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        position: relative;
+      }
+
+      .profile-header::before,
+      .profile-header::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-color: var(--text-secondary);
+        border-style: solid;
+      }
+      .profile-header::before {
+        top: 10px;
+        left: 10px;
+        border-width: 1px 0 0 1px;
+      }
+      .profile-header::after {
+        bottom: 10px;
+        right: 10px;
+        border-width: 0 1px 1px 0;
+      }
+
+      #avatar {
+        width: 120px;
+        height: 120px;
+        border: 2px solid var(--border);
+        object-fit: cover;
+        transition: all 0.3s ease;
+      }
+      #avatar:hover {
+        border-color: var(--accent);
+      }
+
+      .name-container {
+        margin-top: 1.5rem;
+      }
+
+      .name-container h1 {
+        font-family: 'Space Mono', monospace;
+        font-size: 2rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        color: var(--accent);
+      }
+
+      #email-display {
+        color: var(--text-secondary);
+        font-family: 'Space Mono', monospace;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        letter-spacing: 1px;
+      }
+
+      .profile-meta {
+        margin-top: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem 2rem;
+        justify-content: center;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        font-family: 'Space Mono', monospace;
+      }
+
+      .profile-meta p {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .profile-meta a {
+        color: var(--text-secondary);
+      }
+      .profile-meta a:hover {
+        color: var(--accent);
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+
+      .btn {
+        font-family: 'Space Mono', monospace;
+        background: transparent;
+        color: var(--text-primary);
+        padding: 0.75rem 1.5rem;
+        border: 1px solid var(--border);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 700;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .btn::before,
+      .btn::after {
+        content: '';
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-color: var(--text-secondary);
+        border-style: solid;
+        opacity: 0.5;
+        transition: opacity 0.3s ease;
+      }
+      .btn::before {
+        top: 4px;
+        left: 4px;
+        border-width: 1px 0 0 1px;
+      }
+      .btn::after {
+        bottom: 4px;
+        right: 4px;
+        border-width: 0 1px 1px 0;
+      }
+
+      .btn:hover {
+        background: var(--accent);
+        color: var(--bg-primary);
+        border-color: var(--accent);
+      }
+      .btn:hover::before,
+      .btn:hover::after {
+        border-color: var(--bg-primary);
+        opacity: 1;
+      }
+
+      .btn.primary {
+        background: var(--accent);
+        color: var(--bg-primary);
+        border-color: var(--accent);
+      }
+      .btn.primary::before,
+      .btn.primary::after {
+        border-color: var(--bg-primary);
+      }
+      .btn.primary:hover {
+        background: transparent;
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .btn.primary:hover::before,
+      .btn.primary:hover::after {
+        border-color: var(--text-secondary);
+      }
+
+      #admin-btn {
+        display: none;
+      }
+
+      .profile-fields {
+        display: none;
+        flex-direction: column;
+        gap: 1.5rem;
+        max-width: 600px;
+        margin: 0 auto 4rem auto;
+        padding: 2.5rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        position: relative;
+      }
+
+      .profile-fields::before,
+      .profile-fields::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-color: var(--text-secondary);
+        border-style: solid;
+      }
+      .profile-fields::before {
+        top: 10px;
+        left: 10px;
+        border-width: 1px 0 0 1px;
+      }
+      .profile-fields::after {
+        bottom: 10px;
+        right: 10px;
+        border-width: 0 1px 1px 0;
+      }
+
+      .profile-fields h2 {
+        font-family: 'Space Mono', monospace;
+        text-align: center;
+        margin-bottom: 1rem;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-size: 1rem;
+      }
+
+      .profile-fields input {
+        background: var(--bg-primary);
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+        padding: 1rem;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.85rem;
+        width: 100%;
+        transition: all 0.3s ease;
+        letter-spacing: 1px;
+      }
+
+      .profile-fields input::placeholder {
+        color: var(--text-secondary);
+        text-transform: uppercase;
+      }
+
+      .profile-fields input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      input[type="file"] {
+        display: none;
+      }
+
+      .file-upload-label {
+        font-family: 'Space Mono', monospace;
+        background: var(--bg-primary);
+        border: 1px solid var(--border);
+        padding: 1rem;
+        text-align: center;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        transition: all 0.3s ease;
+      }
+      .file-upload-label:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+      #save-btn, #cancel-btn {
+        flex: 1;
+      }
+
+      .content-separator {
+        border: 0;
+        height: 1px;
+        background: var(--border);
+        margin: 4rem 0;
+      }
+
+      .profile-content-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 4rem;
+      }
+
+      .section-title {
+        font-family: 'Space Mono', monospace;
+        font-size: 1rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+      }
+
+      .section-title::before,
+      .section-title::after {
+        content: '';
+        flex: 1;
+        max-width: 100px;
+        height: 1px;
+        background: var(--border);
+      }
+
+      .playlists-section { order: 1; }
+      .likes-section { order: 2; }
+      .tokens-section { order: 3; }
+
+      .playlists-header {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 2rem;
+      }
+
+      .playlists-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+      }
+
+      .playlist-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+      }
+
+      .playlist-card::before,
+      .playlist-card::after {
+        content: '';
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-color: var(--text-secondary);
+        border-style: solid;
+        opacity: 0.5;
+        transition: opacity 0.3s ease;
+        z-index: 1;
+      }
+      .playlist-card::before {
+        top: 8px;
+        left: 8px;
+        border-width: 1px 0 0 1px;
+      }
+      .playlist-card::after {
+        bottom: 8px;
+        right: 8px;
+        border-width: 0 1px 1px 0;
+      }
+
+      .playlist-card:hover {
+        border-color: var(--accent);
+      }
+      .playlist-card:hover::before,
+      .playlist-card:hover::after {
+        opacity: 1;
+        border-color: var(--accent);
+      }
+
+      .playlist-card-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .playlist-card-title {
+        font-family: 'Space Mono', monospace;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+      }
+
+      .playlist-card-info {
+        color: var(--text-secondary);
+        font-family: 'Space Mono', monospace;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .playlist-card-description {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        font-style: italic;
+      }
+
+      .playlist-card-videos {
+        padding: 1rem;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+
+      .playlist-video-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem;
+        transition: background-color 0.2s;
+        cursor: pointer;
+      }
+
+      .playlist-video-item:hover {
+        background: var(--bg-secondary);
+      }
+
+      .playlist-video-thumb {
+        width: 60px;
+        height: 34px;
+        background: var(--bg-secondary);
+        flex-shrink: 0;
+        object-fit: cover;
+      }
+
+      .playlist-video-title {
+        font-size: 0.8rem;
+        color: var(--text-primary);
+        line-height: 1.3;
+      }
+
+      .playlist-video-item {
+        text-decoration: none;
+      }
+
+      .playlist-more {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        text-align: center;
+        padding: 0.5rem;
+        border-top: 1px solid var(--border);
+        margin-top: 0.5rem;
+      }
+
+      .no-videos {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        text-align: center;
+        padding: 1rem;
+      }
+
+      .playlist-card-header {
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .playlist-card-header:hover {
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .playlist-card-actions {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--border);
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+      }
+
+      .playlist-action-btn {
+        font-family: 'Space Mono', monospace;
+        padding: 0.5rem 1rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .playlist-action-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .playlist-action-btn.icon-only {
+        padding: 0.5rem;
+        min-width: 32px;
+      }
+
+      .playlist-action-btn.danger {
+        border-color: var(--error-color);
+        color: var(--error-color);
+      }
+      .playlist-action-btn.danger:hover {
+        background: var(--error-color);
+        color: var(--bg-primary);
+      }
+
+      .likes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .like-item {
+        position: relative;
+      }
+
+      .like-item a {
+        display: block;
+        border: 1px solid var(--border);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .like-item a::before,
+      .like-item a::after {
+        content: '';
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-color: var(--text-secondary);
+        border-style: solid;
+        opacity: 0.5;
+        transition: opacity 0.3s ease;
+        z-index: 1;
+      }
+      .like-item a::before {
+        top: 8px;
+        left: 8px;
+        border-width: 1px 0 0 1px;
+      }
+      .like-item a::after {
+        bottom: 8px;
+        right: 8px;
+        border-width: 0 1px 1px 0;
+      }
+
+      .like-item a:hover {
+        border-color: var(--accent);
+      }
+      .like-item a:hover::before,
+      .like-item a:hover::after {
+        opacity: 1;
+        border-color: var(--accent);
+      }
+
+      .like-item img {
+        width: 100%;
+        aspect-ratio: 16/9;
+        object-fit: cover;
+      }
+
+      .no-data {
+        font-family: 'Space Mono', monospace;
+        color: var(--text-secondary);
+        text-align: center;
+        padding: 3rem;
+        grid-column: 1 / -1;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-size: 0.85rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+      }
+      .no-data a {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .no-data a:hover {
+        text-decoration: underline;
+      }
+
+      .tokens-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 2rem;
+        gap: 2rem;
+        flex-wrap: wrap;
+      }
+
+      .tokens-stats-container {
+        display: flex;
+        gap: 1rem;
+      }
+
+      .token-stat-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        min-width: 140px;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .token-stat-card::before,
+      .token-stat-card::after {
+        content: '';
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border-color: var(--text-secondary);
+        border-style: solid;
+        opacity: 0.5;
+      }
+      .token-stat-card::before {
+        top: 6px;
+        left: 6px;
+        border-width: 1px 0 0 1px;
+      }
+      .token-stat-card::after {
+        bottom: 6px;
+        right: 6px;
+        border-width: 0 1px 1px 0;
+      }
+
+      .token-stat-card:hover {
+        border-color: var(--accent);
+      }
+
+      .token-stat-icon {
+        background: var(--accent);
+        color: var(--bg-primary);
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        font-weight: bold;
+        font-family: 'Space Mono', monospace;
+      }
+
+      .token-stat-info {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .token-stat-value {
+        font-family: 'Space Mono', monospace;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--accent);
+        line-height: 1;
+      }
+
+      .token-stat-label {
+        font-family: 'Space Mono', monospace;
+        color: var(--text-secondary);
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 0.25rem;
+      }
+
+      .tokens-actions {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
+      }
+
+      .btn-modern {
+        font-family: 'Space Mono', monospace;
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+        padding: 0.75rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 700;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-modern:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .btn-modern.primary {
+        background: var(--accent);
+        color: var(--bg-primary);
+        border-color: var(--accent);
+      }
+      .btn-modern.primary:hover {
+        background: transparent;
+        color: var(--accent);
+      }
+
+      .tokens-display-area {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        padding: 2rem;
+        position: relative;
+      }
+
+      .tokens-display-area::before,
+      .tokens-display-area::after {
+        content: '';
+        position: absolute;
+        width: 15px;
+        height: 15px;
+        border-color: var(--text-secondary);
+        border-style: solid;
+        opacity: 0.5;
+      }
+      .tokens-display-area::before {
+        top: 10px;
+        left: 10px;
+        border-width: 1px 0 0 1px;
+      }
+      .tokens-display-area::after {
+        bottom: 10px;
+        right: 10px;
+        border-width: 0 1px 1px 0;
+      }
+
+      .tokens-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .token-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        position: relative;
+      }
+
+      .token-card::before,
+      .token-card::after {
+        content: '';
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-color: var(--text-secondary);
+        border-style: solid;
+        opacity: 0.5;
+        transition: all 0.3s ease;
+      }
+      .token-card::before {
+        top: 8px;
+        left: 8px;
+        border-width: 1px 0 0 1px;
+      }
+      .token-card::after {
+        bottom: 8px;
+        right: 8px;
+        border-width: 0 1px 1px 0;
+      }
+
+      .token-card:hover {
+        border-color: var(--accent);
+      }
+      .token-card:hover::before,
+      .token-card:hover::after {
+        opacity: 1;
+        border-color: var(--accent);
+      }
+
+      .token-card-image {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        margin-bottom: 1.5rem;
+        border: 2px solid var(--border);
+        transition: all 0.3s ease;
+      }
+
+      .token-card:hover .token-card-image {
+        border-color: var(--accent);
+      }
+
+      .token-card-title {
+        font-family: 'Space Mono', monospace;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+      }
+
+      .token-card-description {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+        line-height: 1.5;
+      }
+
+      .token-card-meta {
+        font-family: 'Space Mono', monospace;
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+      }
+
+      .token-card-code {
+        font-family: 'Space Mono', monospace;
+        color: var(--accent);
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+        margin-bottom: 1rem;
+        padding: 0.5rem;
+        background: var(--bg-primary);
+        border: 1px solid var(--border);
+        text-align: center;
+      }
+
+      .token-card-tokens {
+        font-family: 'Space Mono', monospace;
+        background: var(--bg-primary);
+        border: 1px solid var(--border);
+        padding: 0.75rem 1.25rem;
+        color: var(--text-secondary);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .token-card-tokens span {
+        color: var(--accent);
+        font-size: 1.25rem;
+        display: block;
+        margin-bottom: 0.25rem;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 100px 1rem 3rem;
+        }
+
+        .profile-header {
+          padding: 2rem 1.5rem;
+        }
+
+        .name-container h1 {
+          font-size: 1.5rem;
+        }
+
+        .action-buttons {
+          flex-direction: column;
+          width: 100%;
+        }
+
+        .btn {
+          width: 100%;
+          justify-content: center;
+        }
+
+        .tokens-header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .tokens-stats-container {
+          flex-wrap: wrap;
+        }
+
+        .token-stat-card {
+          flex: 1;
+          min-width: 120px;
+        }
+
+        .tokens-actions {
+          flex-wrap: wrap;
+        }
+
+        .playlists-grid,
+        .tokens-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 2000;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+      }
+
+      .modal-overlay.active {
+        display: flex;
+      }
+
+      .modal-content {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        padding: 2.5rem;
+        max-width: 500px;
+        width: 100%;
+        position: relative;
+      }
+
+      .modal-content::before,
+      .modal-content::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-color: var(--text-secondary);
+        border-style: solid;
+      }
+      .modal-content::before {
+        top: 10px;
+        left: 10px;
+        border-width: 1px 0 0 1px;
+      }
+      .modal-content::after {
+        bottom: 10px;
+        right: 10px;
+        border-width: 0 1px 1px 0;
+      }
+
+      .modal-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: color 0.3s ease;
+      }
+      .modal-close:hover {
+        color: var(--accent);
+      }
+
+      .modal-title {
+        font-family: 'Space Mono', monospace;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 1.5rem;
+        color: var(--accent);
+      }
+
+      .modal-form input,
+      .modal-form textarea {
+        width: 100%;
+        background: var(--bg-primary);
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+        padding: 1rem;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+        transition: border-color 0.3s ease;
+      }
+
+      .modal-form input:focus,
+      .modal-form textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      .modal-form textarea {
+        min-height: 100px;
+        resize: vertical;
+      }
+
+      .modal-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .modal-actions .btn {
+        flex: 1;
+      }
+
+      #toast-container {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .toast {
+        font-family: 'Space Mono', monospace;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+        padding: 1rem 1.5rem;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        animation: slideIn 0.3s ease;
+      }
+
+      .toast.success {
+        border-color: var(--success-color);
+      }
+
+      .toast.error {
+        border-color: var(--error-color);
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="global-liquid-bg"></div>
+
+    <div class="container">
+      <section class="profile-header">
+        <img id="avatar" src="/images/default-avatar.png" alt="Avatar" />
+        <div class="name-container">
+          <h1 id="name-display">User Name</h1>
+        </div>
+        <p id="email-display">user@example.com</p>
+        <div class="profile-meta" id="profile-meta"></div>
+        <div class="action-buttons">
+          <button class="btn" id="edit-btn">
+            <i class="fas fa-pen"></i>
+            Edit Profile
+          </button>
+          <a class="btn" id="links-btn" href="/admin/builder.html" style="display: none;">
+            <i class="fas fa-link"></i>
+            Edit Links
+          </a>
+          <a class="btn" id="batch-btn" href="/admin-tokens.html" style="display: none;">
+            <i class="fas fa-plus-square"></i>
+            Create Batches
+          </a>
+          <a class="btn" id="admin-btn" href="/admin.html" style="display: none;">
+            <i class="fas fa-cog"></i>
+            Admin Panel
+          </a>
+          <a class="btn" id="apps-btn" href="/admin/applications.html" style="display: none;">
+            <i class="fas fa-inbox"></i>
+            Applications
+          </a>
+          <a class="btn" id="sales-btn" href="/admin/orders.html" style="display: none;">
+            <i class="fas fa-shopping-bag"></i>
+            Sales
+          </a>
+        </div>
+      </section>
+
+      <section class="profile-fields" id="profile-fields">
+        <h2>Edit Profile</h2>
+        <input type="text" id="input-name" placeholder="Full Name" />
+        <input type="text" id="input-city" placeholder="City" />
+        <input type="text" id="input-website" placeholder="Website URL" />
+        <input type="text" id="input-instagram" placeholder="Instagram" />
+        <label class="file-upload-label" for="input-avatar">
+          <i class="fas fa-upload"></i> Upload Avatar
+        </label>
+        <input type="file" id="input-avatar" accept="image/*" />
+        <div class="form-actions">
+          <button class="btn primary" id="save-btn">
+            <i class="fas fa-check"></i> Save
+          </button>
+          <button class="btn" id="cancel-btn">
+            <i class="fas fa-times"></i> Cancel
+          </button>
+        </div>
+      </section>
+
+      <hr class="content-separator" />
+
+      <div class="profile-content-grid">
+        <section class="playlists-section">
+          <h2 class="section-title">My Playlists</h2>
+          <div class="playlists-header">
+            <button class="btn" id="create-playlist-btn">
+              <i class="fas fa-plus"></i>
+              New Playlist
+            </button>
+          </div>
+          <div id="playlists-grid" class="playlists-grid">
+            <p class="no-data">No playlists yet. Create one to save your favorite videos!</p>
+          </div>
+        </section>
+
+        <section class="likes-section">
+          <h2 class="section-title">Liked Videos</h2>
+          <div id="likes-grid" class="likes-grid">
+            <p class="no-data">No liked videos yet. <a href="/videos.html">Browse videos</a></p>
+          </div>
+        </section>
+
+        <section class="tokens-section">
+          <h2 class="section-title">My Tokens</h2>
+          <div class="tokens-header">
+            <div class="tokens-stats-container">
+              <div class="token-stat-card">
+                <div class="token-stat-icon"><i class="fas fa-coins"></i></div>
+                <div class="token-stat-info">
+                  <span class="token-stat-value" id="total-tokens">0</span>
+                  <span class="token-stat-label">Total</span>
+                </div>
+              </div>
+              <div class="token-stat-card">
+                <div class="token-stat-icon"><i class="fas fa-clock"></i></div>
+                <div class="token-stat-info">
+                  <span class="token-stat-value" id="pending-tokens">0</span>
+                  <span class="token-stat-label">Pending</span>
+                </div>
+              </div>
+            </div>
+            <div class="tokens-actions">
+              <a href="/claim.html" class="btn-modern primary">
+                <i class="fas fa-ticket-alt"></i> Claim Tokens
+              </a>
+              <button class="btn-modern" id="toggle-tokens-btn">
+                <i class="fas fa-eye"></i> Show
+              </button>
+            </div>
+          </div>
+          <div id="tokens-display-area" class="tokens-display-area" style="display: none;">
+            <div id="tokens-grid" class="tokens-grid">
+              <p class="no-data">No tokens claimed yet. <a href="/claim.html">Claim your first token!</a></p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="playlist-modal">
+      <div class="modal-content">
+        <button class="modal-close" onclick="closePlaylistModal()">&times;</button>
+        <h3 class="modal-title" id="modal-title">Create Playlist</h3>
+        <form class="modal-form" id="playlist-form">
+          <input type="hidden" id="playlist-id" />
+          <input type="text" id="playlist-name" placeholder="Playlist Name" required />
+          <textarea id="playlist-description" placeholder="Description (optional)"></textarea>
+          <div class="modal-actions">
+            <button type="submit" class="btn primary">
+              <i class="fas fa-check"></i> Save
+            </button>
+            <button type="button" class="btn" onclick="closePlaylistModal()">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="/js/responsive-header.js"></script>
+    <script>
+      const API_BASE = "";
+
+      async function getUser() {
+        const res = await fetch(`${API_BASE}/api/profile`, { credentials: "include" });
+        if (!res.ok) {
+          window.location.href = "/login.html";
+          return null;
+        }
+        return res.json();
+      }
+
+      function showToast(message, type = "info") {
+        const container = document.getElementById("toast-container");
+        const toast = document.createElement("div");
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+      }
+
+      async function loadProfile() {
+        const user = await getUser();
+        if (!user) return;
+
+        document.getElementById("avatar").src =
+          user.avatar || "/images/default-avatar.png";
+        document.getElementById("name-display").textContent =
+          user.name || user.email.split("@")[0];
+        document.getElementById("email-display").textContent = user.email;
+
+        const metaEl = document.getElementById("profile-meta");
+        metaEl.innerHTML = "";
+
+        if (user.city) {
+          metaEl.innerHTML += `<p><i class="fas fa-map-marker-alt"></i> ${user.city}</p>`;
+        }
+        if (user.website) {
+          metaEl.innerHTML += `<p><i class="fas fa-globe"></i> <a href="${user.website}" target="_blank">${user.website}</a></p>`;
+        }
+        if (user.instagram) {
+          metaEl.innerHTML += `<p><i class="fab fa-instagram"></i> <a href="https://instagram.com/${user.instagram.replace("@", "")}" target="_blank">${user.instagram}</a></p>`;
+        }
+
+        if (!user.city && !user.website && !user.instagram) {
+          metaEl.style.display = "none";
+        }
+
+        document.getElementById("input-name").value = user.name || "";
+        document.getElementById("input-city").value = user.city || "";
+        document.getElementById("input-website").value = user.website || "";
+        document.getElementById("input-instagram").value = user.instagram || "";
+
+        if (user.role === 'admin' || user.isAdmin) {
+          document.getElementById("admin-btn").style.display = "inline-flex";
+          document.getElementById("links-btn").style.display = "inline-flex";
+          document.getElementById("batch-btn").style.display = "inline-flex";
+          document.getElementById("apps-btn").style.display = "inline-flex";
+          document.getElementById("sales-btn").style.display = "inline-flex";
+        }
+
+        loadLikes(user);
+        loadTokens(user);
+        loadPlaylists();
+      }
+
+      function loadLikes(user) {
+        const grid = document.getElementById("likes-grid");
+        const likes = user.likes || [];
+
+        if (likes.length === 0) {
+          grid.innerHTML =
+            '<p class="no-data">No liked videos yet. <a href="/videos.html">Browse videos</a></p>';
+          return;
+        }
+
+        grid.innerHTML = likes
+          .map(
+            (v) => `
+          <div class="like-item">
+            <a href="/watch.html?v=${v.videoId}">
+              <img src="${v.thumbnail || `https://img.youtube.com/vi/${v.videoId}/mqdefault.jpg`}" alt="${v.title || "Video"}">
+            </a>
+          </div>
+        `,
+          )
+          .join("");
+      }
+
+      async function loadTokens(user) {
+        try {
+          console.log("🎟️ Loading tokens for user:", user);
+          const res = await fetch(`${API_BASE}/api/profile/tokens`, {
+            credentials: "include",
+          });
+          console.log("🎟️ Tokens API response status:", res.status);
+          if (!res.ok) throw new Error("Failed to load tokens");
+          const data = await res.json();
+          console.log("🎟️ Tokens data received:", data);
+
+          const tokens = data.tokens || [];
+          console.log("🎟️ Number of tokens:", tokens.length);
+          const total = tokens.length;
+          const pending = tokens.filter((t) => t.status === "pending").length;
+
+          document.getElementById("total-tokens").textContent = total;
+          document.getElementById("pending-tokens").textContent = pending;
+
+          const grid = document.getElementById("tokens-grid");
+          if (tokens.length === 0) {
+            grid.innerHTML =
+              '<p class="no-data">No tokens claimed yet. <a href="/claim.html">Claim your first token!</a></p>';
+            return;
+          }
+
+          grid.innerHTML = tokens
+            .map(
+              (t) => `
+            <div class="token-card">
+              <img class="token-card-image" src="${t.image_url || "/images/token-placeholder.png"}" alt="${t.drop_name || "Token"}">
+              <h3 class="token-card-title">${t.drop_name || "Product Token"}</h3>
+              <p class="token-card-description">${t.product || ""} ${t.variant ? "- " + t.variant : ""}</p>
+              <p class="token-card-meta">${t.size || ""} | ${t.color || ""}</p>
+              <p class="token-card-code">${t.token_code || ""}</p>
+              <div class="token-card-tokens">
+                <span>1</span>
+                TOKEN
+              </div>
+            </div>
+          `,
+            )
+            .join("");
+        } catch (err) {
+          console.error("Error loading tokens:", err);
+        }
+      }
+
+      async function loadPlaylists() {
+        try {
+          const res = await fetch(`${API_BASE}/api/playlists`, {
+            credentials: "include",
+          });
+          if (!res.ok) throw new Error("Failed to load playlists");
+          const playlists = await res.json();
+
+          const grid = document.getElementById("playlists-grid");
+          if (!playlists || playlists.length === 0) {
+            grid.innerHTML =
+              '<p class="no-data">No playlists yet. Create one to save your favorite videos!</p>';
+            return;
+          }
+
+          grid.innerHTML = playlists
+            .map(
+              (p) => {
+                const videos = p.videos || [];
+                const previewVideos = videos.slice(0, 4);
+                const videosHtml = previewVideos.length > 0 
+                  ? `<div class="playlist-card-videos">
+                      ${previewVideos.map(v => {
+                        const videoId = v.videoId || v.video_id;
+                        const title = v.title || 'Untitled';
+                        const shortTitle = title.length > 40 ? title.substring(0, 40) + '...' : title;
+                        return `
+                          <a href="/watch.html?v=${videoId}" class="playlist-video-item" onclick="event.stopPropagation()">
+                            <img src="https://img.youtube.com/vi/${videoId}/mqdefault.jpg" 
+                                 alt="${shortTitle}" 
+                                 class="playlist-video-thumb"
+                                 onerror="this.src='/images/placeholder.jpg'">
+                            <span class="playlist-video-title">${shortTitle}</span>
+                          </a>
+                        `;
+                      }).join('')}
+                      ${videos.length > 4 ? `<p class="playlist-more">+${videos.length - 4} more videos</p>` : ''}
+                    </div>`
+                  : '<div class="playlist-card-videos"><p class="no-videos">No videos yet</p></div>';
+                
+                return `
+                  <div class="playlist-card">
+                    <div class="playlist-card-header" onclick="viewPlaylist('${p.id}')">
+                      <h3 class="playlist-card-title">${p.name}</h3>
+                      <p class="playlist-card-info">${videos.length} videos</p>
+                      ${p.description ? `<p class="playlist-card-description">${p.description}</p>` : ""}
+                    </div>
+                    ${videosHtml}
+                    <div class="playlist-card-actions" onclick="event.stopPropagation()">
+                      <button class="playlist-action-btn icon-only" onclick="editPlaylist('${p.id}', '${p.name}', '${p.description || ""}')">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="playlist-action-btn icon-only danger" onclick="deletePlaylist('${p.id}')">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                `;
+              }
+            )
+            .join("");
+        } catch (err) {
+          console.error("Error loading playlists:", err);
+        }
+      }
+
+      function viewPlaylist(id) {
+        window.location.href = `/playlist.html?id=${id}`;
+      }
+
+      function openPlaylistModal() {
+        document.getElementById("playlist-modal").classList.add("active");
+        document.getElementById("modal-title").textContent = "Create Playlist";
+        document.getElementById("playlist-id").value = "";
+        document.getElementById("playlist-name").value = "";
+        document.getElementById("playlist-description").value = "";
+      }
+
+      function closePlaylistModal() {
+        document.getElementById("playlist-modal").classList.remove("active");
+      }
+
+      function editPlaylist(id, name, description) {
+        document.getElementById("playlist-modal").classList.add("active");
+        document.getElementById("modal-title").textContent = "Edit Playlist";
+        document.getElementById("playlist-id").value = id;
+        document.getElementById("playlist-name").value = name;
+        document.getElementById("playlist-description").value = description;
+      }
+
+      async function deletePlaylist(id) {
+        if (!confirm("Are you sure you want to delete this playlist?")) return;
+
+        try {
+          const res = await fetch(`${API_BASE}/api/playlists/${id}`, {
+            method: "DELETE",
+            credentials: "include",
+          });
+          if (!res.ok) throw new Error("Failed to delete playlist");
+          showToast("Playlist deleted", "success");
+          loadPlaylists();
+        } catch (err) {
+          showToast("Error deleting playlist", "error");
+        }
+      }
+
+      document.getElementById("playlist-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = document.getElementById("playlist-id").value;
+        const name = document.getElementById("playlist-name").value;
+        const description = document.getElementById("playlist-description").value;
+
+        try {
+          const method = id ? "PUT" : "POST";
+          const url = id
+            ? `${API_BASE}/api/playlists/${id}`
+            : `${API_BASE}/api/playlists`;
+
+          const res = await fetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ name, description }),
+          });
+
+          if (!res.ok) throw new Error("Failed to save playlist");
+
+          showToast(id ? "Playlist updated" : "Playlist created", "success");
+          closePlaylistModal();
+          loadPlaylists();
+        } catch (err) {
+          showToast("Error saving playlist", "error");
+        }
+      });
+
+      document.getElementById("edit-btn").addEventListener("click", () => {
+        document.getElementById("profile-fields").style.display = "flex";
+      });
+
+      document.getElementById("cancel-btn").addEventListener("click", () => {
+        document.getElementById("profile-fields").style.display = "none";
+      });
+
+      document.getElementById("save-btn").addEventListener("click", async () => {
+        const formData = new FormData();
+        formData.append("name", document.getElementById("input-name").value);
+        formData.append("city", document.getElementById("input-city").value);
+        formData.append("website", document.getElementById("input-website").value);
+        formData.append("instagram", document.getElementById("input-instagram").value);
+
+        const avatarFile = document.getElementById("input-avatar").files[0];
+        if (avatarFile) {
+          formData.append("avatar", avatarFile);
+        }
+
+        try {
+          const res = await fetch(`${API_BASE}/api/profile`, {
+            method: "POST",
+            credentials: "include",
+            body: formData,
+          });
+
+          if (!res.ok) throw new Error("Failed to update profile");
+
+          showToast("Profile updated!", "success");
+          document.getElementById("profile-fields").style.display = "none";
+          loadProfile();
+        } catch (err) {
+          showToast("Error updating profile", "error");
+        }
+      });
+
+      document.getElementById("toggle-tokens-btn").addEventListener("click", () => {
+        const area = document.getElementById("tokens-display-area");
+        const btn = document.getElementById("toggle-tokens-btn");
+        if (area.style.display === "none") {
+          area.style.display = "block";
+          btn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide';
+        } else {
+          area.style.display = "none";
+          btn.innerHTML = '<i class="fas fa-eye"></i> Show';
+        }
+      });
+
+      document.getElementById("create-playlist-btn").addEventListener("click", openPlaylistModal);
+
+      loadProfile();
+    </script>
+  </body>
+</html>
