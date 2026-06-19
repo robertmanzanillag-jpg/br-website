@@ -3058,23 +3058,23 @@ app.get('/api/events', (req, res) => {
 });
 
 // ============================================
-// POSH.VIP EVENTS API - Upcoming events from Posh
+// KONG EVENTS API - Upcoming events from Kong Nightlife
 // ============================================
 
-// Import Posh scraper functions
-let poshScraperModule = null;
-async function loadPoshScraper() {
-  if (!poshScraperModule) {
+// Import Kong scraper functions
+let kongScraperModule = null;
+async function loadKongScraper() {
+  if (!kongScraperModule) {
     try {
-      poshScraperModule = await import('./scripts/posh-scraper.js');
+      kongScraperModule = await import('./scripts/kong-scraper.js');
     } catch (err) {
-      console.error('❌ Could not load Posh scraper:', err.message);
+      console.error('❌ Could not load Kong scraper:', err.message);
     }
   }
-  return poshScraperModule;
+  return kongScraperModule;
 }
 
-// Get upcoming events from Posh.vip + Manual events
+// Backward-compatible endpoint name: frontend still calls /api/posh-events.
 app.get('/api/posh-events', async (req, res) => {
   try {
     const allEvents = [];
@@ -3100,6 +3100,7 @@ app.get('/api/posh-events', async (req, res) => {
               venue: event.venue,
               slug: event.title.toLowerCase().replace(/\s+/g, '-'),
               poshUrl: event.ticketUrl,
+              kongUrl: event.ticketUrl,
               ticketUrl: event.ticketUrl,
               price: event.price || '$25+',
               source: 'manual'
@@ -3110,18 +3111,19 @@ app.get('/api/posh-events', async (req, res) => {
       }
     }
     
-    // PRIORITY 2: Load Posh.vip cached events
-    const cachePath = path.join(__dirname, 'db/posh-events-cache.json');
+    // PRIORITY 2: Load Kong Nightlife cached events
+    const cachePath = path.join(__dirname, 'db/kong-events-cache.json');
     if (fs.existsSync(cachePath)) {
       const cacheData = JSON.parse(fs.readFileSync(cachePath, 'utf-8'));
       const hoursSinceUpdate = (Date.now() - new Date(cacheData.lastUpdated)) / (1000 * 60 * 60);
-      console.log(`📦 Posh events cache: ${cacheData.eventCount} events, ${hoursSinceUpdate.toFixed(1)}h old`);
+      console.log(`📦 Kong events cache: ${cacheData.eventCount} events, ${hoursSinceUpdate.toFixed(1)}h old`);
       
       for (const event of (cacheData.events || [])) {
         const eventTitle = event.title || (event.fullTitle || '').split('|')[0].trim();
         const eventDate = event.parsedDate || event.date;
         const exists = allEvents.some(e =>
           (e.poshUrl === event.poshUrl) ||
+          (e.kongUrl && event.kongUrl && e.kongUrl === event.kongUrl) ||
           (e.title.toLowerCase() === eventTitle.toLowerCase() && e.date === eventDate)
         );
         if (exists) continue;
@@ -3138,8 +3140,22 @@ app.get('/api/posh-events', async (req, res) => {
           ...event,
           title: eventTitle,
           date: event.parsedDate || event.date,
-          source: 'posh-cache'
+          source: 'kong-cache'
         });
+      }
+    } else {
+      const scraper = await loadKongScraper();
+      if (scraper) {
+        try {
+          const events = await scraper.getUpcomingKongEvents();
+          allEvents.push(...events.map(event => ({
+            ...event,
+            date: event.parsedDate || event.date,
+            source: 'kong-cache'
+          })));
+        } catch (error) {
+          console.error('❌ Kong events refresh failed:', error.message);
+        }
       }
     }
     
@@ -3150,12 +3166,12 @@ app.get('/api/posh-events', async (req, res) => {
       return dateA - dateB;
     });
     
-    console.log(`✅ Returning ${allEvents.length} upcoming events (manual + posh)`);
+    console.log(`✅ Returning ${allEvents.length} upcoming events (manual + kong)`);
     
     return res.json({
       success: true,
       lastUpdated: new Date().toISOString(),
-      source: 'combined',
+      source: 'kong',
       events: allEvents
     });
   } catch (error) {
@@ -3299,26 +3315,27 @@ app.post('/api/admin/sync-zoho-gallery', async (req, res) => {
   }
 });
 
-// Admin endpoint to manually trigger Posh sync
+// Admin endpoint to manually trigger Kong sync.
+// Route name kept for compatibility with the existing admin UI.
 app.post('/api/admin/sync-posh', async (req, res) => {
   try {
-    console.log('🔄 Manual Posh.vip sync triggered...');
-    const scraper = await loadPoshScraper();
+    console.log('🔄 Manual Kong Nightlife sync triggered...');
+    const scraper = await loadKongScraper();
     
     if (!scraper) {
       return res.status(500).json({ error: 'Scraper not available' });
     }
     
-    const events = await scraper.scrapePoshEvents();
+    const events = await scraper.scrapeKongEvents();
     
     res.json({
       success: true,
-      message: `Synced ${events.length} events from Posh.vip`,
+      message: `Synced ${events.length} events from Kong Nightlife`,
       eventCount: events.length,
       events: events.slice(0, 5) // Preview first 5
     });
   } catch (error) {
-    console.error('❌ Posh sync error:', error.message);
+    console.error('❌ Kong sync error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -3459,15 +3476,9 @@ app.post('/api/admin/posh-events/add', async (req, res) => {
       console.log(`➕ Added Posh event: ${url}`);
     }
 
-    const scraper = await loadPoshScraper();
-    if (scraper) {
-      console.log('🔄 Re-scraping all events after adding new URL...');
-      await scraper.scrapePoshEvents();
-    }
-
     res.json({
       success: true,
-      message: isNew ? 'Event added and cache updated' : 'Event already exists, cache refreshed',
+      message: isNew ? 'Event URL saved. Posh auto-sync is disabled.' : 'Event already exists. Posh auto-sync is disabled.',
       eventUrls: manualEvents.eventUrls
     });
   } catch (error) {
@@ -5321,87 +5332,16 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ── POSH.VIP SCRAPER ──────────────────────────────────────────────
-// Uses Posh.vip's internal API discovered via network analysis
-async function scrapePoshEvents() {
-  console.log('🔍 Fetching posh.vip API for Black Room events...');
-  try {
-    const { default: fetch } = await import('node-fetch');
-    const res = await fetch('https://posh.vip/api/web/v2/util/group_url/black-room', {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120 Safari/537.36',
-        'Accept': 'application/json',
-        'Referer': 'https://posh.vip/g/black-room',
-        'Origin': 'https://posh.vip'
-      }
-    });
+// Old Posh automatic scraper disabled. Kong sync is handled by routes/auto-sync.js.
 
-    if (!res.ok) {
-      console.error(`❌ Posh API HTTP ${res.status}`);
-      return;
-    }
-
-    const data = await res.json();
-    const rawEvents = data.events || [];
-    console.log(`📦 Posh API returned ${rawEvents.length} total events`);
-
-    const scrapedAt = new Date().toISOString();
-
-    const events = rawEvents.map(ev => {
-      const slug = ev.url || '';
-      const startDate = ev.start ? new Date(ev.start) : null;
-      const dateText = startDate ? startDate.toLocaleDateString('en-US', {
-        weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
-      }) : '';
-      const parsedDate = startDate ? startDate.toISOString().split('T')[0] : '';
-
-      return {
-        title: ev.name || '',
-        fullTitle: ev.name || '',
-        description: ev.description || '',
-        image: ev.flyer || '',
-        dateText,
-        parsedDate,
-        location: ev.venue?.name || 'Miami, FL',
-        address: ev.venue?.address || '',
-        organizer: ev.displayGroupName || 'Black Room',
-        slug,
-        poshUrl: `https://posh.vip/e/${slug}`,
-        source: 'api',
-        accentColor: ev.accentColor || '#e4340c',
-        youtubeLink: ev.youtubeLink || null,
-        scrapedAt
-      };
-    });
-
-    // Save full list to cache (API gives all events, sorted newest first)
-    const cachePath = path.join(__dirname, 'db/posh-events-cache.json');
-    const cache = {
-      lastUpdated: scrapedAt,
-      source: 'https://posh.vip/g/black-room',
-      apiSource: 'https://posh.vip/api/web/v2/util/group_url/black-room',
-      eventCount: events.length,
-      events
-    };
-    fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2));
-    console.log(`✅ Posh sync done — ${events.length} events saved to cache`);
-    return events;
-  } catch (err) {
-    console.error('❌ Posh API error:', err.message);
-  }
-}
-
-// Run scraper immediately on startup, then every day at 6 AM
-scrapePoshEvents();
-cron.schedule('0 6 * * *', () => {
-  console.log('⏰ Daily Posh scrape triggered');
-  scrapePoshEvents();
-});
-
-// Manual scrape endpoint (admin use)
+// Manual scrape endpoint (admin use). Kept for compatibility; now syncs Kong.
 app.post('/api/admin/scrape-posh', async (req, res) => {
-  await scrapePoshEvents();
-  const cachePath = path.join(__dirname, 'db/posh-events-cache.json');
+  const scraper = await loadKongScraper();
+  if (!scraper) {
+    return res.status(500).json({ success: false, error: 'Kong scraper not available' });
+  }
+  await scraper.scrapeKongEvents();
+  const cachePath = path.join(__dirname, 'db/kong-events-cache.json');
   const cache = fs.existsSync(cachePath) ? JSON.parse(fs.readFileSync(cachePath, 'utf-8')) : {};
   res.json({ success: true, eventCount: cache.eventCount || 0 });
 });

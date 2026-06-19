@@ -179,71 +179,16 @@ router.put("/users/:email/role", requireAdmin, (req, res) => {
   }
 });
 
-// Sync events from Posh.vip API (auto-sync)
+// Sync events from Kong Nightlife. Route name kept for existing admin buttons.
 router.post('/scrape-posh', async (req, res) => {
   try {
-    console.log('🔍 Admin triggered Posh.vip sync...');
-    const fetchModule = await import('node-fetch');
-    const fetch = fetchModule.default;
-    const fsSync = (await import('fs')).default;
-    const pathModule = (await import('path')).default;
-    const { fileURLToPath } = await import('url');
-    const __dirname2 = pathModule.dirname(fileURLToPath(import.meta.url));
-
-    const apiRes = await fetch('https://posh.vip/api/web/v2/util/group_url/black-room', {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120 Safari/537.36',
-        'Accept': 'application/json',
-        'Referer': 'https://posh.vip/g/black-room',
-        'Origin': 'https://posh.vip'
-      }
-    });
-
-    if (!apiRes.ok) throw new Error(`Posh API returned ${apiRes.status}`);
-
-    const data = await apiRes.json();
-    const rawEvents = data.events || [];
-    const scrapedAt = new Date().toISOString();
-
-    const events = rawEvents.map(ev => {
-      const slug = ev.url || '';
-      const startDate = ev.start ? new Date(ev.start) : null;
-      const dateText = startDate ? startDate.toLocaleDateString('en-US', {
-        weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
-      }) : '';
-      const parsedDate = startDate ? startDate.toISOString().split('T')[0] : '';
-      return {
-        title: ev.name || '',
-        fullTitle: ev.name || '',
-        description: ev.description || '',
-        image: ev.flyer || '',
-        dateText,
-        parsedDate,
-        location: ev.venue?.name || 'Miami, FL',
-        address: ev.venue?.address || '',
-        organizer: ev.displayGroupName || 'Black Room',
-        slug,
-        poshUrl: `https://posh.vip/e/${slug}`,
-        source: 'api',
-        accentColor: ev.accentColor || '#e4340c',
-        youtubeLink: ev.youtubeLink || null,
-        scrapedAt
-      };
-    });
-
-    const cachePath = pathModule.join(__dirname2, '../db/posh-events-cache.json');
-    const cache = {
-      lastUpdated: scrapedAt,
-      source: 'https://posh.vip/g/black-room',
-      apiSource: 'https://posh.vip/api/web/v2/util/group_url/black-room',
-      eventCount: events.length,
-      events
-    };
-    fsSync.writeFileSync(cachePath, JSON.stringify(cache, null, 2));
-    console.log(`✅ Admin sync done — ${events.length} events saved`);
+    console.log('🔍 Admin triggered Kong Nightlife sync...');
+    const { scrapeKongEvents } = await import('../scripts/kong-scraper.js');
+    const events = await scrapeKongEvents();
+    console.log(`✅ Admin sync done — ${events.length} Kong events saved`);
     res.json({ success: true, eventCount: events.length });
   } catch (error) {
-    console.error('❌ Posh sync error:', error);
+    console.error('❌ Kong sync error:', error);
     res.status(500).json({ error: error.message });
   }
 });

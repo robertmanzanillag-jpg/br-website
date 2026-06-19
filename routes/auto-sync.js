@@ -1,13 +1,13 @@
 import express from 'express';
 import cron from 'node-cron';
 import fetch from 'node-fetch';
-import { scrapePoshEvents } from '../scripts/posh-scraper.js';
+import { scrapeKongEvents } from '../scripts/kong-scraper.js';
 
 const router = express.Router();
 
 let syncHistory = [];
 let cronJob = null;
-let poshCronJob = null;
+let kongCronJob = null;
 
 // Función para ejecutar sincronización
 async function runAutoSync() {
@@ -61,17 +61,17 @@ async function runAutoSync() {
   }
 }
 
-// Función para sincronizar eventos de Posh.vip
-async function runPoshSync() {
+// Función para sincronizar eventos de Kong Nightlife
+async function runKongSync() {
   try {
-    console.log('\n🎟️ === SINCRONIZACIÓN POSH.VIP INICIADA ===');
+    console.log('\n🎟️ === SINCRONIZACIÓN KONG NIGHTLIFE INICIADA ===');
     console.log(`📅 Fecha: ${new Date().toISOString()}`);
     
-    const events = await scrapePoshEvents();
+    const events = await scrapeKongEvents();
     
     const syncRecord = {
       timestamp: new Date().toISOString(),
-      type: 'posh',
+      type: 'kong',
       success: true,
       eventsFound: events.length
     };
@@ -82,17 +82,17 @@ async function runPoshSync() {
       syncHistory = syncHistory.slice(-50);
     }
     
-    console.log(`✅ Sincronización Posh.vip completada`);
-    console.log(`📊 Eventos de Black Room encontrados: ${events.length}`);
+    console.log(`✅ Sincronización Kong Nightlife completada`);
+    console.log(`📊 Eventos encontrados: ${events.length}`);
     
     return syncRecord;
     
   } catch (error) {
-    console.error('❌ Error en sincronización Posh.vip:', error);
+    console.error('❌ Error en sincronización Kong Nightlife:', error);
     
     const errorRecord = {
       timestamp: new Date().toISOString(),
-      type: 'posh',
+      type: 'kong',
       success: false,
       error: error.message
     };
@@ -121,16 +121,16 @@ function startAutoSync() {
     console.log('✅ YouTube sync configurado: Jueves 8PM (EST)');
   }
   
-  // Posh.vip sync: Todos los días a las 6AM
-  if (!poshCronJob) {
-    poshCronJob = cron.schedule('0 6 * * *', async () => {
-      console.log('\n🔔 Ejecutando sincronización Posh.vip (Diaria 6AM)');
-      await runPoshSync();
+  // Kong Nightlife sync: Todos los días a las 6AM
+  if (!kongCronJob) {
+    kongCronJob = cron.schedule('0 6 * * *', async () => {
+      console.log('\n🔔 Ejecutando sincronización Kong Nightlife (Diaria 6AM)');
+      await runKongSync();
     }, {
       scheduled: true,
       timezone: "America/New_York"
     });
-    console.log('✅ Posh.vip sync configurado: Diariamente 6AM (EST)');
+    console.log('✅ Kong Nightlife sync configurado: Diariamente 6AM (EST)');
   }
 }
 
@@ -141,10 +141,10 @@ function stopAutoSync() {
     cronJob = null;
     console.log('⏸️  YouTube sync detenido');
   }
-  if (poshCronJob) {
-    poshCronJob.stop();
-    poshCronJob = null;
-    console.log('⏸️  Posh.vip sync detenido');
+  if (kongCronJob) {
+    kongCronJob.stop();
+    kongCronJob = null;
+    console.log('⏸️  Kong Nightlife sync detenido');
   }
 }
 
@@ -155,8 +155,8 @@ router.get('/status', (req, res) => {
       active: cronJob !== null,
       schedule: 'Jueves 8PM EST'
     },
-    posh: {
-      active: poshCronJob !== null,
+    kong: {
+      active: kongCronJob !== null,
       schedule: 'Diariamente 6AM EST'
     },
     timezone: 'America/New_York',
@@ -164,13 +164,13 @@ router.get('/status', (req, res) => {
   });
 });
 
-// Endpoint para sincronizar Posh.vip manualmente
+// Endpoint para sincronizar Kong manualmente. Route kept for admin compatibility.
 router.post('/sync-posh', async (req, res) => {
   try {
-    const result = await runPoshSync();
+    const result = await runKongSync();
     res.json({
       success: true,
-      message: 'Sincronización Posh.vip ejecutada',
+      message: 'Sincronización Kong Nightlife ejecutada',
       result
     });
   } catch (error) {

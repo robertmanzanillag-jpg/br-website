@@ -8,7 +8,43 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
+function addKongEvent(allEvents, event) {
+  const eventTitle = event.title || (event.fullTitle || '').split('|')[0].trim();
+  const exists = allEvents.some(e =>
+    (e.poshvipUrl && e.poshvipUrl === event.poshUrl) ||
+    (e.kongUrl && event.kongUrl && e.kongUrl === event.kongUrl) ||
+    (e.title.toLowerCase() === eventTitle.toLowerCase() && e.date === (event.parsedDate || parseEventDate(event.dateText)))
+  );
+  if (exists) return;
+
+  const date = event.parsedDate || parseEventDate(event.dateText);
+
+  allEvents.push({
+    id: `kong-${event.slug}`,
+    title: eventTitle,
+    name: eventTitle,
+    date: date,
+    time: event.time || extractTime(event.dateText),
+    location: event.location || 'Miami, FL',
+    description: event.description,
+    ticketLink: event.poshUrl,
+    poshvipUrl: event.poshUrl,
+    kongUrl: event.kongUrl,
+    detailUrl: event.detailUrl,
+    purchaseUrl: event.purchaseUrl,
+    type: 'live-event',
+    featured: true,
+    isPoshEvent: true,
+    source: 'kong',
+    image: event.image,
+    imageUrl: event.imageUrl || event.image,
+    price: event.price,
+    ageRestriction: event.ageRestriction,
+    address: event.address
+  });
+}
+
+router.get('/', async (req, res) => {
   try {
     const allEvents = [];
     const now = new Date();
@@ -43,39 +79,25 @@ router.get('/', (req, res) => {
       }
     }
     
-    const poshCacheFile = path.join(__dirname, '../db/posh-events-cache.json');
-    if (fs.existsSync(poshCacheFile)) {
-      const poshData = JSON.parse(fs.readFileSync(poshCacheFile, 'utf8'));
-      if (poshData.events && poshData.events.length > 0) {
-        for (const event of poshData.events) {
-          const eventTitle = event.title || (event.fullTitle || '').split('|')[0].trim();
-          const exists = allEvents.some(e =>
-            (e.poshvipUrl && e.poshvipUrl === event.poshUrl) ||
-            (e.title.toLowerCase() === eventTitle.toLowerCase() && e.date === (event.parsedDate || parseEventDate(event.dateText)))
-          );
-          if (exists) continue;
-
-          const date = event.parsedDate || parseEventDate(event.dateText);
-
-          allEvents.push({
-            id: `posh-${event.slug}`,
-            title: eventTitle,
-            name: eventTitle,
-            date: date,
-            time: extractTime(event.dateText),
-            location: event.location || 'Miami, FL',
-            description: event.description,
-            ticketLink: event.poshUrl,
-            poshvipUrl: event.poshUrl,
-            type: 'live-event',
-            featured: true,
-            isPoshEvent: true,
-            source: 'posh',
-            image: event.image,
-            imageUrl: event.image
-          });
+    const kongCacheFile = path.join(__dirname, '../db/kong-events-cache.json');
+    if (fs.existsSync(kongCacheFile)) {
+      const kongData = JSON.parse(fs.readFileSync(kongCacheFile, 'utf8'));
+      if (kongData.events && kongData.events.length > 0) {
+        for (const event of kongData.events) {
+          addKongEvent(allEvents, event);
         }
-        console.log(`📦 Loaded ${poshData.events.length} events from Posh.vip cache`);
+        console.log(`📦 Loaded ${kongData.events.length} events from Kong cache`);
+      }
+    } else {
+      try {
+        const { getUpcomingKongEvents } = await import('../scripts/kong-scraper.js');
+        const kongEvents = await getUpcomingKongEvents();
+        for (const event of kongEvents) {
+          addKongEvent(allEvents, event);
+        }
+        console.log(`🔄 Generated Kong cache and loaded ${kongEvents.length} events`);
+      } catch (error) {
+        console.error('❌ Kong fallback sync failed:', error.message);
       }
     }
     
@@ -86,7 +108,8 @@ router.get('/', (req, res) => {
       const poshLocalEvents = localEvents.filter(event => 
         event.type === 'live-event' || 
         event.isPoshEvent === true ||
-        event.source === 'posh'
+        event.source === 'posh' ||
+        event.source === 'kong'
       );
       
       for (const event of poshLocalEvents) {
@@ -162,19 +185,26 @@ router.get('/:id', (req, res) => {
   try {
     const eventId = req.params.id;
     
-    const poshCacheFile = path.join(__dirname, '../db/posh-events-cache.json');
-    if (fs.existsSync(poshCacheFile)) {
-      const poshData = JSON.parse(fs.readFileSync(poshCacheFile, 'utf8'));
-      const poshEvent = poshData.events?.find(e => `posh-${e.slug}` === eventId);
-      if (poshEvent) {
+    const kongCacheFile = path.join(__dirname, '../db/kong-events-cache.json');
+    if (fs.existsSync(kongCacheFile)) {
+      const kongData = JSON.parse(fs.readFileSync(kongCacheFile, 'utf8'));
+      const kongEvent = kongData.events?.find(e => `kong-${e.slug}` === eventId);
+      if (kongEvent) {
         return res.json({
-          id: `posh-${poshEvent.slug}`,
-          title: poshEvent.title || (poshEvent.fullTitle || '').split('|')[0].trim(),
-          date: poshEvent.parsedDate || parseEventDate(poshEvent.dateText),
-          location: poshEvent.location,
-          description: poshEvent.description,
-          ticketLink: poshEvent.poshUrl,
-          image: poshEvent.image
+          id: `kong-${kongEvent.slug}`,
+          title: kongEvent.title || (kongEvent.fullTitle || '').split('|')[0].trim(),
+          date: kongEvent.parsedDate || parseEventDate(kongEvent.dateText),
+          location: kongEvent.location,
+          description: kongEvent.description,
+          ticketLink: kongEvent.poshUrl,
+          kongUrl: kongEvent.kongUrl,
+          detailUrl: kongEvent.detailUrl,
+          purchaseUrl: kongEvent.purchaseUrl,
+          image: kongEvent.image,
+          imageUrl: kongEvent.imageUrl || kongEvent.image,
+          price: kongEvent.price,
+          ageRestriction: kongEvent.ageRestriction,
+          address: kongEvent.address
         });
       }
     }
