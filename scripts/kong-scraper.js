@@ -229,7 +229,17 @@ function parseDetailText(detailText = '') {
     return cleanText(end ? tail.slice(0, end) : tail);
   };
 
-  const address = pickBetween('LOCATION', ['21+', 'DJ', 'Tickets', 'Invite Friends']);
+  const normalizeAddress = (value = '') => {
+    const address = cleanText(value);
+    const midpoint = Math.floor(address.length / 2);
+    const firstHalf = address.slice(0, midpoint).trim();
+    const secondHalf = address.slice(midpoint).trim();
+
+    if (firstHalf && firstHalf === secondHalf) return firstHalf;
+    return address;
+  };
+
+  const address = normalizeAddress(pickBetween('LOCATION', ['18+', '21+', 'DJ', 'Tickets', 'Invite Friends']));
   const description = pickBetween('About', ['Report Event', 'Get a Ride', 'Reviews', 'Going Guestlist']);
   const priceMatch = text.match(/\b(?:Starting price|Tickets from)\s+\$?([0-9][0-9.,]*)/i);
   const ageMatch = text.match(/\b(18\+|21\+)\b/);
