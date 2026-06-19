@@ -9,25 +9,36 @@ const __dirname = path.dirname(__filename);
 const router = express.Router();
 
 const KONG_PROFILE_URL = 'https://kongnightlife.com/user/414d4b95-6e98-4e2b-8a88-1d660f8f1e1b';
-const BLACK_ROOM_FRIENDS_EVENT_URL = 'https://kongnightlife.com/event/2f1baef4-8bd9-49e6-aec4-a388e66ec684';
-const BLACK_ROOM_FRIENDS_ADDRESS = 'CASA NUBE WYNWOOD 2060 NW 1st Ave, Miami, FL 33127, USA';
+const KONG_EVENT_FIXES = {
+  "CHRIS LORENZO, JAZZY & RUZE": {
+    url: 'https://kongnightlife.com/event/3720b036-6bbe-4080-8afa-36f8ada05320'
+  },
+  'BLACK ROOM & FRIENDS': {
+    url: 'https://kongnightlife.com/event/2f1baef4-8bd9-49e6-aec4-a388e66ec684',
+    address: 'CASA NUBE WYNWOOD 2060 NW 1st Ave, Miami, FL 33127, USA'
+  },
+  'RAVE CUP: WORLD CUP QUARTER FINALS WATCH PARTY + RAVE': {
+    url: 'https://kongnightlife.com/event/15e6dc23-dcdb-4409-a558-4f689f5dd09a'
+  }
+};
 
 function normalizeKongEvent(event) {
-  if ((event.title || '').toUpperCase() !== 'BLACK ROOM & FRIENDS') return event;
+  const fix = KONG_EVENT_FIXES[(event.title || '').toUpperCase()];
+  if (!fix) return event;
 
   const hasProfileUrl = [event.ticketUrl, event.purchaseUrl, event.detailUrl, event.kongUrl, event.poshUrl]
     .some(url => url === KONG_PROFILE_URL);
 
-  if (!hasProfileUrl) return event;
+  if (!hasProfileUrl && !fix.address) return event;
 
   return {
     ...event,
-    ticketUrl: BLACK_ROOM_FRIENDS_EVENT_URL,
-    purchaseUrl: BLACK_ROOM_FRIENDS_EVENT_URL,
-    detailUrl: BLACK_ROOM_FRIENDS_EVENT_URL,
-    kongUrl: BLACK_ROOM_FRIENDS_EVENT_URL,
-    poshUrl: BLACK_ROOM_FRIENDS_EVENT_URL,
-    address: event.address || BLACK_ROOM_FRIENDS_ADDRESS
+    ticketUrl: hasProfileUrl ? fix.url : event.ticketUrl,
+    purchaseUrl: hasProfileUrl ? fix.url : event.purchaseUrl,
+    detailUrl: hasProfileUrl ? fix.url : event.detailUrl,
+    kongUrl: hasProfileUrl ? fix.url : event.kongUrl,
+    poshUrl: hasProfileUrl ? fix.url : event.poshUrl,
+    address: fix.address || event.address
   };
 }
 
