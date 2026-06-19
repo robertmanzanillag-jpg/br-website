@@ -3084,17 +3084,24 @@ async function loadKongScraper() {
 // Backward-compatible endpoint name: frontend still calls /api/posh-events.
 const KONG_PROFILE_URL = 'https://kongnightlife.com/user/414d4b95-6e98-4e2b-8a88-1d660f8f1e1b';
 const KONG_EVENT_FIXES = {
-  "CHRIS LORENZO, JAZZY & RUZE": {
-    url: 'https://kongnightlife.com/event/3720b036-6bbe-4080-8afa-36f8ada05320'
-  },
   'BLACK ROOM & FRIENDS': {
     url: 'https://kongnightlife.com/event/2f1baef4-8bd9-49e6-aec4-a388e66ec684',
-    address: 'CASA NUBE WYNWOOD 2060 NW 1st Ave, Miami, FL 33127, USA'
-  },
-  'RAVE CUP: WORLD CUP QUARTER FINALS WATCH PARTY + RAVE': {
-    url: 'https://kongnightlife.com/event/15e6dc23-dcdb-4409-a558-4f689f5dd09a'
+    address: 'CASA NUBE WYNWOOD 2060 NW 1st Ave, Miami, FL 33127, USA',
+    image: 'https://kongnightlife.com/api/objects/public/uploads/1780593125852-121208103.jpg'
   }
 };
+
+function isBlackRoomEvent(event = {}) {
+  const haystack = [
+    event.title,
+    event.fullTitle,
+    event.name,
+    event.description,
+    event.organizer
+  ].filter(Boolean).join(' ').toLowerCase();
+
+  return haystack.includes('black room') || haystack.includes('blackroom.us') || haystack.includes('@blackroom');
+}
 
 function normalizeKongEvent(event) {
   const fix = KONG_EVENT_FIXES[(event.title || '').toUpperCase()];
@@ -3103,7 +3110,7 @@ function normalizeKongEvent(event) {
   const hasProfileUrl = [event.ticketUrl, event.purchaseUrl, event.detailUrl, event.kongUrl, event.poshUrl]
     .some(url => url === KONG_PROFILE_URL);
 
-  if (!hasProfileUrl && !fix.address) return event;
+  if (!hasProfileUrl && !fix.address && !fix.image) return event;
 
   return {
     ...event,
@@ -3112,7 +3119,9 @@ function normalizeKongEvent(event) {
     detailUrl: hasProfileUrl ? fix.url : event.detailUrl,
     kongUrl: hasProfileUrl ? fix.url : event.kongUrl,
     poshUrl: hasProfileUrl ? fix.url : event.poshUrl,
-    address: fix.address || event.address
+    address: fix.address || event.address,
+    image: fix.image || event.image,
+    imageUrl: fix.image || event.imageUrl || event.image
   };
 }
 
@@ -3130,7 +3139,7 @@ app.get('/api/posh-events', async (req, res) => {
         for (const event of manualData.events) {
           const eventDate = new Date(event.date);
           if (eventDate >= now) {
-            allEvents.push({
+            const manualEvent = {
               title: event.title,
               fullTitle: event.title,
               description: event.description || `${event.title} at ${event.venue || event.location || 'Miami, FL'}`,
@@ -3150,7 +3159,9 @@ app.get('/api/posh-events', async (req, res) => {
               detailUrl: event.ticketUrl,
               price: event.price || '$25+',
               source: event.source || 'manual'
-            });
+            };
+
+            if (isBlackRoomEvent(manualEvent)) allEvents.push(manualEvent);
           }
         }
         console.log(`📋 Loaded ${allEvents.length} manual events`);
@@ -3182,23 +3193,27 @@ app.get('/api/posh-events', async (req, res) => {
           } catch {}
         }
 
-        allEvents.push(normalizeKongEvent({
+        const normalizedEvent = normalizeKongEvent({
           ...event,
           title: eventTitle,
           date: event.parsedDate || event.date,
           source: 'kong-cache'
-        }));
+        });
+
+        if (isBlackRoomEvent(normalizedEvent)) allEvents.push(normalizedEvent);
       }
     } else {
       const scraper = await loadKongScraper();
       if (scraper) {
         try {
           const events = await scraper.getUpcomingKongEvents();
-          allEvents.push(...events.map(event => normalizeKongEvent({
-            ...event,
-            date: event.parsedDate || event.date,
-            source: 'kong-cache'
-          })));
+          allEvents.push(...events
+            .map(event => normalizeKongEvent({
+              ...event,
+              date: event.parsedDate || event.date,
+              source: 'kong-cache'
+            }))
+            .filter(isBlackRoomEvent));
         } catch (error) {
           console.error('❌ Kong events refresh failed:', error.message);
         }

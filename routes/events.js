@@ -10,17 +10,24 @@ const router = express.Router();
 
 const KONG_PROFILE_URL = 'https://kongnightlife.com/user/414d4b95-6e98-4e2b-8a88-1d660f8f1e1b';
 const KONG_EVENT_FIXES = {
-  "CHRIS LORENZO, JAZZY & RUZE": {
-    url: 'https://kongnightlife.com/event/3720b036-6bbe-4080-8afa-36f8ada05320'
-  },
   'BLACK ROOM & FRIENDS': {
     url: 'https://kongnightlife.com/event/2f1baef4-8bd9-49e6-aec4-a388e66ec684',
-    address: 'CASA NUBE WYNWOOD 2060 NW 1st Ave, Miami, FL 33127, USA'
-  },
-  'RAVE CUP: WORLD CUP QUARTER FINALS WATCH PARTY + RAVE': {
-    url: 'https://kongnightlife.com/event/15e6dc23-dcdb-4409-a558-4f689f5dd09a'
+    address: 'CASA NUBE WYNWOOD 2060 NW 1st Ave, Miami, FL 33127, USA',
+    image: 'https://kongnightlife.com/api/objects/public/uploads/1780593125852-121208103.jpg'
   }
 };
+
+function isBlackRoomEvent(event = {}) {
+  const haystack = [
+    event.title,
+    event.fullTitle,
+    event.name,
+    event.description,
+    event.organizer
+  ].filter(Boolean).join(' ').toLowerCase();
+
+  return haystack.includes('black room') || haystack.includes('blackroom.us') || haystack.includes('@blackroom');
+}
 
 function normalizeKongEvent(event) {
   const fix = KONG_EVENT_FIXES[(event.title || '').toUpperCase()];
@@ -29,7 +36,7 @@ function normalizeKongEvent(event) {
   const hasProfileUrl = [event.ticketUrl, event.purchaseUrl, event.detailUrl, event.kongUrl, event.poshUrl]
     .some(url => url === KONG_PROFILE_URL);
 
-  if (!hasProfileUrl && !fix.address) return event;
+  if (!hasProfileUrl && !fix.address && !fix.image) return event;
 
   return {
     ...event,
@@ -38,12 +45,15 @@ function normalizeKongEvent(event) {
     detailUrl: hasProfileUrl ? fix.url : event.detailUrl,
     kongUrl: hasProfileUrl ? fix.url : event.kongUrl,
     poshUrl: hasProfileUrl ? fix.url : event.poshUrl,
-    address: fix.address || event.address
+    address: fix.address || event.address,
+    image: fix.image || event.image,
+    imageUrl: fix.image || event.imageUrl || event.image
   };
 }
 
 function addKongEvent(allEvents, event) {
   event = normalizeKongEvent(event);
+  if (!isBlackRoomEvent(event)) return;
   const eventTitle = event.title || (event.fullTitle || '').split('|')[0].trim();
   const exists = allEvents.some(e =>
     (e.poshvipUrl && e.poshvipUrl === event.poshUrl) ||
@@ -90,7 +100,7 @@ router.get('/', async (req, res) => {
       const manualData = JSON.parse(fs.readFileSync(manualEventsFile, 'utf8'));
       if (manualData.events && manualData.events.length > 0) {
         for (const event of manualData.events) {
-          allEvents.push({
+          const manualEvent = {
             id: `manual-${event.title.toLowerCase().replace(/\s+/g, '-')}`,
             title: event.title,
             name: event.title,
@@ -112,7 +122,9 @@ router.get('/', async (req, res) => {
             imageUrl: event.image,
             price: event.price || '$25+',
             address: event.address || ''
-          });
+          };
+
+          if (isBlackRoomEvent(manualEvent)) allEvents.push(manualEvent);
         }
         console.log(`📋 Loaded ${manualData.events.length} manual events`);
       }
