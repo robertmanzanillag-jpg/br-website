@@ -1,3 +1,5 @@
+import { execFileSync } from 'child_process';
+import { existsSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -193,6 +195,25 @@ function filterUpcomingEvents(events) {
     .sort((a, b) => new Date(a.parsedDate || '2099-01-01') - new Date(b.parsedDate || '2099-01-01'));
 }
 
+function findChromiumExecutable() {
+  const explicitPath = process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROME_PATH;
+  if (explicitPath && existsSync(explicitPath)) return explicitPath;
+
+  try {
+    const detectedPath = execFileSync('which', ['chromium'], { encoding: 'utf8' }).trim();
+    if (detectedPath && existsSync(detectedPath)) return detectedPath;
+  } catch {}
+
+  const candidates = [
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome',
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+  ];
+
+  return candidates.find(candidate => existsSync(candidate)) || null;
+}
+
 function parseDetailText(detailText = '') {
   const text = cleanText(detailText);
   const pickBetween = (startLabel, endLabels) => {
@@ -346,8 +367,10 @@ async function scrapeKongEvents() {
   let browser;
   try {
     const { default: puppeteer } = await import('puppeteer');
+    const executablePath = findChromiumExecutable();
     browser = await puppeteer.launch({
       headless: 'new',
+      ...(executablePath ? { executablePath } : {}),
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
