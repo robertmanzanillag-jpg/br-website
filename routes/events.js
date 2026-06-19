@@ -8,7 +8,31 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
+const KONG_PROFILE_URL = 'https://kongnightlife.com/user/414d4b95-6e98-4e2b-8a88-1d660f8f1e1b';
+const BLACK_ROOM_FRIENDS_EVENT_URL = 'https://kongnightlife.com/event/2f1baef4-8bd9-49e6-aec4-a388e66ec684';
+const BLACK_ROOM_FRIENDS_ADDRESS = 'CASA NUBE WYNWOOD 2060 NW 1st Ave, Miami, FL 33127, USA';
+
+function normalizeKongEvent(event) {
+  if ((event.title || '').toUpperCase() !== 'BLACK ROOM & FRIENDS') return event;
+
+  const hasProfileUrl = [event.ticketUrl, event.purchaseUrl, event.detailUrl, event.kongUrl, event.poshUrl]
+    .some(url => url === KONG_PROFILE_URL);
+
+  if (!hasProfileUrl) return event;
+
+  return {
+    ...event,
+    ticketUrl: BLACK_ROOM_FRIENDS_EVENT_URL,
+    purchaseUrl: BLACK_ROOM_FRIENDS_EVENT_URL,
+    detailUrl: BLACK_ROOM_FRIENDS_EVENT_URL,
+    kongUrl: BLACK_ROOM_FRIENDS_EVENT_URL,
+    poshUrl: BLACK_ROOM_FRIENDS_EVENT_URL,
+    address: event.address || BLACK_ROOM_FRIENDS_ADDRESS
+  };
+}
+
 function addKongEvent(allEvents, event) {
+  event = normalizeKongEvent(event);
   const eventTitle = event.title || (event.fullTitle || '').split('|')[0].trim();
   const exists = allEvents.some(e =>
     (e.poshvipUrl && e.poshvipUrl === event.poshUrl) ||
@@ -190,21 +214,22 @@ router.get('/:id', (req, res) => {
       const kongData = JSON.parse(fs.readFileSync(kongCacheFile, 'utf8'));
       const kongEvent = kongData.events?.find(e => `kong-${e.slug}` === eventId);
       if (kongEvent) {
+        const normalizedEvent = normalizeKongEvent(kongEvent);
         return res.json({
-          id: `kong-${kongEvent.slug}`,
-          title: kongEvent.title || (kongEvent.fullTitle || '').split('|')[0].trim(),
-          date: kongEvent.parsedDate || parseEventDate(kongEvent.dateText),
-          location: kongEvent.location,
-          description: kongEvent.description,
-          ticketLink: kongEvent.poshUrl,
-          kongUrl: kongEvent.kongUrl,
-          detailUrl: kongEvent.detailUrl,
-          purchaseUrl: kongEvent.purchaseUrl,
-          image: kongEvent.image,
-          imageUrl: kongEvent.imageUrl || kongEvent.image,
-          price: kongEvent.price,
-          ageRestriction: kongEvent.ageRestriction,
-          address: kongEvent.address
+          id: `kong-${normalizedEvent.slug}`,
+          title: normalizedEvent.title || (normalizedEvent.fullTitle || '').split('|')[0].trim(),
+          date: normalizedEvent.parsedDate || parseEventDate(normalizedEvent.dateText),
+          location: normalizedEvent.location,
+          description: normalizedEvent.description,
+          ticketLink: normalizedEvent.poshUrl,
+          kongUrl: normalizedEvent.kongUrl,
+          detailUrl: normalizedEvent.detailUrl,
+          purchaseUrl: normalizedEvent.purchaseUrl,
+          image: normalizedEvent.image,
+          imageUrl: normalizedEvent.imageUrl || normalizedEvent.image,
+          price: normalizedEvent.price,
+          ageRestriction: normalizedEvent.ageRestriction,
+          address: normalizedEvent.address
         });
       }
     }

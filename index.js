@@ -3075,6 +3075,29 @@ async function loadKongScraper() {
 }
 
 // Backward-compatible endpoint name: frontend still calls /api/posh-events.
+const KONG_PROFILE_URL = 'https://kongnightlife.com/user/414d4b95-6e98-4e2b-8a88-1d660f8f1e1b';
+const BLACK_ROOM_FRIENDS_EVENT_URL = 'https://kongnightlife.com/event/2f1baef4-8bd9-49e6-aec4-a388e66ec684';
+const BLACK_ROOM_FRIENDS_ADDRESS = 'CASA NUBE WYNWOOD 2060 NW 1st Ave, Miami, FL 33127, USA';
+
+function normalizeKongEvent(event) {
+  if ((event.title || '').toUpperCase() !== 'BLACK ROOM & FRIENDS') return event;
+
+  const hasProfileUrl = [event.ticketUrl, event.purchaseUrl, event.detailUrl, event.kongUrl, event.poshUrl]
+    .some(url => url === KONG_PROFILE_URL);
+
+  if (!hasProfileUrl) return event;
+
+  return {
+    ...event,
+    ticketUrl: BLACK_ROOM_FRIENDS_EVENT_URL,
+    purchaseUrl: BLACK_ROOM_FRIENDS_EVENT_URL,
+    detailUrl: BLACK_ROOM_FRIENDS_EVENT_URL,
+    kongUrl: BLACK_ROOM_FRIENDS_EVENT_URL,
+    poshUrl: BLACK_ROOM_FRIENDS_EVENT_URL,
+    address: event.address || BLACK_ROOM_FRIENDS_ADDRESS
+  };
+}
+
 app.get('/api/posh-events', async (req, res) => {
   try {
     const allEvents = [];
@@ -3136,19 +3159,19 @@ app.get('/api/posh-events', async (req, res) => {
           } catch {}
         }
 
-        allEvents.push({
+        allEvents.push(normalizeKongEvent({
           ...event,
           title: eventTitle,
           date: event.parsedDate || event.date,
           source: 'kong-cache'
-        });
+        }));
       }
     } else {
       const scraper = await loadKongScraper();
       if (scraper) {
         try {
           const events = await scraper.getUpcomingKongEvents();
-          allEvents.push(...events.map(event => ({
+          allEvents.push(...events.map(event => normalizeKongEvent({
             ...event,
             date: event.parsedDate || event.date,
             source: 'kong-cache'
