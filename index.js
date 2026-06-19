@@ -200,6 +200,13 @@ import communityAdminRouter from './routes/community-admin.js';
 import uploadRouter from './routes/upload.js';
 import youtubeCalendarSyncRouter from './routes/youtube-calendar-sync.js';
 import autoSyncRouter from './routes/auto-sync.js';
+import {
+  addManualEvent,
+  extractEventFromLink,
+  markDraftConfirmed,
+  readEventDraft,
+  saveEventDraft
+} from './utils/eventLinkAssistant.js';
 
 // Use routes
 app.use('/api/register', registerRouter);
@@ -3125,19 +3132,24 @@ app.get('/api/posh-events', async (req, res) => {
           if (eventDate >= now) {
             allEvents.push({
               title: event.title,
-              description: `${event.title} at ${event.venue}`,
+              fullTitle: event.title,
+              description: event.description || `${event.title} at ${event.venue || event.location || 'Miami, FL'}`,
               image: event.image,
+              imageUrl: event.image,
               dateText: event.date,
               date: event.date,
               time: event.time || '11:00 PM',
               location: event.location || 'Miami, FL',
               venue: event.venue,
+              address: event.address || '',
               slug: event.title.toLowerCase().replace(/\s+/g, '-'),
               poshUrl: event.ticketUrl,
               kongUrl: event.ticketUrl,
               ticketUrl: event.ticketUrl,
+              purchaseUrl: event.ticketUrl,
+              detailUrl: event.ticketUrl,
               price: event.price || '$25+',
-              source: 'manual'
+              source: event.source || 'manual'
             });
           }
         }
@@ -3439,6 +3451,110 @@ function saveManualEvents(data) {
   data.lastUpdated = new Date().toISOString();
   fs.writeFileSync(MANUAL_EVENTS_PATH, JSON.stringify(data, null, 2));
 }
+
+const EVENT_ASSISTANT_DRAFTS_PATH = path.join(__dirname, 'db/event-assistant-drafts.json');
+
+function canUseEventAssistant(req) {
+  const token = process.env.EVENT_ASSISTANT_TOKEN;
+  const providedToken = req.headers['x-event-assistant-token'] || req.body?.token;
+  return Boolean(req.session?.user?.isAdmin || (token && providedToken === token));
+}
+
+app.post('/api/event-assistant/preview', async (req, res) => {
+  try {
+    if (!canUseEventAssistant(req)) {
+      return res.status(401).json({
+        success: false,
+        error: 'Admin confirmation required',
+        question: 'Necesito que estés logueado como admin o que el chat use EVENT_ASSISTANT_TOKEN antes de agregar eventos.'
+      });
+    }
+
+    const { url } = req.body || {};
+    if (!url) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing event link',
+        question: 'Mándame el link del evento que quieres agregar.'
+      });
+    }
+
+    const preview = await extractEventFromLink(url);
+    const draftId = `draft-${Date.now()}`;
+    const draft = {
+      id: draftId,
+      status: 'pending-confirmation',
+      createdAt: new Date().toISOString(),
+      event: preview.event,
+      questions: preview.questions
+    };
+
+    await saveEventDraft(EVENT_ASSISTANT_DRAFTS_PATH, draft);
+
+    return res.json({
+      success: true,
+      draftId,
+      status: preview.needsInfo ? 'needs-info' : 'needs-confirmation',
+      event: preview.event,
+      questions: preview.questions,
+      confirmationText: preview.needsInfo
+        ? `Encontré algo de información, pero me falta: ${preview.questions.join(' ')}`
+        : `Encontré este evento: ${preview.event.title} el ${preview.event.date || 'día por definir'} en ${preview.event.location}. ¿Lo agrego a Events?`
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+      question: 'No pude sacar toda la info de ese link. Pásame título, fecha, imagen y link de ticket, o intenta con otro link público.'
+    });
+  }
+});
+
+app.post('/api/event-assistant/confirm', async (req, res) => {
+  try {
+    if (!canUseEventAssistant(req)) {
+      return res.status(401).json({
+        success: false,
+        error: 'Admin confirmation required'
+      });
+    }
+
+    const { draftId, confirm, updates = {} } = req.body || {};
+    if (!draftId) return res.status(400).json({ success: false, error: 'draftId is required' });
+    if (confirm !== true && String(confirm).toLowerCase() !== 'yes' && String(confirm).toLowerCase() !== 'si' && String(confirm).toLowerCase() !== 'sí') {
+      return res.json({ success: true, status: 'cancelled', message: 'No agregué el evento.' });
+    }
+
+    const draft = await readEventDraft(EVENT_ASSISTANT_DRAFTS_PATH, draftId);
+    if (!draft) return res.status(404).json({ success: false, error: 'Draft not found' });
+
+    const event = { ...draft.event, ...updates };
+    const missing = [];
+    if (!event.title) missing.push('título');
+    if (!event.date) missing.push('fecha');
+    if (!event.ticketUrl) missing.push('link de ticket');
+    if (missing.length) {
+      return res.status(400).json({
+        success: false,
+        error: `Falta ${missing.join(', ')}`,
+        questions: missing.map(field => `Cuál es el ${field} del evento?`)
+      });
+    }
+
+    const result = await addManualEvent(MANUAL_EVENTS_PATH, event);
+    await markDraftConfirmed(EVENT_ASSISTANT_DRAFTS_PATH, draftId);
+
+    return res.json({
+      success: true,
+      status: result.duplicate ? 'already-exists' : 'added',
+      message: result.duplicate ? 'Ese evento ya estaba agregado.' : 'Evento agregado a Events.',
+      event: result.event,
+      total: result.total
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 app.get('/api/admin/manual-events', (req, res) => {
   const data = readManualEvents();

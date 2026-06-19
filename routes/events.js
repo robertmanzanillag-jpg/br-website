@@ -101,13 +101,17 @@ router.get('/', async (req, res) => {
             description: event.description || `${event.title} at ${event.venue}`,
             ticketLink: event.ticketUrl,
             poshvipUrl: event.ticketUrl,
+            kongUrl: event.ticketUrl,
+            detailUrl: event.ticketUrl,
+            purchaseUrl: event.ticketUrl,
             type: 'live-event',
             featured: true,
             isPoshEvent: true,
-            source: 'manual',
+            source: event.source || 'manual',
             image: event.image,
             imageUrl: event.image,
-            price: event.price || '$25+'
+            price: event.price || '$25+',
+            address: event.address || ''
           });
         }
         console.log(`📋 Loaded ${manualData.events.length} manual events`);
