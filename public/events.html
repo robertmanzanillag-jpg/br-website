@@ -653,12 +653,12 @@
             allEvents = poshData.events.map(e => ({
               id: e.slug,
               name: e.title || 'Upcoming Event',
-              date: e.dateText || e.date || '',
+              date: e.date || e.parsedDate || e.dateText || '',
               venue: e.venue || e.location || 'Miami, FL',
               location: e.location || 'FL, USA',
               image: e.image || '/images/events/default-event.jpg',
               price: e.price || '',
-              ticketLink: e.poshUrl || e.ticketUrl || '#'
+              ticketLink: e.purchaseUrl || e.ticketUrl || e.poshUrl || e.detailUrl || '#'
             }));
           } else {
             // Fallback to /api/events, filter out radio entries (same as homepage)

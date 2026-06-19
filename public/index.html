@@ -2082,10 +2082,11 @@
           events = poshData.events.map(e => ({
             id: e.slug,
             name: e.title || 'Upcoming Event',
-            date: e.dateText || '',
+            date: e.date || e.parsedDate || e.dateText || '',
             venue: e.location || e.venue || 'Miami, FL',
             image: e.image || '/images/events/default-event.jpg',
-            posh_url: e.poshUrl,
+            posh_url: e.purchaseUrl || e.ticketUrl || e.poshUrl || e.detailUrl,
+            price: e.price || '',
             category: 'POSH'
           }));
         } else {
