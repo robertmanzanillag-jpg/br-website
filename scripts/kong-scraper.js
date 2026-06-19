@@ -252,6 +252,92 @@ function parseDetailText(detailText = '') {
   };
 }
 
+function decodeHtml(value = '') {
+  return value
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+}
+
+function formatAddressFromJsonLd(location = {}) {
+  const address = location.address;
+  if (!address) return cleanText(location.name || '');
+  if (typeof address === 'string') return cleanText(address);
+  const streetAddress = cleanText(address.streetAddress || '');
+  if (streetAddress.includes(',')) return cleanText([location.name, streetAddress].filter(Boolean).join(' '));
+
+  return cleanText([
+    location.name,
+    streetAddress,
+    address.addressLocality,
+    address.addressRegion,
+    address.postalCode,
+    address.addressCountry
+  ].filter(Boolean).join(' '));
+}
+
+async function fetchStaticEventData(eventUrl) {
+  if (!eventUrl || !eventUrl.includes('/event/')) return {};
+
+  try {
+    const response = await fetch(eventUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120 Safari/537.36',
+        Accept: 'text/html,application/xhtml+xml'
+      }
+    });
+    if (!response.ok) return {};
+
+    const html = await response.text();
+    const meta = (property) => {
+      const pattern = new RegExp(`<meta[^>]+(?:property|name)=["']${property}["'][^>]+content=["']([^"']+)["']`, 'i');
+      return decodeHtml(html.match(pattern)?.[1] || '');
+    };
+    const jsonLdMatches = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi)];
+    let eventNode = null;
+
+    for (const match of jsonLdMatches) {
+      try {
+        const parsed = JSON.parse(match[1]);
+        const nodes = Array.isArray(parsed) ? parsed : [parsed, ...(parsed['@graph'] || [])];
+        eventNode = nodes.find(node => {
+          const type = node?.['@type'];
+          return type === 'Event' || (Array.isArray(type) && type.includes('Event'));
+        });
+        if (eventNode) break;
+      } catch {}
+    }
+
+    const image = meta('og:image') || meta('twitter:image') || eventNode?.image || '';
+    const startDate = eventNode?.startDate || '';
+    const parsedDate = startDate ? new Date(startDate) : null;
+    const offers = Array.isArray(eventNode?.offers) ? eventNode.offers[0] : eventNode?.offers;
+
+    return {
+      title: cleanText(decodeHtml(eventNode?.name || meta('og:title'))),
+      description: cleanText(decodeHtml(eventNode?.description || meta('og:description'))),
+      image,
+      imageUrl: image,
+      parsedDate: parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate.toISOString().slice(0, 10) : '',
+      date: parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate.toISOString().slice(0, 10) : '',
+      address: formatAddressFromJsonLd(eventNode?.location),
+      location: cleanText(eventNode?.location?.name || ''),
+      price: offers?.price ? `$${offers.price}` : '',
+      ticketUrl: eventUrl,
+      detailUrl: eventUrl,
+      kongUrl: eventUrl,
+      poshUrl: eventUrl,
+      purchaseUrl: eventUrl
+    };
+  } catch (error) {
+    console.log(`⚠️ Could not fetch static event data for ${eventUrl}: ${error.message}`);
+    return {};
+  }
+}
+
 async function loadKongEventsPage(page) {
   await page.goto(KONG_PROFILE_URL, { waitUntil: 'networkidle2', timeout: 45000 });
   await page.waitForFunction(() => document.body && !document.body.innerText.includes('Loading Events'), { timeout: 30000 });
@@ -316,9 +402,28 @@ async function extractDetailData(page, event) {
 
   return page.evaluate(() => {
     const text = document.body.innerText || '';
-    const image = Array.from(document.querySelectorAll('img[alt="Event cover image"]'))
+    const metaImage = document.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
+      document.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ||
+      '';
+    let jsonLdImage = '';
+    for (const script of Array.from(document.querySelectorAll('script[type="application/ld+json"]'))) {
+      try {
+        const parsed = JSON.parse(script.textContent || '{}');
+        const nodes = Array.isArray(parsed) ? parsed : [parsed, ...(parsed['@graph'] || [])];
+        const eventNode = nodes.find(node => {
+          const type = node?.['@type'];
+          return type === 'Event' || (Array.isArray(type) && type.includes('Event'));
+        });
+        if (eventNode?.image) {
+          jsonLdImage = Array.isArray(eventNode.image) ? eventNode.image[0] : eventNode.image;
+          break;
+        }
+      } catch {}
+    }
+    const domImage = Array.from(document.querySelectorAll('img[alt="Event cover image"]'))
       .map(img => img.src)
       .find(src => src && !src.startsWith('blob:')) || '';
+    const image = metaImage || jsonLdImage || domImage;
     const links = Array.from(document.querySelectorAll('a'))
       .map(a => ({ text: (a.innerText || a.textContent || '').trim(), href: a.href }))
       .filter(link => link.href);
@@ -343,14 +448,20 @@ async function enrichEventsWithDetails(page, events) {
       const detail = await extractDetailData(page, event);
       const parsedDetail = parseDetailText(detail.text || '');
       const eventUrl = absoluteKongUrl(detail.ticketUrl || detail.detailUrl || event.kongUrl);
+      const staticDetail = await fetchStaticEventData(eventUrl);
 
       enriched.push({
         ...event,
-        description: parsedDetail.description || event.description,
-        image: detail.image || event.image,
-        imageUrl: detail.image || event.image,
-        address: parsedDetail.address || event.address,
-        price: parsedDetail.price || event.price || '',
+        title: staticDetail.title || event.title,
+        fullTitle: staticDetail.title || event.fullTitle || event.title,
+        description: staticDetail.description || parsedDetail.description || event.description,
+        image: staticDetail.image || detail.image || event.image,
+        imageUrl: staticDetail.imageUrl || staticDetail.image || detail.image || event.image,
+        parsedDate: staticDetail.parsedDate || event.parsedDate,
+        date: staticDetail.date || event.date,
+        location: staticDetail.location || event.location,
+        address: staticDetail.address || parsedDetail.address || event.address,
+        price: staticDetail.price || parsedDetail.price || event.price || '',
         ageRestriction: parsedDetail.ageRestriction || event.ageRestriction || '',
         detailUrl: eventUrl,
         kongUrl: eventUrl,
