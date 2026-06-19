@@ -40,6 +40,7 @@ const KNOWN_VENUES = [
   'MAD Club Wynwood',
   'Midline Miami',
   'Mode Miami',
+  'M2 Miami [Back Room]',
   'Sable Miami',
   'Supernatural Haus',
   'The Ground Miami',
@@ -76,6 +77,17 @@ function parseKongDate(dateText) {
   const parsedDate = `${currentYear}-${month}-${dayRaw.padStart(2, '0')}`;
   const time = `${hourRaw}:${minute} ${period}`;
   return { parsedDate, time };
+}
+
+function formatDateInTimezone(date, timeZone = 'America/New_York') {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
 }
 
 function absoluteKongUrl(url = '') {
@@ -316,13 +328,17 @@ async function fetchStaticEventData(eventUrl) {
     const parsedDate = startDate ? new Date(startDate) : null;
     const offers = Array.isArray(eventNode?.offers) ? eventNode.offers[0] : eventNode?.offers;
 
+    const localDate = parsedDate && !Number.isNaN(parsedDate.getTime())
+      ? formatDateInTimezone(parsedDate)
+      : '';
+
     return {
       title: cleanText(decodeHtml(eventNode?.name || meta('og:title'))),
       description: cleanText(decodeHtml(eventNode?.description || meta('og:description'))),
       image,
       imageUrl: image,
-      parsedDate: parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate.toISOString().slice(0, 10) : '',
-      date: parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate.toISOString().slice(0, 10) : '',
+      parsedDate: localDate,
+      date: localDate,
       address: formatAddressFromJsonLd(eventNode?.location),
       location: cleanText(eventNode?.location?.name || ''),
       price: offers?.price ? `$${offers.price}` : '',
@@ -345,7 +361,7 @@ async function loadKongEventsPage(page) {
 
 async function extractLandingData(page) {
   await page.evaluate(async () => {
-    for (let i = 0; i < 5; i += 1) {
+    for (let i = 0; i < 12; i += 1) {
       window.scrollBy(0, window.innerHeight * 0.8);
       await new Promise(resolve => setTimeout(resolve, 350));
     }
@@ -383,7 +399,7 @@ async function openEventCard(page, event) {
     }, event.title);
 
     if (opened) return true;
-    await page.waitForTimeout(350);
+    await new Promise(resolve => setTimeout(resolve, 350));
   }
 
   return false;
@@ -496,6 +512,7 @@ async function scrapeKongEvents() {
     });
 
     const page = await browser.newPage();
+    await page.setViewport({ width: 390, height: 900, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
     await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120 Safari/537.36');
     await loadKongEventsPage(page);
     const data = await extractLandingData(page);

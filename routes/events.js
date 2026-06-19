@@ -23,10 +23,16 @@ function isBlackRoomEvent(event = {}) {
     event.fullTitle,
     event.name,
     event.description,
-    event.organizer
+    event.organizer,
+    event.location,
+    event.venue,
+    event.address
   ].filter(Boolean).join(' ').toLowerCase();
 
-  return haystack.includes('black room') || haystack.includes('blackroom.us') || haystack.includes('@blackroom');
+  return haystack.includes('black room') ||
+    haystack.includes('blackroom.us') ||
+    haystack.includes('@blackroom') ||
+    haystack.includes('[back room]');
 }
 
 function normalizeKongEvent(event) {
