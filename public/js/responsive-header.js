@@ -527,7 +527,7 @@ class BlackRoomHeader {
             </a>
             
             <ul class="nav-links header-nav" id="desktop-nav">
-                <li><a href="/events.html">Events</a></li>
+                <li><a href="/events.html">Tickets</a></li>
                 <li><a href="/videos.html">Videos</a></li>
                 <li><a href="/shop.html">Shop</a></li>
                 <li><a href="/calendar.html">Calendar</a></li>
@@ -556,7 +556,7 @@ class BlackRoomHeader {
                 <i class="fas fa-times"></i>
             </div>
             <ul class="mobile-nav">
-                <li><a href="/events.html">Events</a></li>
+                <li><a href="/events.html">Tickets</a></li>
                 <li><a href="/videos.html">Videos</a></li>
                 <li><a href="/shop.html">Shop</a></li>
                 <li><a href="/calendar.html">Calendar</a></li>
@@ -941,7 +941,7 @@ function createResponsiveHeader() {
       <nav>
         <ul class="nav-left">
           <li><a href="index.html">Home</a></li>
-          <li><a href="events.html">Events</a></li>
+          <li><a href="events.html">Tickets</a></li>
           <li><a href="shop.html">Shop</a></li>
           <li><a href="videos.html">Videos</a></li>
         </ul>

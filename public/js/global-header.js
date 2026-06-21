@@ -359,7 +359,7 @@
       </a>
       
       <ul class="nav-links">
-        <li><a href="/events.html">Events</a></li>
+        <li><a href="/events.html">Tickets</a></li>
         <li><a href="/videos.html">Videos</a></li>
         <li><a href="/shop.html">Shop</a></li>
         <li><a href="/calendar.html">Calendar</a></li>
@@ -392,7 +392,7 @@
         <i class="fas fa-times"></i>
       </div>
       <ul>
-        <li><a href="/events.html">Events</a></li>
+        <li><a href="/events.html">Tickets</a></li>
         <li><a href="/videos.html">Videos</a></li>
         <li><a href="/shop.html">Shop</a></li>
         <li><a href="/calendar.html">Calendar</a></li>
