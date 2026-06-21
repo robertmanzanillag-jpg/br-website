@@ -2087,7 +2087,7 @@
             image: e.image || '/images/events/default-event.jpg',
             posh_url: e.purchaseUrl || e.ticketUrl || e.poshUrl || e.detailUrl,
             price: e.price || '',
-            category: 'POSH'
+            category: ''
           }));
         } else {
           // Fallback to regular events
@@ -2113,7 +2113,6 @@
               <div class="event-card-date">${formatDateShort(e.date)}</div>
             </div>
             <div class="event-card-image">
-              ${e.category ? `<span class="event-tag">${e.category}</span>` : ''}
               <img src="${e.image || e.flyer_image || '/images/events/posh-black-room-ii-anniversary.jpg'}" alt="${e.name}" onerror="this.src='/images/events/default-event.jpg'">
               <div class="corner-bottom-left"></div>
               <div class="corner-bottom-right"></div>
