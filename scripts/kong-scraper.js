@@ -1,4 +1,3 @@
-import { execFileSync } from 'child_process';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
@@ -201,22 +200,20 @@ function filterUpcomingEvents(events) {
   return events
     .filter(event => {
       if (!event.parsedDate) return true;
-      const eventDate = new Date(event.parsedDate);
+      const eventDate = parseDateAtLocalMidnight(event.parsedDate);
       return !Number.isNaN(eventDate.getTime()) && eventDate >= today;
     })
-    .sort((a, b) => new Date(a.parsedDate || '2099-01-01') - new Date(b.parsedDate || '2099-01-01'));
+    .sort((a, b) => parseDateAtLocalMidnight(a.parsedDate || '2099-01-01') - parseDateAtLocalMidnight(b.parsedDate || '2099-01-01'));
 }
 
 function findChromiumExecutable() {
   const explicitPath = process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROME_PATH;
   if (explicitPath && existsSync(explicitPath)) return explicitPath;
 
-  try {
-    const detectedPath = execFileSync('which', ['chromium'], { encoding: 'utf8' }).trim();
-    if (detectedPath && existsSync(detectedPath)) return detectedPath;
-  } catch {}
-
   const candidates = [
+    ...getPathCandidates('chromium'),
+    ...getPathCandidates('chromium-browser'),
+    ...getPathCandidates('google-chrome'),
     '/usr/bin/chromium',
     '/usr/bin/chromium-browser',
     '/usr/bin/google-chrome',
@@ -224,6 +221,21 @@ function findChromiumExecutable() {
   ];
 
   return candidates.find(candidate => existsSync(candidate)) || null;
+}
+
+function getPathCandidates(binaryName) {
+  return (process.env.PATH || '')
+    .split(path.delimiter)
+    .filter(Boolean)
+    .map(dir => path.join(dir, binaryName));
+}
+
+function parseDateAtLocalMidnight(dateStr) {
+  const match = String(dateStr || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  const date = new Date(dateStr);
+  if (!Number.isNaN(date.getTime())) date.setHours(0, 0, 0, 0);
+  return date;
 }
 
 function parseDetailText(detailText = '') {

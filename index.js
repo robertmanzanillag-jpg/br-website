@@ -3083,6 +3083,8 @@ async function loadKongScraper() {
 
 // Backward-compatible endpoint name: frontend still calls /api/posh-events.
 const KONG_PROFILE_URL = 'https://kongnightlife.com/user/414d4b95-6e98-4e2b-8a88-1d660f8f1e1b';
+const KONG_CACHE_MAX_AGE_HOURS = Number.parseFloat(process.env.KONG_CACHE_MAX_AGE_HOURS || '12');
+let kongRefreshPromise = null;
 const KONG_EVENT_FIXES = {
   'BLACK ROOM & FRIENDS': {
     url: 'https://kongnightlife.com/event/2f1baef4-8bd9-49e6-aec4-a388e66ec684',
@@ -3223,11 +3225,54 @@ function parseDateAtLocalMidnight(dateStr) {
   return date;
 }
 
+function getKongCacheAgeHours(cachePath) {
+  if (!fs.existsSync(cachePath)) return Number.POSITIVE_INFINITY;
+
+  try {
+    const cacheData = JSON.parse(fs.readFileSync(cachePath, 'utf-8'));
+    const updatedAt = new Date(cacheData.lastUpdated);
+    if (Number.isNaN(updatedAt.getTime())) return Number.POSITIVE_INFINITY;
+    return (Date.now() - updatedAt.getTime()) / (1000 * 60 * 60);
+  } catch {
+    return Number.POSITIVE_INFINITY;
+  }
+}
+
+async function refreshKongEventsCache(reason = 'scheduled') {
+  if (kongRefreshPromise) return kongRefreshPromise;
+
+  kongRefreshPromise = (async () => {
+    const scraper = await loadKongScraper();
+    if (!scraper?.scrapeKongEvents) {
+      throw new Error('Kong scraper not available');
+    }
+
+    console.log(`🔄 Refreshing Kong events cache (${reason})...`);
+    const events = await scraper.scrapeKongEvents();
+    console.log(`✅ Kong events cache refreshed (${events.length} events)`);
+    return events;
+  })().finally(() => {
+    kongRefreshPromise = null;
+  });
+
+  return kongRefreshPromise;
+}
+
 app.get('/api/posh-events', async (req, res) => {
   try {
     const allEvents = [];
     const now = new Date();
     now.setHours(0, 0, 0, 0);
+    const cachePath = path.join(__dirname, 'db/kong-events-cache.json');
+    const cacheAgeHours = getKongCacheAgeHours(cachePath);
+
+    if (cacheAgeHours >= KONG_CACHE_MAX_AGE_HOURS || req.query.refresh === '1') {
+      try {
+        await refreshKongEventsCache(req.query.refresh === '1' ? 'manual request' : `stale cache ${cacheAgeHours.toFixed(1)}h`);
+      } catch (error) {
+        console.error('❌ Kong events refresh failed:', error.message);
+      }
+    }
     
     // PRIORITY 1: Load manual events (most reliable)
     const manualPath = path.join(__dirname, 'db/manual-events.json');
@@ -3267,7 +3312,6 @@ app.get('/api/posh-events', async (req, res) => {
     }
     
     // PRIORITY 2: Load Kong Nightlife cached events
-    const cachePath = path.join(__dirname, 'db/kong-events-cache.json');
     if (fs.existsSync(cachePath)) {
       const cacheData = JSON.parse(fs.readFileSync(cachePath, 'utf-8'));
       const hoursSinceUpdate = (Date.now() - new Date(cacheData.lastUpdated)) / (1000 * 60 * 60);
