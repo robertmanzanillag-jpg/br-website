@@ -234,16 +234,16 @@
     <div class="empty">Loading events...</div>
   </div>
 
-  <!-- POSH SYNC SECTION -->
+  <!-- KONG SYNC SECTION -->
   <div style="margin-top: 4rem; border-top: 1px solid #1a1a1a; padding-top: 3rem;">
     <div class="section-title">
-      <h2>Posh.vip Events (Auto-Sync)</h2>
+      <h2>Kong Nightlife Events (Auto-Sync)</h2>
       <div style="display:flex;gap:1rem;align-items:center;">
         <span class="count-badge" id="posh-count-label"></span>
-        <button class="btn" id="sync-btn" onclick="syncPosh()" style="font-size:0.55rem;padding:0.6rem 1.2rem;">Sync Now</button>
+        <button class="btn" id="sync-btn" onclick="syncKong()" style="font-size:0.55rem;padding:0.6rem 1.2rem;">Sync Now</button>
       </div>
     </div>
-    <p style="font-size:0.6rem;color:#444;letter-spacing:0.1em;margin-bottom:1.5rem;">Events are automatically synced daily from posh.vip/g/black-room</p>
+    <p style="font-size:0.6rem;color:#444;letter-spacing:0.1em;margin-bottom:1.5rem;">Events are automatically synced daily from Kong Nightlife.</p>
     <div id="sync-msg" style="display:none" class="msg"></div>
     <div class="events-list" id="posh-events-list">
       <div class="empty">Loading...</div>
@@ -270,7 +270,7 @@
         <img class="event-thumb" src="${e.image || '/images/events/default-event.jpg'}" onerror="this.src='/images/events/default-event.jpg'">
         <div class="event-info">
           <div class="event-name">${e.title}</div>
-          <div class="event-meta">${e.venue || ''} &nbsp;·&nbsp; ${e.price || ''} ${e.ticketUrl ? '&nbsp;·&nbsp; <a href="' + e.ticketUrl + '" target="_blank" style="color:#888">Posh ↗</a>' : ''}</div>
+          <div class="event-meta">${e.venue || ''} &nbsp;·&nbsp; ${e.price || ''} ${e.ticketUrl ? '&nbsp;·&nbsp; <a href="' + e.ticketUrl + '" target="_blank" style="color:#888">Tickets ↗</a>' : ''}</div>
         </div>
         <div class="event-date-badge">${formatDate(e.date)}</div>
         <button class="btn btn-danger" onclick="deleteEvent('${e.id}')">Delete</button>
@@ -351,17 +351,17 @@
     setTimeout(() => el.style.display = 'none', 5000);
   }
 
-  async function syncPosh() {
+  async function syncKong() {
     const btn = document.getElementById('sync-btn');
     const msg = document.getElementById('sync-msg');
     btn.disabled = true;
     btn.textContent = 'Syncing...';
     msg.style.display = 'none';
     try {
-      const res = await fetch('/api/admin/scrape-posh', { method: 'POST' });
+      const res = await fetch('/api/admin/scrape-kong', { method: 'POST' });
       const data = await res.json();
       if (res.ok) {
-        showMsg(msg, 'success', `Sync complete — ${data.eventCount} events loaded from Posh.vip`);
+        showMsg(msg, 'success', `Sync complete — ${data.eventCount} events loaded from Kong Nightlife`);
         loadPoshEvents();
       } else {
         showMsg(msg, 'error', 'Sync failed. Check server logs.');
@@ -374,7 +374,7 @@
   }
 
   async function loadPoshEvents() {
-    const res = await fetch('/api/posh-events');
+    const res = await fetch('/api/kong-events');
     const data = await res.json();
     const list = document.getElementById('posh-events-list');
     const events = (data.events || []).filter(e => {
@@ -385,7 +385,7 @@
     document.getElementById('posh-count-label').textContent = events.length + ' upcoming';
 
     if (!events.length) {
-      list.innerHTML = '<div class="empty">No upcoming events in cache. Click Sync Now to fetch from Posh.vip.</div>';
+      list.innerHTML = '<div class="empty">No upcoming events in cache. Click Sync Now to fetch from Kong Nightlife.</div>';
       return;
     }
 
@@ -394,7 +394,7 @@
         <img class="event-thumb" src="${e.image || '/images/events/default-event.jpg'}" onerror="this.src='/images/events/default-event.jpg'">
         <div class="event-info">
           <div class="event-name">${e.title}</div>
-          <div class="event-meta">${e.location || ''} &nbsp;·&nbsp; <a href="${e.poshUrl}" target="_blank" style="color:#888">Posh ↗</a></div>
+          <div class="event-meta">${e.location || ''} &nbsp;·&nbsp; <a href="${e.purchaseUrl || e.ticketUrl || e.kongUrl || e.poshUrl}" target="_blank" style="color:#888">Tickets ↗</a></div>
         </div>
         <div class="event-date-badge">${e.dateText || e.parsedDate || ''}</div>
       </div>

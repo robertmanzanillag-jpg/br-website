@@ -3081,7 +3081,7 @@ async function loadKongScraper() {
   return kongScraperModule;
 }
 
-// Backward-compatible endpoint name: frontend still calls /api/posh-events.
+// Main Kong events endpoint. /api/posh-events remains as a backward-compatible alias.
 const KONG_PROFILE_URL = 'https://kongnightlife.com/user/414d4b95-6e98-4e2b-8a88-1d660f8f1e1b';
 const KONG_CACHE_MAX_AGE_HOURS = Number.parseFloat(process.env.KONG_CACHE_MAX_AGE_HOURS || '12');
 let kongRefreshPromise = null;
@@ -3258,7 +3258,7 @@ async function refreshKongEventsCache(reason = 'scheduled') {
   return kongRefreshPromise;
 }
 
-app.get('/api/posh-events', async (req, res) => {
+async function handleKongEventsRequest(req, res) {
   try {
     const allEvents = [];
     const now = new Date();
@@ -3383,7 +3383,10 @@ app.get('/api/posh-events', async (req, res) => {
     console.error('❌ Error loading events:', error.message);
     res.status(500).json({ error: 'Error loading events' });
   }
-});
+}
+
+app.get('/api/kong-events', handleKongEventsRequest);
+app.get('/api/posh-events', handleKongEventsRequest);
 
 // Zoho WorkDrive token management
 let zohoAccessToken = null;
@@ -3520,9 +3523,7 @@ app.post('/api/admin/sync-zoho-gallery', async (req, res) => {
   }
 });
 
-// Admin endpoint to manually trigger Kong sync.
-// Route name kept for compatibility with the existing admin UI.
-app.post('/api/admin/sync-posh', async (req, res) => {
+async function handleAdminKongSync(req, res) {
   try {
     console.log('🔄 Manual Kong Nightlife sync triggered...');
     const scraper = await loadKongScraper();
@@ -3543,7 +3544,10 @@ app.post('/api/admin/sync-posh', async (req, res) => {
     console.error('❌ Kong sync error:', error.message);
     res.status(500).json({ error: error.message });
   }
-});
+}
+
+app.post('/api/admin/sync-kong', handleAdminKongSync);
+app.post('/api/admin/sync-posh', handleAdminKongSync);
 
 // Refresh videos from YouTube
 app.post('/api/admin/refresh-videos', async (req, res) => {
@@ -5643,8 +5647,7 @@ app.use((err, req, res, next) => {
 
 // Old Posh automatic scraper disabled. Kong sync is handled by routes/auto-sync.js.
 
-// Manual scrape endpoint (admin use). Kept for compatibility; now syncs Kong.
-app.post('/api/admin/scrape-posh', async (req, res) => {
+async function handleAdminKongScrape(req, res) {
   const scraper = await loadKongScraper();
   if (!scraper) {
     return res.status(500).json({ success: false, error: 'Kong scraper not available' });
@@ -5653,7 +5656,10 @@ app.post('/api/admin/scrape-posh', async (req, res) => {
   const cachePath = path.join(__dirname, 'db/kong-events-cache.json');
   const cache = fs.existsSync(cachePath) ? JSON.parse(fs.readFileSync(cachePath, 'utf-8')) : {};
   res.json({ success: true, eventCount: cache.eventCount || 0 });
-});
+}
+
+app.post('/api/admin/scrape-kong', handleAdminKongScrape);
+app.post('/api/admin/scrape-posh', handleAdminKongScrape);
 
 // Ensure required tables/columns exist (safe to run every startup)
 async function ensureSchema() {

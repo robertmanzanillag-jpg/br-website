@@ -654,12 +654,12 @@
         eventsContainer.innerHTML = `<div class="loading-container"><div class="loading-spinner"></div><p>Loading events...</p></div>`;
 
         try {
-          // Try Posh.vip events first (same as homepage)
-          const poshRes = await fetch('/api/posh-events');
-          const poshData = await poshRes.json();
+          // Try Kong events first (same as homepage)
+          const kongRes = await fetch('/api/kong-events');
+          const kongData = await kongRes.json();
 
-          if (poshData.success && poshData.events && poshData.events.length > 0) {
-            allEvents = poshData.events.map(e => ({
+          if (kongData.success && kongData.events && kongData.events.length > 0) {
+            allEvents = kongData.events.map(e => ({
               id: e.slug,
               name: e.title || 'Upcoming Event',
               date: e.date || e.parsedDate || e.dateText || '',

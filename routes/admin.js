@@ -179,8 +179,7 @@ router.put("/users/:email/role", requireAdmin, (req, res) => {
   }
 });
 
-// Sync events from Kong Nightlife. Route name kept for existing admin buttons.
-router.post('/scrape-posh', async (req, res) => {
+async function handleScrapeKong(req, res) {
   try {
     console.log('🔍 Admin triggered Kong Nightlife sync...');
     const { scrapeKongEvents } = await import('../scripts/kong-scraper.js');
@@ -191,7 +190,10 @@ router.post('/scrape-posh', async (req, res) => {
     console.error('❌ Kong sync error:', error);
     res.status(500).json({ error: error.message });
   }
-});
+}
+
+router.post('/scrape-kong', handleScrapeKong);
+router.post('/scrape-posh', handleScrapeKong);
 
 // Upload image endpoint
 router.post('/upload-image', requireAdmin, upload.single('image'), (req, res) => {

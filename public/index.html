@@ -2066,20 +2066,20 @@
       {id:"timeless-tshirt",name:"TIMELESS T-SHIRT",price:55,images:{front:"/images/products/timeless-front.jpg",back:"/images/products/timeless-back.png"}}
     ];
 
-    // Load events from Posh.vip (with fallback to regular events)
+    // Load events from Kong Nightlife (with fallback to regular events)
     async function loadEvents() {
       const grid = document.getElementById('events-grid');
       
       try {
-        // First try Posh.vip events
-        const poshRes = await fetch('/api/posh-events');
-        const poshData = await poshRes.json();
+        // First try Kong events
+        const kongRes = await fetch('/api/kong-events');
+        const kongData = await kongRes.json();
         
         let events = [];
         
-        if (poshData.success && poshData.events && poshData.events.length > 0) {
-          console.log(`✅ Loaded ${poshData.events.length} events from Posh.vip`);
-          events = poshData.events.map(e => ({
+        if (kongData.success && kongData.events && kongData.events.length > 0) {
+          console.log(`✅ Loaded ${kongData.events.length} events from Kong Nightlife`);
+          events = kongData.events.map(e => ({
             id: e.slug,
             name: e.title || 'Upcoming Event',
             date: e.date || e.parsedDate || e.dateText || '',
@@ -2091,7 +2091,7 @@
           }));
         } else {
           // Fallback to regular events
-          console.log('⚠️ No Posh events, falling back to regular events');
+          console.log('⚠️ No Kong events, falling back to regular events');
           const res = await fetch('/api/events');
           const allEvents = await res.json();
           events = allEvents.filter(e => e.type !== 'radio').slice(0, 8);

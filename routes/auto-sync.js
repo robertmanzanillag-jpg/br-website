@@ -164,8 +164,7 @@ router.get('/status', (req, res) => {
   });
 });
 
-// Endpoint para sincronizar Kong manualmente. Route kept for admin compatibility.
-router.post('/sync-posh', async (req, res) => {
+async function handleManualKongSync(req, res) {
   try {
     const result = await runKongSync();
     res.json({
@@ -179,7 +178,10 @@ router.post('/sync-posh', async (req, res) => {
       error: error.message
     });
   }
-});
+}
+
+router.post('/sync-kong', handleManualKongSync);
+router.post('/sync-posh', handleManualKongSync);
 
 // Endpoint para ejecutar sync manual
 router.post('/run-now', async (req, res) => {
