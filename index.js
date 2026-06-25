@@ -3093,6 +3093,24 @@ const KONG_EVENT_FIXES = {
   }
 };
 
+const KONG_EVENT_URL_FIXES = {
+  'https://kongnightlife.com/event/15e6dc23-dcdb-4409-a558-4f689f5dd09a': {
+    title: 'VOID',
+    fullTitle: 'VOID',
+    description: 'VOID emerges for the first time. A new chapter from Black Room built for deeper atmospheres, relentless energy, and hard techno.',
+    image: 'https://kongnightlife.com/api/objects/public/uploads/1782253024342-542185282.jpg',
+    imageUrl: 'https://kongnightlife.com/api/objects/public/uploads/1782253024342-542185282.jpg',
+    dateText: 'Jul 11 · 10:00 PM',
+    parsedDate: '2026-07-11',
+    date: '2026-07-11',
+    time: '10:00 PM',
+    location: 'M2 [Back Room]',
+    venue: 'M2 [Back Room]',
+    address: 'M2 [Back Room] 1235 Washington Ave, Miami Beach, FL 33139, USA',
+    price: '$9.99'
+  }
+};
+
 const KNOWN_BLACK_ROOM_KONG_EVENTS = [
   {
     title: 'BLACK ROOM & FRIENDS',
@@ -3116,18 +3134,18 @@ const KNOWN_BLACK_ROOM_KONG_EVENTS = [
     source: 'kong-known'
   },
   {
-    title: 'RAVE CUP: World Cup Quarter Finals Watch Party + Rave',
-    fullTitle: 'RAVE CUP: World Cup Quarter Finals Watch Party + Rave',
-    description: 'Watch Party + Rave by Black Room at Casa Nube Wynwood. Contact: info@blackroom.live or DM @blackroom.us',
-    image: 'https://kongnightlife.com/api/objects/public/uploads/1781805548912-827539442.jpg',
-    imageUrl: 'https://kongnightlife.com/api/objects/public/uploads/1781805548912-827539442.jpg',
-    dateText: 'Jul 11 · 3:00 PM',
+    title: 'VOID',
+    fullTitle: 'VOID',
+    description: 'VOID emerges for the first time. A new chapter from Black Room built for deeper atmospheres, relentless energy, and hard techno.',
+    image: 'https://kongnightlife.com/api/objects/public/uploads/1782253024342-542185282.jpg',
+    imageUrl: 'https://kongnightlife.com/api/objects/public/uploads/1782253024342-542185282.jpg',
+    dateText: 'Jul 11 · 10:00 PM',
     parsedDate: '2026-07-11',
     date: '2026-07-11',
-    time: '3:00 PM',
-    location: 'Casa Nube Wynwood',
-    address: 'Casa Nube Wynwood 2060 NW 1st Ave, Miami, FL 33127, USA',
-    slug: 'rave-cup-world-cup-quarter-finals-watch-party-rave-2026-07-11',
+    time: '10:00 PM',
+    location: 'M2 [Back Room]',
+    address: 'M2 [Back Room] 1235 Washington Ave, Miami Beach, FL 33139, USA',
+    slug: 'void-2026-07-11',
     kongUrl: 'https://kongnightlife.com/event/15e6dc23-dcdb-4409-a558-4f689f5dd09a',
     poshUrl: 'https://kongnightlife.com/event/15e6dc23-dcdb-4409-a558-4f689f5dd09a',
     ticketUrl: 'https://kongnightlife.com/event/15e6dc23-dcdb-4409-a558-4f689f5dd09a',
@@ -3178,6 +3196,20 @@ function isBlackRoomEvent(event = {}) {
 }
 
 function normalizeKongEvent(event) {
+  const eventUrls = [event.ticketUrl, event.purchaseUrl, event.detailUrl, event.kongUrl, event.poshUrl].filter(Boolean);
+  const urlFix = eventUrls.map(url => KONG_EVENT_URL_FIXES[url]).find(Boolean);
+  if (urlFix) {
+    event = {
+      ...event,
+      ...urlFix,
+      ticketUrl: event.ticketUrl || eventUrls[0],
+      purchaseUrl: event.purchaseUrl || eventUrls[0],
+      detailUrl: event.detailUrl || eventUrls[0],
+      kongUrl: event.kongUrl || eventUrls[0],
+      poshUrl: event.poshUrl || eventUrls[0]
+    };
+  }
+
   const fix = KONG_EVENT_FIXES[(event.title || '').toUpperCase()];
   if (!fix) return event;
 

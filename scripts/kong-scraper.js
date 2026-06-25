@@ -95,6 +95,19 @@ function absoluteKongUrl(url = '') {
   return `https://kongnightlife.com${url.startsWith('/') ? '' : '/'}${url}`;
 }
 
+function normalizeKongImageUrl(url = '') {
+  if (!url) return '';
+
+  try {
+    const parsed = new URL(url);
+    if (parsed.pathname === '/api/image-proxy' && parsed.searchParams.get('url')) {
+      return parsed.searchParams.get('url');
+    }
+  } catch {}
+
+  return url;
+}
+
 function findVenue(chunk) {
   const lowerChunk = chunk.toLowerCase();
   let best = null;
@@ -335,7 +348,7 @@ async function fetchStaticEventData(eventUrl) {
       } catch {}
     }
 
-    const image = meta('og:image') || meta('twitter:image') || eventNode?.image || '';
+    const image = normalizeKongImageUrl(meta('og:image') || meta('twitter:image') || eventNode?.image || '');
     const startDate = eventNode?.startDate || '';
     const parsedDate = startDate ? new Date(startDate) : null;
     const offers = Array.isArray(eventNode?.offers) ? eventNode.offers[0] : eventNode?.offers;
@@ -451,7 +464,7 @@ async function extractDetailData(page, event) {
     const domImage = Array.from(document.querySelectorAll('img[alt="Event cover image"]'))
       .map(img => img.src)
       .find(src => src && !src.startsWith('blob:')) || '';
-    const image = metaImage || jsonLdImage || domImage;
+    const image = normalizeKongImageUrl(metaImage || jsonLdImage || domImage);
     const links = Array.from(document.querySelectorAll('a'))
       .map(a => ({ text: (a.innerText || a.textContent || '').trim(), href: a.href }))
       .filter(link => link.href);
