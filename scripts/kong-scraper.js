@@ -6,10 +6,14 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const KONG_PROFILE_URL = 'https://kongnightlife.com/user/414d4b95-6e98-4e2b-8a88-1d660f8f1e1b';
+const KONG_USER_ID = '414d4b95-6e98-4e2b-8a88-1d660f8f1e1b';
+const KONG_PROFILE_URL = `https://kongnightlife.com/user/${KONG_USER_ID}`;
+const KONG_ORGANIZED_EVENTS_URL = `https://kongnightlife.com/api/users/${KONG_USER_ID}/organized-events?includePast=true`;
 const KONG_EVENTS_URL = 'https://kongnightlife.com/events';
 const CACHE_FILE = path.join(__dirname, '../db/kong-events-cache.json');
 const DETAIL_LIMIT = Number.parseInt(process.env.KONG_DETAIL_LIMIT || '40', 10);
+const CACHE_MAX_AGE_HOURS = Number.parseFloat(process.env.KONG_CACHE_MAX_AGE_HOURS || '1');
+const ALLOW_EMPTY_CACHE = process.env.ALLOW_EMPTY_KONG_CACHE === 'true';
 
 const MONTHS = {
   jan: '01',
@@ -96,6 +100,7 @@ function absoluteKongUrl(url = '') {
 }
 
 function normalizeKongImageUrl(url = '') {
+  if (Array.isArray(url)) return normalizeKongImageUrl(url.find(Boolean) || '');
   if (!url) return '';
 
   try {
@@ -105,7 +110,117 @@ function normalizeKongImageUrl(url = '') {
     }
   } catch {}
 
-  return url;
+  const value = String(url);
+  if (value.startsWith('/')) return absoluteKongUrl(value);
+  return value;
+}
+
+function addImageVersion(url = '', updatedAt = '') {
+  if (!url || !updatedAt) return url;
+
+  try {
+    const parsed = new URL(url);
+    if (!parsed.searchParams.has('v')) {
+      const updatedMs = new Date(updatedAt).getTime();
+      if (!Number.isNaN(updatedMs)) parsed.searchParams.set('v', String(updatedMs));
+    }
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+function formatTimeInTimezone(date, timeZone = 'America/New_York') {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hour: 'numeric',
+    minute: '2-digit'
+  }).format(date);
+}
+
+function formatDateText(date, timeZone = 'America/New_York') {
+  const datePart = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    month: 'short',
+    day: 'numeric'
+  }).format(date);
+  return `${datePart} · ${formatTimeInTimezone(date, timeZone)}`;
+}
+
+function formatPrice(value) {
+  if (value === null || value === undefined || value === '') return '';
+  const amount = Number(value);
+  if (Number.isNaN(amount)) return String(value).startsWith('$') ? String(value) : `$${value}`;
+  return `$${amount.toFixed(2).replace(/\.00$/, '')}`;
+}
+
+function mapKongApiEvent(event = {}) {
+  const eventUrl = `https://kongnightlife.com/event/${event.id}`;
+  const startDate = new Date(event.startDate || event.date || '');
+  const hasValidDate = !Number.isNaN(startDate.getTime());
+  const parsedDate = hasValidDate ? formatDateInTimezone(startDate) : '';
+  const rawImage = normalizeKongImageUrl(event.coverImage || event.image || event.images || event.venueImage || '');
+  const image = addImageVersion(rawImage, event.updatedAt || event.lastScrapedAt || event.createdAt);
+  const title = cleanText(event.title || event.name || 'Black Room event');
+  const location = cleanText(event.venueName || event.venue?.name || event.location || 'Miami, FL');
+  const address = cleanText(event.venueAddress || event.venue?.address || '');
+
+  return {
+    id: event.id,
+    title,
+    fullTitle: title,
+    description: cleanText(event.shortDescription || event.description || `${title} at ${location}`),
+    image,
+    imageUrl: image,
+    dateText: hasValidDate ? formatDateText(startDate) : '',
+    parsedDate,
+    date: parsedDate,
+    time: hasValidDate ? formatTimeInTimezone(startDate) : '',
+    location,
+    venue: location,
+    address,
+    latitude: event.latitude || '',
+    longitude: event.longitude || '',
+    organizer: 'Black Room',
+    organizerId: event.organizerId || KONG_USER_ID,
+    slug: slugify(`${title}-${parsedDate || event.id}`),
+    kongUrl: eventUrl,
+    detailUrl: eventUrl,
+    ticketUrl: eventUrl,
+    purchaseUrl: eventUrl,
+    poshUrl: eventUrl,
+    price: formatPrice(event.minPrice),
+    minPrice: event.minPrice,
+    maxPrice: event.maxPrice,
+    source: 'kong-profile',
+    sourceId: event.id,
+    sourceUrl: KONG_ORGANIZED_EVENTS_URL,
+    scrapedAt: new Date().toISOString(),
+    updatedAt: event.updatedAt || ''
+  };
+}
+
+async function fetchKongProfileApiEvents() {
+  const response = await fetch(KONG_ORGANIZED_EVENTS_URL, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120 Safari/537.36',
+      Accept: 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Kong organizer API returned ${response.status}`);
+  }
+
+  const payload = await response.json();
+  const rawEvents = Array.isArray(payload) ? payload : (payload.events || payload.data || []);
+  const events = filterUpcomingEvents(rawEvents.map(mapKongApiEvent));
+
+  if (!ALLOW_EMPTY_CACHE && events.length === 0) {
+    throw new Error('Kong organizer API returned 0 upcoming events; keeping previous cache');
+  }
+
+  return events;
 }
 
 function findVenue(chunk) {
@@ -241,6 +356,17 @@ function getPathCandidates(binaryName) {
     .split(path.delimiter)
     .filter(Boolean)
     .map(dir => path.join(dir, binaryName));
+}
+
+async function loadPuppeteer() {
+  try {
+    const module = await import('puppeteer');
+    return module.default || module;
+  } catch (error) {
+    console.warn(`⚠️ Could not load puppeteer (${error.message}); trying puppeteer-core`);
+    const module = await import('puppeteer-core');
+    return module.default || module;
+  }
 }
 
 function parseDateAtLocalMidnight(dateStr) {
@@ -461,10 +587,22 @@ async function extractDetailData(page, event) {
         }
       } catch {}
     }
+    const normalizeImageUrl = (url = '') => {
+      if (!url) return '';
+
+      try {
+        const parsed = new URL(url);
+        if (parsed.pathname === '/api/image-proxy' && parsed.searchParams.get('url')) {
+          return parsed.searchParams.get('url');
+        }
+      } catch {}
+
+      return url;
+    };
     const domImage = Array.from(document.querySelectorAll('img[alt="Event cover image"]'))
       .map(img => img.src)
       .find(src => src && !src.startsWith('blob:')) || '';
-    const image = normalizeKongImageUrl(metaImage || jsonLdImage || domImage);
+    const image = normalizeImageUrl(metaImage || jsonLdImage || domImage);
     const links = Array.from(document.querySelectorAll('a'))
       .map(a => ({ text: (a.innerText || a.textContent || '').trim(), href: a.href }))
       .filter(link => link.href);
@@ -526,9 +664,28 @@ async function enrichEventsWithDetails(page, events) {
 async function scrapeKongEvents() {
   console.log('🚀 Starting Kong Nightlife scraper...');
 
+  try {
+    const events = await fetchKongProfileApiEvents();
+    const scrapedAt = new Date().toISOString();
+    const cacheData = {
+      lastUpdated: scrapedAt,
+      source: KONG_PROFILE_URL,
+      apiSource: KONG_ORGANIZED_EVENTS_URL,
+      displaySource: KONG_EVENTS_URL,
+      eventCount: events.length,
+      events
+    };
+
+    await fs.writeFile(CACHE_FILE, JSON.stringify(cacheData, null, 2));
+    console.log(`✅ Kong API sync done — ${events.length} events saved to cache`);
+    return events;
+  } catch (apiError) {
+    console.warn(`⚠️ Kong organizer API failed (${apiError.message}); trying browser fallback`);
+  }
+
   let browser;
   try {
-    const { default: puppeteer } = await import('puppeteer');
+    const puppeteer = await loadPuppeteer();
     const executablePath = findChromiumExecutable();
     browser = await puppeteer.launch({
       headless: 'new',
@@ -541,9 +698,15 @@ async function scrapeKongEvents() {
     await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120 Safari/537.36');
     await loadKongEventsPage(page);
     const data = await extractLandingData(page);
+    data.imageUrls = data.imageUrls.map(normalizeKongImageUrl);
     const baseEvents = filterUpcomingEvents(parseEventsFromText(data.text, data.imageUrls));
     const events = filterUpcomingEvents(await enrichEventsWithDetails(page, baseEvents));
     const scrapedAt = new Date().toISOString();
+
+    if (!ALLOW_EMPTY_CACHE && events.length === 0) {
+      throw new Error('Kong scraper returned 0 events; keeping previous cache');
+    }
+
     const cacheData = {
       lastUpdated: scrapedAt,
       source: KONG_PROFILE_URL,
@@ -580,7 +743,7 @@ async function getUpcomingKongEvents() {
     const lastUpdated = new Date(cached.lastUpdated);
     const hoursSinceUpdate = (now - lastUpdated) / (1000 * 60 * 60);
 
-    if (hoursSinceUpdate < 12) {
+    if (hoursSinceUpdate < CACHE_MAX_AGE_HOURS) {
       console.log(`📦 Using cached Kong events (${hoursSinceUpdate.toFixed(1)}h old)`);
       return filterUpcomingEvents(cached.events || []);
     }

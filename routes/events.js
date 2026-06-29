@@ -8,7 +8,10 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
-const KONG_PROFILE_URL = 'https://kongnightlife.com/user/414d4b95-6e98-4e2b-8a88-1d660f8f1e1b';
+const KONG_USER_ID = '414d4b95-6e98-4e2b-8a88-1d660f8f1e1b';
+const KONG_PROFILE_URL = `https://kongnightlife.com/user/${KONG_USER_ID}`;
+const KONG_CACHE_MAX_AGE_HOURS = Number.parseFloat(process.env.KONG_CACHE_MAX_AGE_HOURS || '1');
+let kongRefreshPromise = null;
 const KONG_EVENT_FIXES = {
   'BLACK ROOM & FRIENDS': {
     url: 'https://kongnightlife.com/event/2f1baef4-8bd9-49e6-aec4-a388e66ec684',
@@ -102,6 +105,8 @@ const KNOWN_BLACK_ROOM_KONG_EVENTS = [
 ];
 
 function isBlackRoomEvent(event = {}) {
+  if (event.source === 'kong-profile' || event.organizerId === KONG_USER_ID) return true;
+
   const haystack = [
     event.title,
     event.fullTitle,
@@ -220,8 +225,40 @@ function parseDateAtLocalMidnight(dateStr) {
   return date;
 }
 
+function getKongCacheAgeHours(cachePath) {
+  if (!fs.existsSync(cachePath)) return Number.POSITIVE_INFINITY;
+
+  try {
+    const cacheData = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+    const updatedAt = new Date(cacheData.lastUpdated);
+    if (Number.isNaN(updatedAt.getTime())) return Number.POSITIVE_INFINITY;
+    return (Date.now() - updatedAt.getTime()) / (1000 * 60 * 60);
+  } catch {
+    return Number.POSITIVE_INFINITY;
+  }
+}
+
+async function refreshKongCache(reason = 'events route') {
+  if (kongRefreshPromise) return kongRefreshPromise;
+
+  kongRefreshPromise = (async () => {
+    const { scrapeKongEvents } = await import('../scripts/kong-scraper.js');
+    console.log(`🔄 Refreshing Kong cache from /events (${reason})...`);
+    return scrapeKongEvents();
+  })().finally(() => {
+    kongRefreshPromise = null;
+  });
+
+  return kongRefreshPromise;
+}
+
 router.get('/', async (req, res) => {
   try {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.set('Surrogate-Control', 'no-store');
+
     const allEvents = [];
     const now = new Date();
     
@@ -262,6 +299,15 @@ router.get('/', async (req, res) => {
     }
     
     const kongCacheFile = path.join(__dirname, '../db/kong-events-cache.json');
+    const cacheAgeHours = getKongCacheAgeHours(kongCacheFile);
+    if (cacheAgeHours >= KONG_CACHE_MAX_AGE_HOURS || req.query.refresh === '1') {
+      try {
+        await refreshKongCache(req.query.refresh === '1' ? 'manual request' : `stale cache ${cacheAgeHours.toFixed(1)}h`);
+      } catch (error) {
+        console.error('❌ Kong fallback sync failed:', error.message);
+      }
+    }
+
     if (fs.existsSync(kongCacheFile)) {
       const kongData = JSON.parse(fs.readFileSync(kongCacheFile, 'utf8'));
       if (kongData.events && kongData.events.length > 0) {

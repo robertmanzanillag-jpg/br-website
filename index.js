@@ -3082,8 +3082,9 @@ async function loadKongScraper() {
 }
 
 // Main Kong events endpoint. /api/posh-events remains as a backward-compatible alias.
-const KONG_PROFILE_URL = 'https://kongnightlife.com/user/414d4b95-6e98-4e2b-8a88-1d660f8f1e1b';
-const KONG_CACHE_MAX_AGE_HOURS = Number.parseFloat(process.env.KONG_CACHE_MAX_AGE_HOURS || '12');
+const KONG_USER_ID = '414d4b95-6e98-4e2b-8a88-1d660f8f1e1b';
+const KONG_PROFILE_URL = `https://kongnightlife.com/user/${KONG_USER_ID}`;
+const KONG_CACHE_MAX_AGE_HOURS = Number.parseFloat(process.env.KONG_CACHE_MAX_AGE_HOURS || '1');
 let kongRefreshPromise = null;
 const KONG_EVENT_FIXES = {
   'BLACK ROOM & FRIENDS': {
@@ -3178,6 +3179,8 @@ const KNOWN_BLACK_ROOM_KONG_EVENTS = [
 ];
 
 function isBlackRoomEvent(event = {}) {
+  if (event.source === 'kong-profile' || event.organizerId === KONG_USER_ID) return true;
+
   const haystack = [
     event.title,
     event.fullTitle,
@@ -3292,13 +3295,19 @@ async function refreshKongEventsCache(reason = 'scheduled') {
 
 async function handleKongEventsRequest(req, res) {
   try {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.set('Surrogate-Control', 'no-store');
+
     const allEvents = [];
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     const cachePath = path.join(__dirname, 'db/kong-events-cache.json');
     const cacheAgeHours = getKongCacheAgeHours(cachePath);
 
-    if (cacheAgeHours >= KONG_CACHE_MAX_AGE_HOURS || req.query.refresh === '1') {
+    const mustRefresh = cacheAgeHours >= KONG_CACHE_MAX_AGE_HOURS || req.query.refresh === '1';
+    if (mustRefresh) {
       try {
         await refreshKongEventsCache(req.query.refresh === '1' ? 'manual request' : `stale cache ${cacheAgeHours.toFixed(1)}h`);
       } catch (error) {
@@ -3408,6 +3417,8 @@ async function handleKongEventsRequest(req, res) {
     return res.json({
       success: true,
       lastUpdated: new Date().toISOString(),
+      cacheAgeHours: Number.isFinite(cacheAgeHours) ? Number(cacheAgeHours.toFixed(2)) : null,
+      maxCacheAgeHours: KONG_CACHE_MAX_AGE_HOURS,
       source: 'kong',
       events: allEvents
     });

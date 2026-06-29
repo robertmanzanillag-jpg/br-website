@@ -121,16 +121,22 @@ function startAutoSync() {
     console.log('✅ YouTube sync configurado: Jueves 8PM (EST)');
   }
   
-  // Kong Nightlife sync: Todos los días a las 6AM
+  // Kong Nightlife sync: every hour so ticket images/details do not stay stale.
   if (!kongCronJob) {
-    kongCronJob = cron.schedule('0 6 * * *', async () => {
-      console.log('\n🔔 Ejecutando sincronización Kong Nightlife (Diaria 6AM)');
+    kongCronJob = cron.schedule('7 * * * *', async () => {
+      console.log('\n🔔 Ejecutando sincronización Kong Nightlife (cada hora)');
       await runKongSync();
     }, {
       scheduled: true,
       timezone: "America/New_York"
     });
-    console.log('✅ Kong Nightlife sync configurado: Diariamente 6AM (EST)');
+    console.log('✅ Kong Nightlife sync configurado: cada hora (America/New_York)');
+
+    setTimeout(() => {
+      runKongSync().catch(error => {
+        console.error('❌ Error en sincronización inicial Kong Nightlife:', error);
+      });
+    }, 30000);
   }
 }
 
@@ -157,7 +163,7 @@ router.get('/status', (req, res) => {
     },
     kong: {
       active: kongCronJob !== null,
-      schedule: 'Diariamente 6AM EST'
+      schedule: 'Cada hora, minuto 7 (America/New_York)'
     },
     timezone: 'America/New_York',
     history: syncHistory.slice(-10)

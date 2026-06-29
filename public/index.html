@@ -2072,7 +2072,7 @@
       
       try {
         // First try Kong events
-        const kongRes = await fetch('/api/kong-events');
+        const kongRes = await fetch(`/api/kong-events?_=${Date.now()}`, { cache: 'no-store' });
         const kongData = await kongRes.json();
         
         let events = [];
@@ -2092,7 +2092,7 @@
         } else {
           // Fallback to regular events
           console.log('⚠️ No Kong events, falling back to regular events');
-          const res = await fetch('/api/events');
+          const res = await fetch(`/api/events?_=${Date.now()}`, { cache: 'no-store' });
           const allEvents = await res.json();
           events = allEvents.filter(e => e.type !== 'radio').slice(0, 8);
         }

@@ -374,7 +374,7 @@
   }
 
   async function loadPoshEvents() {
-    const res = await fetch('/api/kong-events');
+    const res = await fetch(`/api/kong-events?_=${Date.now()}`, { cache: 'no-store' });
     const data = await res.json();
     const list = document.getElementById('posh-events-list');
     const events = (data.events || []).filter(e => {
