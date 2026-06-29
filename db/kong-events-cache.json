@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-06-29T09:50:58.697Z",
+  "lastUpdated": "2026-06-29T19:54:09.342Z",
   "source": "https://kongnightlife.com/user/414d4b95-6e98-4e2b-8a88-1d660f8f1e1b",
   "apiSource": "https://kongnightlife.com/api/users/414d4b95-6e98-4e2b-8a88-1d660f8f1e1b/organized-events?includePast=true",
   "displaySource": "https://kongnightlife.com/events",
@@ -35,16 +35,16 @@
       "source": "kong-profile",
       "sourceId": "15e6dc23-dcdb-4409-a558-4f689f5dd09a",
       "sourceUrl": "https://kongnightlife.com/api/users/414d4b95-6e98-4e2b-8a88-1d660f8f1e1b/organized-events?includePast=true",
-      "scrapedAt": "2026-06-29T09:50:58.696Z",
+      "scrapedAt": "2026-06-29T19:54:09.342Z",
       "updatedAt": "2026-06-24T23:25:25.483Z"
     },
     {
       "id": "06c55ef4-73b5-4df1-834f-0ea49d2b9ba0",
-      "title": "ZAPEROCO II",
-      "fullTitle": "ZAPEROCO II",
+      "title": "ZAPEROCO",
+      "fullTitle": "ZAPEROCO",
       "description": "ZAPEROCO @ M2 MIAMI [Back Room] July 18th | 10:00PM-5:00AM Limited tickets available prices will increase as the date gets closer. July 18th, 2026 M2 Miami [Back Room] Physical ID required No racism, sexism, homophobia, transphobia, or hate of any kind. All ticket sales are final. No refunds. Contact: info@blackroom.live or DM @blackroom.us",
-      "image": "https://kongnightlife.com/api/objects/public/uploads/1781197698719-493457825.jpg?v=1782343461151",
-      "imageUrl": "https://kongnightlife.com/api/objects/public/uploads/1781197698719-493457825.jpg?v=1782343461151",
+      "image": "https://kongnightlife.com/api/objects/public/uploads/1781197698719-493457825.jpg?v=1782761727262",
+      "imageUrl": "https://kongnightlife.com/api/objects/public/uploads/1781197698719-493457825.jpg?v=1782761727262",
       "dateText": "Jul 18 · 10:00 PM",
       "parsedDate": "2026-07-18",
       "date": "2026-07-18",
@@ -56,7 +56,7 @@
       "longitude": "-80.1912000",
       "organizer": "Black Room",
       "organizerId": "414d4b95-6e98-4e2b-8a88-1d660f8f1e1b",
-      "slug": "zaperoco-ii-2026-07-18",
+      "slug": "zaperoco-2026-07-18",
       "kongUrl": "https://kongnightlife.com/event/06c55ef4-73b5-4df1-834f-0ea49d2b9ba0",
       "detailUrl": "https://kongnightlife.com/event/06c55ef4-73b5-4df1-834f-0ea49d2b9ba0",
       "ticketUrl": "https://kongnightlife.com/event/06c55ef4-73b5-4df1-834f-0ea49d2b9ba0",
@@ -68,8 +68,8 @@
       "source": "kong-profile",
       "sourceId": "06c55ef4-73b5-4df1-834f-0ea49d2b9ba0",
       "sourceUrl": "https://kongnightlife.com/api/users/414d4b95-6e98-4e2b-8a88-1d660f8f1e1b/organized-events?includePast=true",
-      "scrapedAt": "2026-06-29T09:50:58.696Z",
-      "updatedAt": "2026-06-24T23:24:21.151Z"
+      "scrapedAt": "2026-06-29T19:54:09.342Z",
+      "updatedAt": "2026-06-29T19:35:27.262Z"
     },
     {
       "id": "6dbbeb28-e5ce-4ff6-8a07-5421161fa922",
@@ -101,7 +101,7 @@
       "source": "kong-profile",
       "sourceId": "6dbbeb28-e5ce-4ff6-8a07-5421161fa922",
       "sourceUrl": "https://kongnightlife.com/api/users/414d4b95-6e98-4e2b-8a88-1d660f8f1e1b/organized-events?includePast=true",
-      "scrapedAt": "2026-06-29T09:50:58.696Z",
+      "scrapedAt": "2026-06-29T19:54:09.342Z",
       "updatedAt": "2026-06-25T22:50:30.269Z"
     }
   ]
