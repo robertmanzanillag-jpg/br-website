@@ -4847,10 +4847,10 @@ app.post('/api/team-application', async (req, res) => {
     const pool = (await import('./database/connection.js')).default;
     const {
       role, fullName, instagram, experience, experienceWhere,
-      availability, canRepresent, canAttendShoots, phone, email
+      availability, canRepresent, canAttendShoots, phone, email, age
     } = req.body || {};
 
-    if (!role || !['promoter', 'ambassador'].includes(role)) {
+    if (!role || !['promoter', 'ambassador', 'hostess'].includes(role)) {
       return res.status(400).json({ error: 'Invalid role' });
     }
     if (!fullName || !instagram) {
@@ -4861,6 +4861,9 @@ app.post('/api/team-application', async (req, res) => {
     }
     if (role === 'ambassador' && (!phone || !email || !canRepresent || !canAttendShoots)) {
       return res.status(400).json({ error: 'Please answer all ambassador questions' });
+    }
+    if (role === 'hostess' && (!phone || !email || !availability || !experience)) {
+      return res.status(400).json({ error: 'Please answer all hostess questions' });
     }
 
     await pool.query(`
@@ -4889,6 +4892,15 @@ app.post('/api/team-application', async (req, res) => {
         <div class="field"><div class="label">Phone</div><div class="value">${phone || '-'}</div></div>
         <div class="field"><div class="label">Email</div><div class="value">${email || '-'}</div></div>
         <div class="field"><div class="label">Promoter Experience</div><div class="value">${experience === 'yes' ? 'Yes' : 'No'}</div></div>
+        ${experience === 'yes' && experienceWhere ? `<div class="field"><div class="label">Where</div><div class="value">${experienceWhere}</div></div>` : ''}
+      ` : role === 'hostess' ? `
+        <div class="field"><div class="label">Full Name</div><div class="value">${fullName}</div></div>
+        <div class="field"><div class="label">Age</div><div class="value">${age || '-'}</div></div>
+        <div class="field"><div class="label">Instagram</div><div class="value">${instagram}</div></div>
+        <div class="field"><div class="label">Phone</div><div class="value">${phone || '-'}</div></div>
+        <div class="field"><div class="label">Email</div><div class="value">${email || '-'}</div></div>
+        <div class="field"><div class="label">Availability</div><div class="value">${availability || '-'}</div></div>
+        <div class="field"><div class="label">Hospitality Experience</div><div class="value">${experience === 'yes' ? 'Yes' : 'No'}</div></div>
         ${experience === 'yes' && experienceWhere ? `<div class="field"><div class="label">Where</div><div class="value">${experienceWhere}</div></div>` : ''}
       ` : `
         <div class="field"><div class="label">Full Name</div><div class="value">${fullName}</div></div>
@@ -4930,7 +4942,7 @@ app.post('/api/team-application', async (req, res) => {
         await emailTransporter.sendMail({
           from: '"Black Room" <theblackroom.us@gmail.com>',
           to: 'theblackroom.us@gmail.com',
-          subject: `📨 ${role === 'promoter' ? 'Promoter' : 'Ambassador'} application: ${fullName} (${instagram})`,
+          subject: `📨 ${role === 'promoter' ? 'Promoter' : role === 'hostess' ? 'Hostess' : 'Ambassador'} application: ${fullName} (${instagram})`,
           html: emailHtml
         });
       }

@@ -268,6 +268,12 @@
     <div class="sc-count" id="cnt-ambassadors">—</div>
     <div class="sc-desc">Brand ambassador applications</div>
   </div>
+  <div class="section-card" id="card-hostesses" onclick="switchTab('hostesses')">
+    <div class="sc-icon"><i class="fas fa-gem"></i></div>
+    <div class="sc-label">Hostesses</div>
+    <div class="sc-count" id="cnt-hostesses">—</div>
+    <div class="sc-desc">Hostess applications</div>
+  </div>
   <div class="section-card" id="card-academy" onclick="switchTab('academy')">
     <div class="sc-icon"><i class="fas fa-graduation-cap"></i></div>
     <div class="sc-label">Academy</div>
@@ -303,6 +309,14 @@
     <div class="table-wrap" id="tbl-ambassadors"><div class="loading"><div class="spinner"></div> Loading…</div></div>
   </div>
 
+  <div class="panel" id="panel-hostesses">
+    <div class="controls">
+      <div class="search-wrap"><i class="fas fa-search"></i><input type="text" placeholder="Search…" oninput="renderTeam('hostesses')" id="q-hostesses"></div>
+      <span class="stats-label" id="stats-hostesses">— entries</span>
+    </div>
+    <div class="table-wrap" id="tbl-hostesses"><div class="loading"><div class="spinner"></div> Loading…</div></div>
+  </div>
+
   <div class="panel" id="panel-academy">
     <div class="controls">
       <div class="search-wrap"><i class="fas fa-search"></i><input type="text" placeholder="Search…" oninput="renderAcademy()" id="q-academy"></div>
@@ -320,6 +334,7 @@
     opendeck:    { col:'created_at', dir:-1 },
     promoters:   { col:'created_at', dir:-1 },
     ambassadors: { col:'created_at', dir:-1 },
+    hostesses:   { col:'created_at', dir:-1 },
     academy:     { col:'createdAt',  dir:-1 }
   };
   let delTarget = null;
@@ -340,6 +355,7 @@
       const r = await fetch('/api/admin/team-applications'); teamData = await r.json();
       document.getElementById('cnt-promoters').textContent   = teamData.filter(x=>x.role==='promoter').length;
       document.getElementById('cnt-ambassadors').textContent = teamData.filter(x=>x.role==='ambassador').length;
+      document.getElementById('cnt-hostesses').textContent   = teamData.filter(x=>x.role==='hostess').length;
     } catch(e){}
   }
   async function loadAcademy() {
@@ -350,13 +366,14 @@
   function switchTab(tab) {
     currentTab = tab;
     closeDrawer();
-    ['opendeck','promoters','ambassadors','academy'].forEach(t => {
+    ['opendeck','promoters','ambassadors','hostesses','academy'].forEach(t => {
       document.getElementById(`card-${t}`).classList.toggle('active', t===tab);
       document.getElementById(`panel-${t}`).classList.toggle('active', t===tab);
     });
     if (tab==='opendeck') renderOpenDeck();
     else if (tab==='promoters') renderTeam('promoters');
     else if (tab==='ambassadors') renderTeam('ambassadors');
+    else if (tab==='hostesses') renderTeam('hostesses');
     else renderAcademy();
   }
 
@@ -371,7 +388,7 @@
   }
   function doSort(tab,col) {
     if(sorts[tab].col===col) sorts[tab].dir*=-1; else{sorts[tab].col=col;sorts[tab].dir=-1;}
-    if(tab==='opendeck') renderOpenDeck(); else if(tab==='promoters'||tab==='ambassadors') renderTeam(tab); else renderAcademy();
+    if(tab==='opendeck') renderOpenDeck(); else if(tab==='promoters'||tab==='ambassadors'||tab==='hostesses') renderTeam(tab); else renderAcademy();
   }
   function q(tab){return(document.getElementById(`q-${tab}`)?.value||'').toLowerCase().trim();}
 
@@ -442,7 +459,7 @@
 
   // ── TEAM ──
   function renderTeam(tab) {
-    const role=tab==='promoters'?'promoter':'ambassador';
+    const role = tab==='promoters' ? 'promoter' : tab==='hostesses' ? 'hostess' : 'ambassador';
     const search=q(tab);
     let data=teamData.filter(r=>r.role===role&&(!search||[r.full_name,r.email,r.phone,r.instagram].some(f=>(f||'').toLowerCase().includes(search))));
     data=sortData(data,tab);
@@ -451,13 +468,13 @@
 
     const extraCols = tab==='ambassadors'
       ? `<col class="col-badge"><col class="col-badge">`
-      : '';
+      : tab==='hostesses' ? `<col class="col-sm"><col class="col-badge">` : '';
     const extraHdrs = tab==='ambassadors'
       ? thSort(tab,'can_represent','Represent')+thSort(tab,'can_attend_shoots','Shoots')
-      : '';
+      : tab==='hostesses' ? thSort(tab,'availability','Avail.')+thSort(tab,'experience','Exp.') : '';
 
     const html=`<table>
-      <colgroup><col class="col-chk"><col class="col-id"><col class="col-name"><col class="col-std"><col class="col-std"><col class="col-std"><col class="col-std">${extraCols}<col class="col-date"><col class="col-act"></colgroup>
+      <colgroup><col class="col-chk"><col class="col-id"><col class="col-name"><col class="col-std"><col class="col-std"><col class="col-std">${extraCols}<col class="col-date"><col class="col-act"></colgroup>
       <thead><tr>
         <th title="Contacted"><i class="fas fa-check"></i></th>
         ${thSort(tab,'id','#')}
@@ -465,7 +482,7 @@
         ${thSort(tab,'email','Email')}
         ${thSort(tab,'phone','Phone')}
         ${thSort(tab,'instagram','Instagram')}
-        ${thSort(tab,'experience','Experience')}
+        ${tab==='promoters' ? thSort(tab,'experience','Experience') : ''}
         ${extraHdrs}
         ${thSort(tab,'created_at','Date')}
         <th>Act</th>
@@ -478,8 +495,9 @@
           <td title="${esc(r.email||'')}">${emailLink(r.email)}</td>
           <td title="${esc(r.phone||'')}" onclick="event.stopPropagation()">${phoneLink(r.phone)}</td>
           <td title="${esc(r.instagram||'')}" onclick="event.stopPropagation()">${igLink(r.instagram)}</td>
-          <td title="${esc(r.experience||'')}">${esc(r.experience||'—')}</td>
+          ${tab==='promoters' ? `<td title="${esc(r.experience||'')}">${esc(r.experience||'—')}</td>` : ''}
           ${tab==='ambassadors' ? `<td>${r.can_represent?yesno(r.can_represent):'—'}</td><td>${r.can_attend_shoots?yesno(r.can_attend_shoots):'—'}</td>` : ''}
+          ${tab==='hostesses' ? `<td title="${esc(r.availability||'')}">${esc(r.availability||'—')}</td><td>${r.experience?yesno(r.experience):'—'}</td>` : ''}
           <td class="cell-date">${fmtDate(r.created_at)}</td>
           <td onclick="event.stopPropagation()"><div class="actions">
             <button class="btn-act del" onclick="askDel('${r.id}','team')"><i class="fas fa-trash"></i></button>
@@ -494,7 +512,8 @@
     const r=teamData.find(x=>String(x.id)===String(id)); if(!r) return;
     drawerRecord=r; drawerType='team';
     document.getElementById('drawerName').textContent=r.full_name;
-    document.getElementById('drawerTag').textContent=`${r.role==='promoter'?'Promoter':'Ambassador'} · ${fmtDate(r.created_at)}`;
+    const roleLabel = r.role==='promoter'?'Promoter':r.role==='hostess'?'Hostess':'Ambassador';
+    document.getElementById('drawerTag').textContent=`${roleLabel} · ${fmtDate(r.created_at)}`;
     let body=`
       ${dfLink('Email', emailLink(r.email))}
       ${dfLink('Phone', phoneLink(r.phone))}
@@ -502,6 +521,10 @@
       <hr class="drawer-divider">`;
     if(r.role==='promoter') {
       body+=`${dfBadge('Has experience', r.experience)}
+        ${r.experience==='yes'?df('Experience at',r.experience_where||'—'):''}`;
+    } else if(r.role==='hostess') {
+      body+=`${df('Availability', r.availability||'—')}
+        ${dfBadge('Hospitality experience', r.experience)}
         ${r.experience==='yes'?df('Experience at',r.experience_where||'—'):''}`;
     } else {
       body+=`${dfBadge('Can represent brand', r.can_represent)}
@@ -616,7 +639,7 @@
   function editTeam(id) {
     closeDrawer();
     const r=teamData.find(x=>String(x.id)===String(id)); if(!r) return;
-    const tab=r.role==='promoter'?'promoters':'ambassadors';
+    const tab=r.role==='promoter'?'promoters':r.role==='hostess'?'hostesses':'ambassadors';
     const row=document.getElementById(`row-team-${id}`); if(!row) return;
     row.classList.add('editing');
     row.onclick=null;
@@ -657,6 +680,7 @@
           teamData=teamData.filter(x=>String(x.id)!==String(id));
           document.getElementById('cnt-promoters').textContent=teamData.filter(x=>x.role==='promoter').length;
           document.getElementById('cnt-ambassadors').textContent=teamData.filter(x=>x.role==='ambassador').length;
+          document.getElementById('cnt-hostesses').textContent=teamData.filter(x=>x.role==='hostess').length;
           renderTeam(currentTab);
         } else {
           academyData=academyData.filter(x=>String(x._idx)!==String(id));
@@ -675,6 +699,7 @@
     if(currentTab==='opendeck'){data=openDeckData;filename='open-deck';}
     else if(currentTab==='promoters'){data=teamData.filter(x=>x.role==='promoter');filename='promoters';}
     else if(currentTab==='ambassadors'){data=teamData.filter(x=>x.role==='ambassador');filename='ambassadors';}
+    else if(currentTab==='hostesses'){data=teamData.filter(x=>x.role==='hostess');filename='hostesses';}
     else{data=academyData;filename='academy';}
     if(!data.length) return;
     const keys=Object.keys(data[0]);
