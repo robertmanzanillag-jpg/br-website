@@ -92,6 +92,18 @@ app.use('/images/product-images', express.static(path.join(__dirname, 'public/im
   }
 }));
 
+const healthHandler = (_req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: 'br-website',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
+};
+
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
+
 // Trust proxy for secure cookies behind Replit's proxy
 app.set('trust proxy', 1);
 
