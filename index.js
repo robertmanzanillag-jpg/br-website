@@ -2970,6 +2970,10 @@ app.get('/argentina-application', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'argentina-application.html'));
 });
 
+app.get('/label-application', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'label-application.html'));
+});
+
 // Add comprehensive storage endpoint
 app.get('/api/storage/*', (req, res) => {
   const filePath = req.params[0];
@@ -4759,6 +4763,141 @@ app.post('/api/valentine-registration', async (req, res) => {
 });
 
 // ============================================
+// LABEL DEMO SUBMISSIONS
+// ============================================
+
+app.post('/api/label-applications', async (req, res) => {
+  try {
+    const pool = (await import('./database/connection.js')).default;
+    const clean = (value, maxLength) => String(value || '').trim().slice(0, maxLength);
+    const firstName  = clean(req.body?.firstName,  80);
+    const lastName   = clean(req.body?.lastName,   80);
+    const email      = clean(req.body?.email,      254).toLowerCase();
+    const artistName = clean(req.body?.artistName, 120);
+    const instagram  = clean(req.body?.instagram,  120);
+    const soundcloud = clean(req.body?.soundcloud, 500);
+    const trackUrl   = clean(req.body?.trackUrl,   500);
+
+    if (!firstName || !lastName || !email || !artistName || !instagram || !soundcloud || !trackUrl) {
+      return res.status(400).json({ error: 'Please complete all required fields.' });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Please enter a valid email address.' });
+    }
+
+    const parseSoundCloudUrl = (value) => {
+      const parsed = new URL(value);
+      if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Invalid protocol');
+      const hostname = parsed.hostname.toLowerCase();
+      if (hostname !== 'soundcloud.com' && !hostname.endsWith('.soundcloud.com')) throw new Error('Invalid SoundCloud host');
+      return parsed.href;
+    };
+
+    let soundcloudUrl, submittedTrackUrl;
+    try {
+      soundcloudUrl      = parseSoundCloudUrl(soundcloud);
+      submittedTrackUrl  = parseSoundCloudUrl(trackUrl);
+    } catch {
+      return res.status(400).json({ error: 'Please enter valid SoundCloud links.' });
+    }
+
+    await pool.query(`
+      INSERT INTO label_applications
+        (first_name, last_name, email, artist_name, instagram, soundcloud_url, track_url)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `, [firstName, lastName, email, artistName, instagram, soundcloudUrl, submittedTrackUrl]);
+
+    const escapeHtml = (v) => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[c]);
+    try {
+      const safeFirst   = escapeHtml(firstName);
+      const safeLast    = escapeHtml(lastName);
+      const safeEmail   = escapeHtml(email);
+      const safeArtist  = escapeHtml(artistName);
+      const safeIG      = escapeHtml(instagram);
+      const safeSC      = escapeHtml(soundcloudUrl);
+      const safeTrack   = escapeHtml(submittedTrackUrl);
+      const emailHtml = `
+        <!doctype html>
+        <html>
+          <body style="margin:0;padding:0;background:#000;color:#fff;font-family:Arial,sans-serif;">
+            <div style="max-width:620px;margin:0 auto;background:#0b0b0b;">
+              <div style="padding:30px;border-bottom:2px solid #ff2638;text-align:center;">
+                <h1 style="margin:0;font-size:22px;letter-spacing:4px;">LABEL DEMO SUBMISSION</h1>
+                <p style="margin:10px 0 0;color:#888;font-size:11px;letter-spacing:2px;">BLACK ROOM</p>
+              </div>
+              <div style="padding:30px;">
+                <p style="margin:0 0 5px;color:#777;font-size:11px;text-transform:uppercase;">Name</p>
+                <p style="margin:0 0 22px;font-size:16px;">${safeFirst} ${safeLast}</p>
+                <p style="margin:0 0 5px;color:#777;font-size:11px;text-transform:uppercase;">Artist name</p>
+                <p style="margin:0 0 22px;font-size:16px;">${safeArtist}</p>
+                <p style="margin:0 0 5px;color:#777;font-size:11px;text-transform:uppercase;">Email</p>
+                <p style="margin:0 0 22px;font-size:16px;"><a href="mailto:${safeEmail}" style="color:#fff;">${safeEmail}</a></p>
+                <p style="margin:0 0 5px;color:#777;font-size:11px;text-transform:uppercase;">Instagram</p>
+                <p style="margin:0 0 22px;font-size:16px;">${safeIG}</p>
+                <p style="margin:0 0 5px;color:#777;font-size:11px;text-transform:uppercase;">SoundCloud profile</p>
+                <p style="margin:0 0 22px;font-size:16px;"><a href="${safeSC}" style="color:#ff5a68;">${safeSC}</a></p>
+                <p style="margin:0 0 5px;color:#777;font-size:11px;text-transform:uppercase;">Submitted track</p>
+                <p style="margin:0 0 22px;font-size:16px;"><a href="${safeTrack}" style="color:#ff5a68;">Listen to track</a></p>
+              </div>
+              <div style="padding:18px 30px;border-top:1px solid #1e1e1e;text-align:center;">
+                <p style="margin:0;color:#555;font-size:10px;letter-spacing:2px;">BLACK ROOM LABEL · blackroomus.com</p>
+              </div>
+            </div>
+          </body>
+        </html>`;
+      await emailTransporter.sendMail({
+        from:    `"Black Room Label" <${process.env.EMAIL_USER || 'theblackroom.us@gmail.com'}>`,
+        to:      process.env.EMAIL_USER || 'theblackroom.us@gmail.com',
+        replyTo: email,
+        subject: `🎵 Label submission: ${artistName}`,
+        html:    emailHtml
+      });
+    } catch (emailError) {
+      console.error('Label application email error:', emailError.message);
+    }
+
+    console.log(`🎵 Label application: ${artistName} (${email})`);
+    res.status(201).json({ success: true });
+  } catch (error) {
+    console.error('Error saving label application:', error);
+    res.status(500).json({ error: 'We could not save your submission. Please try again.' });
+  }
+});
+
+app.get('/api/admin/label-applications', async (req, res) => {
+  try {
+    const pool = (await import('./database/connection.js')).default;
+    const result = await pool.query('SELECT * FROM label_applications ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching label applications:', error);
+    res.status(500).json({ error: 'Failed to fetch label applications' });
+  }
+});
+
+app.put('/api/admin/label-applications/:id/contacted', async (req, res) => {
+  try {
+    const pool = (await import('./database/connection.js')).default;
+    await pool.query('UPDATE label_applications SET contacted=$1 WHERE id=$2', [!!req.body.contacted, req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating label application:', error);
+    res.status(500).json({ error: 'Failed to update label application' });
+  }
+});
+
+app.delete('/api/admin/label-applications/:id', async (req, res) => {
+  try {
+    const pool = (await import('./database/connection.js')).default;
+    await pool.query('DELETE FROM label_applications WHERE id=$1', [req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting label application:', error);
+    res.status(500).json({ error: 'Failed to delete label application' });
+  }
+});
+
+// ============================================
 // ARGENTINA APPLICATIONS
 // ============================================
 
@@ -5872,6 +6011,20 @@ async function ensureSchema() {
         WHERE stripe_session_id IS NOT NULL
     `);
     await pool.query(`
+      CREATE TABLE IF NOT EXISTS label_applications (
+        id             SERIAL PRIMARY KEY,
+        first_name     VARCHAR(80)  NOT NULL,
+        last_name      VARCHAR(80)  NOT NULL,
+        email          VARCHAR(254) NOT NULL,
+        artist_name    VARCHAR(120) NOT NULL,
+        instagram      VARCHAR(120) NOT NULL,
+        soundcloud_url TEXT         NOT NULL,
+        track_url      TEXT         NOT NULL,
+        contacted      BOOLEAN      NOT NULL DEFAULT false,
+        created_at     TIMESTAMP    NOT NULL DEFAULT now()
+      )
+    `);
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS argentina_applications (
         id         SERIAL PRIMARY KEY,
         full_name  VARCHAR(100)  NOT NULL,
@@ -5884,7 +6037,7 @@ async function ensureSchema() {
         created_at TIMESTAMP     NOT NULL DEFAULT now()
       )
     `);
-    console.log('✅ Schema ensured (order_email_log, academy payment columns, argentina_applications)');
+    console.log('✅ Schema ensured (order_email_log, academy payment columns, argentina_applications, label_applications)');
   } catch (err) {
     console.error('⚠️ ensureSchema failed:', err.message);
   }
