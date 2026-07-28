@@ -439,10 +439,27 @@
   function q(tab){return(document.getElementById(`q-${tab}`)?.value||'').toLowerCase().trim();}
 
   // ── LABEL DEMOS ──
-  function demoFileLink(r) {
-    if (!r.demo_file_path) return '<span style="color:var(--muted)">—</span>';
-    const name = r.demo_file_name || 'Download';
-    return `<a class="clink" href="${esc(r.demo_file_path)}" target="_blank" rel="noopener" download><i class="fas fa-download"></i>${esc(name)}</a>`;
+  // Unified file accessor — handles both new JSONB array format and legacy single-file columns
+  function getDemoFiles(r) {
+    if (Array.isArray(r.demo_files) && r.demo_files.length > 0) return r.demo_files;
+    if (r.demo_file_path) return [{ path: r.demo_file_path, name: r.demo_file_name || 'Download', size: 0 }];
+    return [];
+  }
+  function demoFileCell(r) {
+    const files = getDemoFiles(r);
+    if (!files.length) return '<span style="color:var(--muted)">—</span>';
+    if (files.length === 1)
+      return `<a class="clink" href="${esc(files[0].path)}" target="_blank" rel="noopener" download><i class="fas fa-download"></i>${esc(files[0].name)}</a>`;
+    return `<span class="clink" style="cursor:default;text-decoration:none;opacity:.85"><i class="fas fa-download"></i>${files.length} files</span>`;
+  }
+  function demoFilesDrawerHtml(r) {
+    const files = getDemoFiles(r);
+    if (!files.length) return df('Uploaded files','<span style="color:var(--muted)">No files uploaded</span>');
+    const links = files.map((f,i) => {
+      const mb = f.size ? ` <span style="color:var(--muted);font-size:11px;">(${(f.size/(1024*1024)).toFixed(1)} MB)</span>` : '';
+      return `<div style="margin-bottom:6px;"><a class="clink" href="${esc(f.path)}" target="_blank" rel="noopener" download><i class="fas fa-download"></i>${esc(f.name)}</a>${mb}</div>`;
+    }).join('');
+    return `<div class="drawer-field"><div class="df-label">Uploaded files (${files.length})</div><div class="df-value">${links}</div></div>`;
   }
 
   function renderLabel() {
@@ -476,7 +493,7 @@
           <td title="${esc(r.instagram||'')}" onclick="event.stopPropagation()">${igLink(r.instagram)}</td>
           <td onclick="event.stopPropagation()">${scLink(r.soundcloud_url)}</td>
           <td onclick="event.stopPropagation()">${trackLink(r.track_url,'Track')}</td>
-          <td onclick="event.stopPropagation()">${demoFileLink(r)}</td>
+          <td onclick="event.stopPropagation()">${demoFileCell(r)}</td>
           <td class="cell-date">${fmtDate(r.created_at)}</td>
           <td onclick="event.stopPropagation()"><div class="actions">
             <button class="btn-act del" onclick="askDel('${r.id}','label')"><i class="fas fa-trash"></i></button>
@@ -499,7 +516,7 @@
       ${dfLink('SoundCloud profile', scLink(r.soundcloud_url))}
       <hr class="drawer-divider">
       ${dfLink('Submitted track', trackLink(r.track_url, r.track_url))}
-      ${r.demo_file_path ? dfLink('Uploaded file', `<a class="clink" href="${esc(r.demo_file_path)}" target="_blank" rel="noopener" download><i class="fas fa-download"></i>${esc(r.demo_file_name||'Download file')}</a>`) : df('Uploaded file','<span style="color:var(--muted)">No file uploaded</span>')}`;
+      ${demoFilesDrawerHtml(r)}`;
     openDrawer();
   }
 

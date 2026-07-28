@@ -248,6 +248,19 @@
       }
       .file-drop.has-file .file-drop-label { color: var(--success); }
       .file-drop-hint { font-size: 10px; color: #444; pointer-events: none; }
+      #file-list { margin-top: 8px; }
+      .file-list-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 7px 10px;
+        border: 1px solid #222;
+        background: #050505;
+        margin-bottom: 3px;
+        font-size: 12px;
+        color: #ccc;
+      }
+      .file-list-item span { color: #555; font-size: 11px; white-space: nowrap; margin-left: 10px; }
 
       .submit {
         display: flex;
@@ -398,13 +411,14 @@
           <p class="disclaimer">*Track must be available for download*</p>
 
           <div class="field">
-            <label for="demoFile">Demo file <span style="color:var(--muted);font-family:Inter,sans-serif;text-transform:none;letter-spacing:0;font-size:10px;">(optional)</span></label>
+            <label for="demoFiles">Demo files <span style="color:var(--muted);font-family:Inter,sans-serif;text-transform:none;letter-spacing:0;font-size:10px;">(optional · up to 10 files)</span></label>
             <div class="file-drop" id="file-drop">
-              <input type="file" id="demoFile" name="demoFile" accept=".mp3,.wav,.flac,.aiff,.aif,.ogg,.m4a,.aac,.zip" aria-label="Upload demo file (optional)">
+              <input type="file" id="demoFiles" name="demoFiles" multiple accept=".mp3,.wav,.flac,.aiff,.aif,.ogg,.m4a,.aac,.zip" aria-label="Upload demo files (optional, up to 10)">
               <span class="file-drop-icon" id="file-icon">♪</span>
               <span class="file-drop-label" id="file-label">Click to upload or drag & drop</span>
-              <span class="file-drop-hint" id="file-hint">MP3 · WAV · FLAC · AIFF · OGG · M4A · ZIP &nbsp;·&nbsp; max 50 MB</span>
+              <span class="file-drop-hint" id="file-hint">MP3 · WAV · FLAC · AIFF · OGG · M4A · ZIP &nbsp;·&nbsp; up to 10 files &nbsp;·&nbsp; max 1 GB total</span>
             </div>
+            <div id="file-list"></div>
           </div>
 
           <button class="submit" type="submit">
@@ -428,32 +442,51 @@
       const form      = document.getElementById('label-form');
       const instagram = document.getElementById('instagram');
       const errorBox  = document.getElementById('form-error');
-      const fileInput = document.getElementById('demoFile');
+      const fileInput = document.getElementById('demoFiles');
       const fileDrop  = document.getElementById('file-drop');
       const fileLabel = document.getElementById('file-label');
       const fileIcon  = document.getElementById('file-icon');
       const fileHint  = document.getElementById('file-hint');
+      const fileList  = document.getElementById('file-list');
+
+      const HINT_DEFAULT = 'MP3 · WAV · FLAC · AIFF · OGG · M4A · ZIP  ·  up to 10 files  ·  max 1 GB total';
 
       instagram.addEventListener('blur', () => {
-        const value = instagram.value.trim();
-        if (value && !value.startsWith('@') && !value.includes('instagram.com')) {
-          instagram.value = `@${value}`;
-        }
+        const v = instagram.value.trim();
+        if (v && !v.startsWith('@') && !v.includes('instagram.com')) instagram.value = `@${v}`;
       });
 
+      function escHtml(s) {
+        return String(s).replace(/[&<>"']/g, c =>
+          ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[c]);
+      }
+
       fileInput.addEventListener('change', () => {
-        const file = fileInput.files[0];
-        if (file) {
-          fileDrop.classList.add('has-file');
-          fileLabel.textContent = file.name;
-          fileHint.textContent  = `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
-          fileIcon.textContent  = '✓';
-        } else {
+        const files = [...fileInput.files];
+        if (!files.length) {
           fileDrop.classList.remove('has-file');
           fileLabel.textContent = 'Click to upload or drag & drop';
-          fileHint.textContent  = 'MP3 · WAV · FLAC · AIFF · OGG · M4A · ZIP  ·  max 50 MB';
+          fileHint.textContent  = HINT_DEFAULT;
           fileIcon.textContent  = '♪';
+          fileList.innerHTML    = '';
+          return;
         }
+        const totalMB = files.reduce((s, f) => s + f.size, 0) / (1024 * 1024);
+        fileDrop.classList.add('has-file');
+        fileIcon.textContent = '✓';
+        if (files.length === 1) {
+          fileLabel.textContent = files[0].name;
+          fileHint.textContent  = `${(files[0].size / (1024 * 1024)).toFixed(1)} MB`;
+        } else {
+          fileLabel.textContent = `${files.length} files selected`;
+          fileHint.textContent  = `${totalMB.toFixed(1)} MB total`;
+        }
+        fileList.innerHTML = files.map(f =>
+          `<div class="file-list-item">
+             <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(f.name)}</span>
+             <span>${(f.size / (1024 * 1024)).toFixed(1)} MB</span>
+           </div>`
+        ).join('');
       });
 
       form.addEventListener('submit', async (event) => {
@@ -463,22 +496,22 @@
         const button = form.querySelector('.submit');
         const originalContent = button.innerHTML;
 
-        // Build multipart FormData so the optional file travels with the text fields
+        // Build multipart FormData — files travel alongside text fields
         const formData = new FormData(form);
         // Trim all text fields
         ['firstName','lastName','email','artistName','instagram','soundcloud','trackUrl'].forEach(key => {
           const val = formData.get(key);
           if (typeof val === 'string') formData.set(key, val.trim());
         });
-        // Remove the file entry if the user picked no file (browser may include an empty blob)
-        if (!fileInput.files.length) formData.delete('demoFile');
+        // Remove empty file entry if the user picked nothing
+        if (!fileInput.files.length) formData.delete('demoFiles');
 
         button.disabled = true;
         button.innerHTML = '<span>Submitting…</span><span aria-hidden="true">•••</span>';
         errorBox.style.display = 'none';
 
         try {
-          // No Content-Type header — browser sets multipart/form-data with boundary
+          // No Content-Type header — browser sets multipart/form-data with boundary automatically
           const response = await fetch('/api/label-applications', {
             method: 'POST',
             body: formData

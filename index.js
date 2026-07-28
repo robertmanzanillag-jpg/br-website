@@ -4778,7 +4778,9 @@ const DEMO_ALLOWED_MIMES = new Set([
   'audio/ogg','audio/mp4','audio/x-m4a','audio/aac','audio/x-aac',
   'application/zip','application/x-zip-compressed'
 ]);
-const DEMO_MAX_BYTES = 50 * 1024 * 1024; // 50 MB
+const DEMO_MAX_FILE_BYTES  = 1 * 1024 * 1024 * 1024; // 1 GB per file
+const DEMO_MAX_TOTAL_BYTES = 1 * 1024 * 1024 * 1024; // 1 GB total per submission
+const DEMO_MAX_FILES       = 10;
 
 const demoStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, demosUploadDir),
@@ -4789,7 +4791,7 @@ const demoStorage = multer.diskStorage({
 });
 const demoUpload = multer({
   storage: demoStorage,
-  limits:  { fileSize: DEMO_MAX_BYTES, files: 1 },
+  limits:  { fileSize: DEMO_MAX_FILE_BYTES, files: DEMO_MAX_FILES },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     if (DEMO_ALLOWED_MIMES.has(file.mimetype) || DEMO_ALLOWED_EXTS.has(ext)) return cb(null, true);
@@ -4797,11 +4799,23 @@ const demoUpload = multer({
   }
 });
 
+// Safely remove files already written to disk (call on any error path)
+const cleanupDemoFiles = (files) => {
+  if (!files?.length) return;
+  for (const f of files) { try { fs.unlinkSync(f.path); } catch {} }
+};
+
 const demoUploadMiddleware = (req, res, next) => {
-  demoUpload.single('demoFile')(req, res, (err) => {
+  demoUpload.array('demoFiles', DEMO_MAX_FILES)(req, res, (err) => {
     if (!err) return next();
-    if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE')
-      return res.status(400).json({ error: 'File too large. Maximum size is 50 MB.' });
+    // Clean up any files already written before the error occurred
+    cleanupDemoFiles(req.files);
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE')
+        return res.status(400).json({ error: 'Each file must be under 1 GB.' });
+      if (err.code === 'LIMIT_FILE_COUNT')
+        return res.status(400).json({ error: `Maximum ${DEMO_MAX_FILES} files per submission.` });
+    }
     if (err && err.code === 'INVALID_FILE_TYPE')
       return res.status(400).json({ error: 'Invalid file type. Accepted: MP3, WAV, FLAC, AIFF, OGG, M4A, AAC, ZIP.' });
     return res.status(400).json({ error: 'File upload failed. Please try again.' });
@@ -4809,6 +4823,8 @@ const demoUploadMiddleware = (req, res, next) => {
 };
 
 app.post('/api/label-applications', demoUploadMiddleware, async (req, res) => {
+  const uploadedFiles = req.files || [];
+  const cleanup = () => cleanupDemoFiles(uploadedFiles);
   try {
     const pool = (await import('./database/connection.js')).default;
     const clean = (value, maxLength) => String(value || '').trim().slice(0, maxLength);
@@ -4821,10 +4837,10 @@ app.post('/api/label-applications', demoUploadMiddleware, async (req, res) => {
     const trackUrl   = clean(req.body?.trackUrl,   500);
 
     if (!firstName || !lastName || !email || !artistName || !instagram || !soundcloud || !trackUrl) {
-      return res.status(400).json({ error: 'Please complete all required fields.' });
+      cleanup(); return res.status(400).json({ error: 'Please complete all required fields.' });
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({ error: 'Please enter a valid email address.' });
+      cleanup(); return res.status(400).json({ error: 'Please enter a valid email address.' });
     }
 
     const parseSoundCloudUrl = (value) => {
@@ -4837,31 +4853,63 @@ app.post('/api/label-applications', demoUploadMiddleware, async (req, res) => {
 
     let soundcloudUrl, submittedTrackUrl;
     try {
-      soundcloudUrl      = parseSoundCloudUrl(soundcloud);
-      submittedTrackUrl  = parseSoundCloudUrl(trackUrl);
+      soundcloudUrl     = parseSoundCloudUrl(soundcloud);
+      submittedTrackUrl = parseSoundCloudUrl(trackUrl);
     } catch {
-      return res.status(400).json({ error: 'Please enter valid SoundCloud links.' });
+      cleanup(); return res.status(400).json({ error: 'Please enter valid SoundCloud links.' });
     }
 
-    const demoFile     = req.file || null;
-    const demoFilePath = demoFile ? `/uploads/demos/${demoFile.filename}` : null;
-    const demoFileName = demoFile ? demoFile.originalname : null;
+    // Total size guard (1 GB across all files)
+    const totalBytes = uploadedFiles.reduce((sum, f) => sum + f.size, 0);
+    if (totalBytes > DEMO_MAX_TOTAL_BYTES) {
+      cleanup();
+      return res.status(400).json({ error: 'Total upload size exceeds 1 GB. Please reduce the number or size of files.' });
+    }
+
+    // Build demo_files JSONB array (new format)
+    const demoFilesJson = uploadedFiles.map(f => ({
+      path: `/uploads/demos/${f.filename}`,
+      name: f.originalname,
+      size: f.size
+    }));
+
+    // Backward-compat single-file columns: populate from first file if present
+    const demoFilePath = demoFilesJson[0]?.path || null;
+    const demoFileName = demoFilesJson[0]?.name || null;
 
     await pool.query(`
       INSERT INTO label_applications
-        (first_name, last_name, email, artist_name, instagram, soundcloud_url, track_url, demo_file_path, demo_file_name)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-    `, [firstName, lastName, email, artistName, instagram, soundcloudUrl, submittedTrackUrl, demoFilePath, demoFileName]);
+        (first_name, last_name, email, artist_name, instagram, soundcloud_url, track_url,
+         demo_file_path, demo_file_name, demo_files)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `, [firstName, lastName, email, artistName, instagram, soundcloudUrl, submittedTrackUrl,
+        demoFilePath, demoFileName, JSON.stringify(demoFilesJson)]);
 
     const escapeHtml = (v) => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[c]);
     try {
-      const safeFirst   = escapeHtml(firstName);
-      const safeLast    = escapeHtml(lastName);
-      const safeEmail   = escapeHtml(email);
-      const safeArtist  = escapeHtml(artistName);
-      const safeIG      = escapeHtml(instagram);
-      const safeSC      = escapeHtml(soundcloudUrl);
-      const safeTrack   = escapeHtml(submittedTrackUrl);
+      const safeFirst  = escapeHtml(firstName);
+      const safeLast   = escapeHtml(lastName);
+      const safeEmail  = escapeHtml(email);
+      const safeArtist = escapeHtml(artistName);
+      const safeIG     = escapeHtml(instagram);
+      const safeSC     = escapeHtml(soundcloudUrl);
+      const safeTrack  = escapeHtml(submittedTrackUrl);
+
+      // Build the uploaded files section for the email body (download links for all)
+      const filesHtml = demoFilesJson.length === 0 ? '' :
+        `<p style="margin:0 0 5px;color:#777;font-size:11px;text-transform:uppercase;">
+           Uploaded files (${demoFilesJson.length})</p>
+         ${demoFilesJson.map((f, i) =>
+           `<p style="margin:0 0 8px;font-size:15px;">
+              <a href="https://blackroomus.com${escapeHtml(f.path)}" style="color:#ff5a68;">
+                ⬇ ${escapeHtml(f.name)}
+              </a>
+              <span style="color:#555;font-size:11px;"> (${(f.size / (1024*1024)).toFixed(1)} MB)</span>
+            </p>`).join('')}
+         <p style="margin:16px 0 22px;color:#666;font-size:11px;">
+           Files are hosted on blackroomus.com and available for download by the team.
+         </p>`;
+
       const emailHtml = `
         <!doctype html>
         <html>
@@ -4884,8 +4932,7 @@ app.post('/api/label-applications', demoUploadMiddleware, async (req, res) => {
                 <p style="margin:0 0 22px;font-size:16px;"><a href="${safeSC}" style="color:#ff5a68;">${safeSC}</a></p>
                 <p style="margin:0 0 5px;color:#777;font-size:11px;text-transform:uppercase;">Submitted track</p>
                 <p style="margin:0 0 22px;font-size:16px;"><a href="${safeTrack}" style="color:#ff5a68;">Listen to track</a></p>
-                ${demoFilePath ? `<p style="margin:0 0 5px;color:#777;font-size:11px;text-transform:uppercase;">Uploaded file</p>
-                <p style="margin:0 0 22px;font-size:16px;"><a href="${escapeHtml(demoFilePath)}" style="color:#ff5a68;">⬇ ${escapeHtml(demoFileName||'Download file')}</a></p>` : ''}
+                ${filesHtml}
               </div>
               <div style="padding:18px 30px;border-top:1px solid #1e1e1e;text-align:center;">
                 <p style="margin:0;color:#555;font-size:10px;letter-spacing:2px;">BLACK ROOM LABEL · blackroomus.com</p>
@@ -4893,29 +4940,36 @@ app.post('/api/label-applications', demoUploadMiddleware, async (req, res) => {
             </div>
           </body>
         </html>`;
+
       const mailOptions = {
         from:    `"Black Room Label" <${process.env.EMAIL_USER || 'theblackroom.us@gmail.com'}>`,
         to:      process.env.EMAIL_USER || 'theblackroom.us@gmail.com',
         replyTo: email,
-        subject: `🎵 Label submission: ${artistName}`,
+        subject: `🎵 Label submission: ${artistName}${demoFilesJson.length ? ` (${demoFilesJson.length} file${demoFilesJson.length > 1 ? 's' : ''})` : ''}`,
         html:    emailHtml
       };
-      // Attach file if present and under 15 MB (Gmail attachment limit safety)
-      if (demoFile && demoFile.size <= 15 * 1024 * 1024) {
-        mailOptions.attachments = [{
-          filename:    demoFile.originalname,
-          path:        demoFile.path,
-          contentType: demoFile.mimetype
-        }];
+
+      // Attach small files (≤ 10 MB each) up to 20 MB total — never fail the submission over email limits
+      let attachTotal = 0;
+      const attachments = [];
+      for (const f of uploadedFiles) {
+        if (f.size <= 10 * 1024 * 1024 && attachTotal + f.size <= 20 * 1024 * 1024) {
+          attachments.push({ filename: f.originalname, path: f.path, contentType: f.mimetype });
+          attachTotal += f.size;
+        }
       }
+      if (attachments.length) mailOptions.attachments = attachments;
+
       await emailTransporter.sendMail(mailOptions);
     } catch (emailError) {
       console.error('Label application email error:', emailError.message);
+      // Email failure does NOT roll back the submission — data is already saved
     }
 
-    console.log(`🎵 Label application: ${artistName} (${email})`);
+    console.log(`🎵 Label application: ${artistName} (${email}) — ${uploadedFiles.length} file(s)`);
     res.status(201).json({ success: true });
   } catch (error) {
+    cleanup();
     console.error('Error saving label application:', error);
     res.status(500).json({ error: 'We could not save your submission. Please try again.' });
   }
@@ -4946,6 +5000,24 @@ app.put('/api/admin/label-applications/:id/contacted', async (req, res) => {
 app.delete('/api/admin/label-applications/:id', async (req, res) => {
   try {
     const pool = (await import('./database/connection.js')).default;
+    // Fetch record first so we can clean up files from disk
+    const { rows } = await pool.query('SELECT demo_files, demo_file_path FROM label_applications WHERE id=$1', [req.params.id]);
+    if (rows.length) {
+      const rec = rows[0];
+      // New multi-file format
+      const files = Array.isArray(rec.demo_files) ? rec.demo_files : [];
+      for (const f of files) {
+        if (f.path) {
+          const diskPath = path.join(__dirname, 'public', f.path);
+          try { fs.unlinkSync(diskPath); } catch {}
+        }
+      }
+      // Legacy single-file column (for old records not yet migrated to demo_files)
+      if (!files.length && rec.demo_file_path) {
+        const diskPath = path.join(__dirname, 'public', rec.demo_file_path);
+        try { fs.unlinkSync(diskPath); } catch {}
+      }
+    }
     await pool.query('DELETE FROM label_applications WHERE id=$1', [req.params.id]);
     res.json({ success: true });
   } catch (error) {
@@ -6083,9 +6155,19 @@ async function ensureSchema() {
         created_at     TIMESTAMP    NOT NULL DEFAULT now()
       )
     `);
-    // Migrate existing tables that may lack the file columns
+    // Migrate existing tables that may lack file columns
     await pool.query(`ALTER TABLE label_applications ADD COLUMN IF NOT EXISTS demo_file_path VARCHAR(500)`);
     await pool.query(`ALTER TABLE label_applications ADD COLUMN IF NOT EXISTS demo_file_name VARCHAR(255)`);
+    await pool.query(`ALTER TABLE label_applications ADD COLUMN IF NOT EXISTS demo_files JSONB NOT NULL DEFAULT '[]'`);
+    // Back-fill demo_files for any existing single-file records that were written before this migration
+    await pool.query(`
+      UPDATE label_applications
+         SET demo_files = jsonb_build_array(
+               jsonb_build_object('path', demo_file_path, 'name', demo_file_name, 'size', 0)
+             )
+       WHERE demo_file_path IS NOT NULL
+         AND (demo_files IS NULL OR demo_files = '[]'::jsonb)
+    `);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS argentina_applications (
         id         SERIAL PRIMARY KEY,
