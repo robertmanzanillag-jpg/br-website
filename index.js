@@ -2966,6 +2966,10 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+app.get('/argentina-application', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'argentina-application.html'));
+});
+
 // Add comprehensive storage endpoint
 app.get('/api/storage/*', (req, res) => {
   const filePath = req.params[0];
@@ -4755,6 +4759,135 @@ app.post('/api/valentine-registration', async (req, res) => {
 });
 
 // ============================================
+// ARGENTINA APPLICATIONS
+// ============================================
+
+app.post('/api/argentina-applications', async (req, res) => {
+  try {
+    const pool = (await import('./database/connection.js')).default;
+    const clean = (value, maxLength) => String(value || '').trim().slice(0, maxLength);
+    const fullName = clean(req.body?.fullName, 100);
+    const instagram = clean(req.body?.instagram, 100);
+    const email = clean(req.body?.email, 254).toLowerCase();
+    const genres = clean(req.body?.genres, 180);
+    const setUrl = clean(req.body?.setUrl, 500);
+    const interest = clean(req.body?.interest, 500);
+
+    if (!fullName || !instagram || !email || !genres || !setUrl || !interest) {
+      return res.status(400).json({ error: 'Please complete all required fields.' });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Please enter a valid email address.' });
+    }
+
+    let parsedSetUrl;
+    try {
+      parsedSetUrl = new URL(setUrl);
+    } catch {
+      return res.status(400).json({ error: 'Please enter a valid public link to your set.' });
+    }
+    if (!['http:', 'https:'].includes(parsedSetUrl.protocol)) {
+      return res.status(400).json({ error: 'The set link must begin with http:// or https://.' });
+    }
+
+    await pool.query(`
+      INSERT INTO argentina_applications (full_name, instagram, email, genres, set_url, interest)
+      VALUES ($1, $2, $3, $4, $5, $6)
+    `, [fullName, instagram, email, genres, parsedSetUrl.href, interest]);
+
+    console.log(`🇦🇷 Argentina application: ${fullName} (${instagram})`);
+
+    const escapeHtml = (value) => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[c]);
+    try {
+      const safeName      = escapeHtml(fullName);
+      const safeInstagram = escapeHtml(instagram);
+      const safeEmail     = escapeHtml(email);
+      const safeGenres    = escapeHtml(genres);
+      const safeSetUrl    = escapeHtml(parsedSetUrl.href);
+      const safeInterest  = escapeHtml(interest).replace(/\n/g, '<br>');
+      const emailHtml = `
+        <!doctype html>
+        <html>
+          <body style="margin:0;padding:0;background:#050505;color:#fff;font-family:Arial,sans-serif;">
+            <div style="max-width:620px;margin:0 auto;background:#101010;">
+              <div style="padding:30px;border-bottom:2px solid #ff2638;text-align:center;">
+                <h1 style="margin:0;font-size:22px;letter-spacing:4px;">ARGENTINA APPLICATION</h1>
+                <p style="margin:10px 0 0;color:#888;font-size:11px;letter-spacing:2px;">BLACK ROOM MIAMI</p>
+              </div>
+              <div style="padding:30px;">
+                <p style="margin:0 0 5px;color:#777;font-size:11px;text-transform:uppercase;">Name</p>
+                <p style="margin:0 0 22px;font-size:16px;">${safeName}</p>
+                <p style="margin:0 0 5px;color:#777;font-size:11px;text-transform:uppercase;">Instagram</p>
+                <p style="margin:0 0 22px;font-size:16px;">${safeInstagram}</p>
+                <p style="margin:0 0 5px;color:#777;font-size:11px;text-transform:uppercase;">Email</p>
+                <p style="margin:0 0 22px;font-size:16px;"><a href="mailto:${safeEmail}" style="color:#fff;">${safeEmail}</a></p>
+                <p style="margin:0 0 5px;color:#777;font-size:11px;text-transform:uppercase;">Genres</p>
+                <p style="margin:0 0 22px;font-size:16px;">${safeGenres}</p>
+                <p style="margin:0 0 5px;color:#777;font-size:11px;text-transform:uppercase;">Set</p>
+                <p style="margin:0 0 22px;font-size:16px;"><a href="${safeSetUrl}" style="color:#ff5a68;">Listen to set</a></p>
+                <p style="margin:0 0 5px;color:#777;font-size:11px;text-transform:uppercase;">Why they want to play with us</p>
+                <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:#ccc;">${safeInterest}</p>
+              </div>
+              <div style="padding:18px 30px;border-top:1px solid #1e1e1e;text-align:center;">
+                <p style="margin:0;color:#555;font-size:10px;letter-spacing:2px;">BLACK ROOM · blackroomus.com</p>
+              </div>
+            </div>
+          </body>
+        </html>`;
+      await emailTransporter.sendMail({
+        from: `"Black Room" <${process.env.EMAIL_USER || 'theblackroom.us@gmail.com'}>`,
+        to: process.env.EMAIL_USER || 'theblackroom.us@gmail.com',
+        subject: `🇦🇷 Argentina application: ${fullName} (${instagram})`,
+        html: emailHtml
+      });
+    } catch (emailError) {
+      console.error('Argentina application email error:', emailError.message);
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error saving Argentina application:', error);
+    res.status(500).json({ error: 'We could not save your submission. Please try again.' });
+  }
+});
+
+app.get('/api/admin/argentina-applications', async (req, res) => {
+  try {
+    const pool = (await import('./database/connection.js')).default;
+    const result = await pool.query('SELECT * FROM argentina_applications ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching Argentina applications:', error);
+    res.status(500).json({ error: 'Failed to fetch Argentina applications' });
+  }
+});
+
+app.put('/api/admin/argentina-applications/:id/contacted', async (req, res) => {
+  try {
+    const pool = (await import('./database/connection.js')).default;
+    await pool.query(
+      'UPDATE argentina_applications SET contacted=$1 WHERE id=$2',
+      [!!req.body.contacted, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating Argentina application:', error);
+    res.status(500).json({ error: 'Failed to update Argentina application' });
+  }
+});
+
+app.delete('/api/admin/argentina-applications/:id', async (req, res) => {
+  try {
+    const pool = (await import('./database/connection.js')).default;
+    await pool.query('DELETE FROM argentina_applications WHERE id=$1', [req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting Argentina application:', error);
+    res.status(500).json({ error: 'Failed to delete Argentina application' });
+  }
+});
+
+// ============================================
 // OPEN DECK SIGN-UPS
 // ============================================
 
@@ -5738,7 +5871,20 @@ async function ensureSchema() {
         ON academy_registrations(stripe_session_id)
         WHERE stripe_session_id IS NOT NULL
     `);
-    console.log('✅ Schema ensured (order_email_log, academy payment columns)');
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS argentina_applications (
+        id         SERIAL PRIMARY KEY,
+        full_name  VARCHAR(100)  NOT NULL,
+        instagram  VARCHAR(100)  NOT NULL,
+        email      VARCHAR(254)  NOT NULL,
+        genres     VARCHAR(180)  NOT NULL,
+        set_url    TEXT          NOT NULL,
+        interest   VARCHAR(500)  NOT NULL,
+        contacted  BOOLEAN       NOT NULL DEFAULT false,
+        created_at TIMESTAMP     NOT NULL DEFAULT now()
+      )
+    `);
+    console.log('✅ Schema ensured (order_email_log, academy payment columns, argentina_applications)');
   } catch (err) {
     console.error('⚠️ ensureSchema failed:', err.message);
   }
