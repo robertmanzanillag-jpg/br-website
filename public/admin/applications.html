@@ -439,14 +439,20 @@
   function q(tab){return(document.getElementById(`q-${tab}`)?.value||'').toLowerCase().trim();}
 
   // ── LABEL DEMOS ──
+  function demoFileLink(r) {
+    if (!r.demo_file_path) return '<span style="color:var(--muted)">—</span>';
+    const name = r.demo_file_name || 'Download';
+    return `<a class="clink" href="${esc(r.demo_file_path)}" target="_blank" rel="noopener" download><i class="fas fa-download"></i>${esc(name)}</a>`;
+  }
+
   function renderLabel() {
     const search=q('label');
-    let data=labelData.filter(r=>!search||[r.first_name,r.last_name,r.email,r.artist_name,r.instagram,r.soundcloud_url,r.track_url].some(f=>(f||'').toLowerCase().includes(search)));
+    let data=labelData.filter(r=>!search||[r.first_name,r.last_name,r.email,r.artist_name,r.instagram,r.soundcloud_url,r.track_url,r.demo_file_name].some(f=>(f||'').toLowerCase().includes(search)));
     data=sortData(data,'label');
     document.getElementById('stats-label').textContent=`${data.length} entries`;
     if(!data.length){document.getElementById('tbl-label').innerHTML=emptyHTML();return;}
     const html=`<table>
-      <colgroup><col class="col-chk"><col class="col-id"><col class="col-name"><col class="col-name"><col class="col-std"><col class="col-std"><col class="col-std"><col class="col-std"><col class="col-date"><col class="col-act"></colgroup>
+      <colgroup><col class="col-chk"><col class="col-id"><col class="col-name"><col class="col-name"><col class="col-std"><col class="col-std"><col class="col-std"><col class="col-std"><col class="col-std"><col class="col-date"><col class="col-act"></colgroup>
       <thead><tr>
         <th title="Contacted"><i class="fas fa-check"></i></th>
         ${thSort('label','id','#')}
@@ -456,6 +462,7 @@
         ${thSort('label','instagram','Instagram')}
         ${thSort('label','soundcloud_url','SoundCloud')}
         ${thSort('label','track_url','Track')}
+        <th>File</th>
         ${thSort('label','created_at','Date')}
         <th>Act</th>
       </tr></thead>
@@ -469,6 +476,7 @@
           <td title="${esc(r.instagram||'')}" onclick="event.stopPropagation()">${igLink(r.instagram)}</td>
           <td onclick="event.stopPropagation()">${scLink(r.soundcloud_url)}</td>
           <td onclick="event.stopPropagation()">${trackLink(r.track_url,'Track')}</td>
+          <td onclick="event.stopPropagation()">${demoFileLink(r)}</td>
           <td class="cell-date">${fmtDate(r.created_at)}</td>
           <td onclick="event.stopPropagation()"><div class="actions">
             <button class="btn-act del" onclick="askDel('${r.id}','label')"><i class="fas fa-trash"></i></button>
@@ -490,7 +498,8 @@
       ${dfLink('Instagram', igLink(r.instagram))}
       ${dfLink('SoundCloud profile', scLink(r.soundcloud_url))}
       <hr class="drawer-divider">
-      ${dfLink('Submitted track', trackLink(r.track_url, r.track_url))}`;
+      ${dfLink('Submitted track', trackLink(r.track_url, r.track_url))}
+      ${r.demo_file_path ? dfLink('Uploaded file', `<a class="clink" href="${esc(r.demo_file_path)}" target="_blank" rel="noopener" download><i class="fas fa-download"></i>${esc(r.demo_file_name||'Download file')}</a>`) : df('Uploaded file','<span style="color:var(--muted)">No file uploaded</span>')}`;
     openDrawer();
   }
 

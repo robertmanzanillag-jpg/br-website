@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import multer from 'multer';
 import compression from 'compression';
 import session from 'express-session';
 import pgSession from 'connect-pg-simple';
@@ -4766,7 +4767,48 @@ app.post('/api/valentine-registration', async (req, res) => {
 // LABEL DEMO SUBMISSIONS
 // ============================================
 
-app.post('/api/label-applications', async (req, res) => {
+// ── Demo file upload setup ──
+const demosUploadDir = path.join(__dirname, 'public', 'uploads', 'demos');
+if (!fs.existsSync(demosUploadDir)) fs.mkdirSync(demosUploadDir, { recursive: true });
+
+const DEMO_ALLOWED_EXTS  = new Set(['.mp3','.wav','.flac','.aiff','.aif','.ogg','.m4a','.aac','.zip']);
+const DEMO_ALLOWED_MIMES = new Set([
+  'audio/mpeg','audio/mp3','audio/wav','audio/x-wav','audio/wave',
+  'audio/flac','audio/x-flac','audio/aiff','audio/x-aiff',
+  'audio/ogg','audio/mp4','audio/x-m4a','audio/aac','audio/x-aac',
+  'application/zip','application/x-zip-compressed'
+]);
+const DEMO_MAX_BYTES = 50 * 1024 * 1024; // 50 MB
+
+const demoStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, demosUploadDir),
+  filename:    (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `demo-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
+  }
+});
+const demoUpload = multer({
+  storage: demoStorage,
+  limits:  { fileSize: DEMO_MAX_BYTES, files: 1 },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (DEMO_ALLOWED_MIMES.has(file.mimetype) || DEMO_ALLOWED_EXTS.has(ext)) return cb(null, true);
+    cb(Object.assign(new Error('INVALID_FILE_TYPE'), { code: 'INVALID_FILE_TYPE' }));
+  }
+});
+
+const demoUploadMiddleware = (req, res, next) => {
+  demoUpload.single('demoFile')(req, res, (err) => {
+    if (!err) return next();
+    if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE')
+      return res.status(400).json({ error: 'File too large. Maximum size is 50 MB.' });
+    if (err && err.code === 'INVALID_FILE_TYPE')
+      return res.status(400).json({ error: 'Invalid file type. Accepted: MP3, WAV, FLAC, AIFF, OGG, M4A, AAC, ZIP.' });
+    return res.status(400).json({ error: 'File upload failed. Please try again.' });
+  });
+};
+
+app.post('/api/label-applications', demoUploadMiddleware, async (req, res) => {
   try {
     const pool = (await import('./database/connection.js')).default;
     const clean = (value, maxLength) => String(value || '').trim().slice(0, maxLength);
@@ -4801,11 +4843,15 @@ app.post('/api/label-applications', async (req, res) => {
       return res.status(400).json({ error: 'Please enter valid SoundCloud links.' });
     }
 
+    const demoFile     = req.file || null;
+    const demoFilePath = demoFile ? `/uploads/demos/${demoFile.filename}` : null;
+    const demoFileName = demoFile ? demoFile.originalname : null;
+
     await pool.query(`
       INSERT INTO label_applications
-        (first_name, last_name, email, artist_name, instagram, soundcloud_url, track_url)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-    `, [firstName, lastName, email, artistName, instagram, soundcloudUrl, submittedTrackUrl]);
+        (first_name, last_name, email, artist_name, instagram, soundcloud_url, track_url, demo_file_path, demo_file_name)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `, [firstName, lastName, email, artistName, instagram, soundcloudUrl, submittedTrackUrl, demoFilePath, demoFileName]);
 
     const escapeHtml = (v) => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[c]);
     try {
@@ -4838,6 +4884,8 @@ app.post('/api/label-applications', async (req, res) => {
                 <p style="margin:0 0 22px;font-size:16px;"><a href="${safeSC}" style="color:#ff5a68;">${safeSC}</a></p>
                 <p style="margin:0 0 5px;color:#777;font-size:11px;text-transform:uppercase;">Submitted track</p>
                 <p style="margin:0 0 22px;font-size:16px;"><a href="${safeTrack}" style="color:#ff5a68;">Listen to track</a></p>
+                ${demoFilePath ? `<p style="margin:0 0 5px;color:#777;font-size:11px;text-transform:uppercase;">Uploaded file</p>
+                <p style="margin:0 0 22px;font-size:16px;"><a href="${escapeHtml(demoFilePath)}" style="color:#ff5a68;">⬇ ${escapeHtml(demoFileName||'Download file')}</a></p>` : ''}
               </div>
               <div style="padding:18px 30px;border-top:1px solid #1e1e1e;text-align:center;">
                 <p style="margin:0;color:#555;font-size:10px;letter-spacing:2px;">BLACK ROOM LABEL · blackroomus.com</p>
@@ -4845,13 +4893,22 @@ app.post('/api/label-applications', async (req, res) => {
             </div>
           </body>
         </html>`;
-      await emailTransporter.sendMail({
+      const mailOptions = {
         from:    `"Black Room Label" <${process.env.EMAIL_USER || 'theblackroom.us@gmail.com'}>`,
         to:      process.env.EMAIL_USER || 'theblackroom.us@gmail.com',
         replyTo: email,
         subject: `🎵 Label submission: ${artistName}`,
         html:    emailHtml
-      });
+      };
+      // Attach file if present and under 15 MB (Gmail attachment limit safety)
+      if (demoFile && demoFile.size <= 15 * 1024 * 1024) {
+        mailOptions.attachments = [{
+          filename:    demoFile.originalname,
+          path:        demoFile.path,
+          contentType: demoFile.mimetype
+        }];
+      }
+      await emailTransporter.sendMail(mailOptions);
     } catch (emailError) {
       console.error('Label application email error:', emailError.message);
     }
@@ -6020,10 +6077,15 @@ async function ensureSchema() {
         instagram      VARCHAR(120) NOT NULL,
         soundcloud_url TEXT         NOT NULL,
         track_url      TEXT         NOT NULL,
+        demo_file_path VARCHAR(500),
+        demo_file_name VARCHAR(255),
         contacted      BOOLEAN      NOT NULL DEFAULT false,
         created_at     TIMESTAMP    NOT NULL DEFAULT now()
       )
     `);
+    // Migrate existing tables that may lack the file columns
+    await pool.query(`ALTER TABLE label_applications ADD COLUMN IF NOT EXISTS demo_file_path VARCHAR(500)`);
+    await pool.query(`ALTER TABLE label_applications ADD COLUMN IF NOT EXISTS demo_file_name VARCHAR(255)`);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS argentina_applications (
         id         SERIAL PRIMARY KEY,

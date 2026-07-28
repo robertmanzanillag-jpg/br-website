@@ -209,6 +209,46 @@
         line-height: 1.5;
       }
 
+      .file-drop {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        min-height: 90px;
+        padding: 20px 15px;
+        border: 1px dashed #383838;
+        background: #000;
+        cursor: pointer;
+        text-align: center;
+        transition: border-color .2s ease, background .2s ease;
+      }
+      .file-drop:hover, .file-drop.has-file { border-color: #666; background: #080808; }
+      .file-drop input[type=file] {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        min-height: unset;
+        border: none;
+        padding: 0;
+      }
+      .file-drop-icon { font-size: 22px; color: #444; pointer-events: none; }
+      .file-drop.has-file .file-drop-icon { color: var(--success); }
+      .file-drop-label {
+        font-family: "Space Mono", monospace;
+        font-size: 9px;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: #666;
+        pointer-events: none;
+      }
+      .file-drop.has-file .file-drop-label { color: var(--success); }
+      .file-drop-hint { font-size: 10px; color: #444; pointer-events: none; }
+
       .submit {
         display: flex;
         width: 100%;
@@ -357,6 +397,16 @@
 
           <p class="disclaimer">*Track must be available for download*</p>
 
+          <div class="field">
+            <label for="demoFile">Demo file <span style="color:var(--muted);font-family:Inter,sans-serif;text-transform:none;letter-spacing:0;font-size:10px;">(optional)</span></label>
+            <div class="file-drop" id="file-drop">
+              <input type="file" id="demoFile" name="demoFile" accept=".mp3,.wav,.flac,.aiff,.aif,.ogg,.m4a,.aac,.zip" aria-label="Upload demo file (optional)">
+              <span class="file-drop-icon" id="file-icon">♪</span>
+              <span class="file-drop-label" id="file-label">Click to upload or drag & drop</span>
+              <span class="file-drop-hint" id="file-hint">MP3 · WAV · FLAC · AIFF · OGG · M4A · ZIP &nbsp;·&nbsp; max 50 MB</span>
+            </div>
+          </div>
+
           <button class="submit" type="submit">
             <span>Submit track</span>
             <span aria-hidden="true">→</span>
@@ -375,14 +425,34 @@
     </main>
 
     <script>
-      const form = document.getElementById('label-form');
+      const form      = document.getElementById('label-form');
       const instagram = document.getElementById('instagram');
-      const errorBox = document.getElementById('form-error');
+      const errorBox  = document.getElementById('form-error');
+      const fileInput = document.getElementById('demoFile');
+      const fileDrop  = document.getElementById('file-drop');
+      const fileLabel = document.getElementById('file-label');
+      const fileIcon  = document.getElementById('file-icon');
+      const fileHint  = document.getElementById('file-hint');
 
       instagram.addEventListener('blur', () => {
         const value = instagram.value.trim();
         if (value && !value.startsWith('@') && !value.includes('instagram.com')) {
           instagram.value = `@${value}`;
+        }
+      });
+
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (file) {
+          fileDrop.classList.add('has-file');
+          fileLabel.textContent = file.name;
+          fileHint.textContent  = `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
+          fileIcon.textContent  = '✓';
+        } else {
+          fileDrop.classList.remove('has-file');
+          fileLabel.textContent = 'Click to upload or drag & drop';
+          fileHint.textContent  = 'MP3 · WAV · FLAC · AIFF · OGG · M4A · ZIP  ·  max 50 MB';
+          fileIcon.textContent  = '♪';
         }
       });
 
@@ -392,19 +462,26 @@
 
         const button = form.querySelector('.submit');
         const originalContent = button.innerHTML;
-        const payload = Object.fromEntries(
-          [...new FormData(form).entries()].map(([key, value]) => [key, value.trim()])
-        );
+
+        // Build multipart FormData so the optional file travels with the text fields
+        const formData = new FormData(form);
+        // Trim all text fields
+        ['firstName','lastName','email','artistName','instagram','soundcloud','trackUrl'].forEach(key => {
+          const val = formData.get(key);
+          if (typeof val === 'string') formData.set(key, val.trim());
+        });
+        // Remove the file entry if the user picked no file (browser may include an empty blob)
+        if (!fileInput.files.length) formData.delete('demoFile');
 
         button.disabled = true;
         button.innerHTML = '<span>Submitting…</span><span aria-hidden="true">•••</span>';
         errorBox.style.display = 'none';
 
         try {
+          // No Content-Type header — browser sets multipart/form-data with boundary
           const response = await fetch('/api/label-applications', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: formData
           });
           const result = await response.json().catch(() => ({}));
           if (!response.ok) throw new Error(result.error || 'We could not submit your track. Please try again.');
