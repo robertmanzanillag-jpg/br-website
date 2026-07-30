@@ -4941,9 +4941,15 @@ app.post('/api/label-applications', demoUploadMiddleware, async (req, res) => {
           </body>
         </html>`;
 
+      // Build deduplicated recipient list: team inbox + label inbox
+      const LABEL_INBOX = 'Label@blackroom.live';
+      const teamInbox   = process.env.EMAIL_USER || 'theblackroom.us@gmail.com';
+      const toAddresses = [...new Set([teamInbox, LABEL_INBOX])];
+      console.log(`📬 Label submission email → ${toAddresses.join(', ')}`);
+
       const mailOptions = {
-        from:    `"Black Room Label" <${process.env.EMAIL_USER || 'theblackroom.us@gmail.com'}>`,
-        to:      process.env.EMAIL_USER || 'theblackroom.us@gmail.com',
+        from:    `"Black Room Label" <${teamInbox}>`,
+        to:      toAddresses.join(', '),
         replyTo: email,
         subject: `🎵 Label submission: ${artistName}${demoFilesJson.length ? ` (${demoFilesJson.length} file${demoFilesJson.length > 1 ? 's' : ''})` : ''}`,
         html:    emailHtml
