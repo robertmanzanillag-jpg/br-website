@@ -1,0 +1,23 @@
+RED ROOM — PNG TRANSPARENTES VERIFICADOS
+
+Estos ocho archivos tienen canal alfa real:
+- Broken_Glass_Back.png
+- Broken_Glass_Front.png
+- Drape_Rect_Back.png
+- Drape_Rect_Front.png
+- Melt_Back.png
+- Melt_Front.png
+- Splatter_Back.png
+- Splatter_Front.png
+
+Verificación realizada:
+- 4500 × 4500 px.
+- 300 DPI.
+- Las cuatro esquinas tienen alfa 0 (completamente transparente).
+- 0 píxeles verdes visibles en los ocho archivos.
+
+IMPORTANTE:
+No guardar las imágenes verdes mostradas durante el proceso de edición.
+Descargar el archivo ZIP y abrir los PNG desde la app Archivos.
+La app Fotos puede representar la transparencia con blanco o negro aunque
+el canal alfa continúe intacto.
