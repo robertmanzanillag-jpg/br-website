@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 import pool from '../database/connection.js';
+import { hasApplicationsAccess } from '../utils/applicationsAccess.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -70,6 +71,7 @@ router.get("/", (req, res) => {
       photo: user.photo || "",
       likes: user.likes || [],
       role: user.role || "user",
+      applicationsAccess: hasApplicationsAccess(user),
       authenticated: true 
     });
   } catch (error) {

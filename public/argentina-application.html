@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#050505">
+    <meta name="description" content="Apply to perform with Black Room in Argentina.">
+    <title>Argentina Application — Black Room</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #050505;
+        --panel: rgba(13, 13, 13, 0.92);
+        --line: #292929;
+        --muted: #8a8a8a;
+        --white: #f4f4f4;
+        --accent: #ff2638;
+        --success: #78f2b0;
+      }
+
+      * { box-sizing: border-box; }
+
+      html { background: var(--bg); }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        padding: 42px 20px 70px;
+        color: var(--white);
+        background-color: var(--bg);
+        background-image:
+          linear-gradient(to bottom, rgba(2,7,14,.28), rgba(3,5,8,.48) 72%, rgba(3,3,3,.62)),
+          radial-gradient(circle at 50% -15%, rgba(255,255,255,.08), transparent 34rem),
+          url("/images/argentina-application.jpg");
+        background-position: center, center, center top;
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-attachment: fixed;
+        font-family: Inter, sans-serif;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.42;
+        background-image:
+          linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+        background-size: 48px 48px;
+        mask-image: linear-gradient(to bottom, #000, transparent 88%);
+      }
+
+      .scanlines {
+        position: fixed;
+        z-index: 0;
+        inset: 0;
+        pointer-events: none;
+        background: repeating-linear-gradient(to bottom, transparent 0, transparent 3px, rgba(255,255,255,.014) 3px, rgba(255,255,255,.014) 4px);
+      }
+
+      .scan-sweep {
+        position: fixed;
+        z-index: 0;
+        right: 0;
+        left: 0;
+        height: 80px;
+        pointer-events: none;
+        background: linear-gradient(to bottom, transparent, rgba(255,255,255,.05), transparent);
+        animation: sweep 7s linear infinite;
+      }
+
+      @keyframes sweep {
+        from { top: -80px; }
+        to { top: 100vh; }
+      }
+
+      .particles {
+        position: fixed;
+        z-index: 0;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+      }
+
+      .particle {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.55);
+        box-shadow: 0 0 6px rgba(255,255,255,.45);
+        animation: float 22s linear infinite;
+      }
+
+      @keyframes float {
+        0% { opacity: 0; transform: translateY(105vh); }
+        10%, 90% { opacity: 1; }
+        100% { opacity: 0; transform: translateY(-10vh) translateX(50px); }
+      }
+
+      .page {
+        position: relative;
+        z-index: 1;
+        width: min(100%, 610px);
+        margin: 0 auto;
+      }
+
+      .brand {
+        display: block;
+        width: 108px;
+        height: auto;
+        margin: 0 auto 22px;
+        filter: drop-shadow(0 0 24px rgba(255,255,255,.12));
+        animation: logoFloat 5s ease-in-out infinite;
+      }
+
+      @keyframes logoFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+      }
+
+      .eyebrow,
+      .field label,
+      .status,
+      .counter,
+      .footer-note {
+        font-family: "Space Mono", monospace;
+        text-transform: uppercase;
+        letter-spacing: .14em;
+      }
+
+      .hero {
+        margin-bottom: 26px;
+        text-align: center;
+      }
+
+      .eyebrow {
+        margin: 0 0 11px;
+        color: var(--accent);
+        font-size: 11px;
+      }
+
+      h1 {
+        margin: 0;
+        font-family: "Space Mono", monospace;
+        font-size: clamp(29px, 8vw, 48px);
+        line-height: 1;
+        letter-spacing: -.06em;
+        text-transform: uppercase;
+      }
+
+      .glitch {
+        position: relative;
+        display: inline-block;
+      }
+
+      .glitch::before,
+      .glitch::after {
+        content: attr(data-text);
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0;
+      }
+
+      .glitch::before {
+        color: #00ffaa;
+        clip-path: inset(0 0 65% 0);
+        animation: glitch-a 5s steps(1, end) infinite;
+      }
+
+      .glitch::after {
+        color: #ff0080;
+        clip-path: inset(65% 0 0 0);
+        animation: glitch-b 5s steps(1, end) infinite;
+      }
+
+      @keyframes glitch-a {
+        0%, 92%, 100% { opacity: 0; transform: translate(0); }
+        93%, 97% { opacity: .7; transform: translate(-2px, -1px); }
+        95% { opacity: .7; transform: translate(2px, 1px); }
+      }
+
+      @keyframes glitch-b {
+        0%, 92%, 100% { opacity: 0; transform: translate(0); }
+        93%, 97% { opacity: .7; transform: translate(2px, 1px); }
+        95% { opacity: .7; transform: translate(-2px, -1px); }
+      }
+
+      .card {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,.32);
+        background: rgba(0,0,0,.18);
+        box-shadow: 0 30px 80px rgba(0,0,0,.35);
+        backdrop-filter: blur(2px);
+      }
+
+      .corner {
+        position: absolute;
+        z-index: 2;
+        width: 15px;
+        height: 15px;
+        border-color: #fff;
+        border-style: solid;
+        pointer-events: none;
+      }
+
+      .corner.tl { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+      .corner.tr { top: -1px; right: -1px; border-width: 1px 1px 0 0; }
+      .corner.bl { bottom: -1px; left: -1px; border-width: 0 0 1px 1px; }
+      .corner.br { right: -1px; bottom: -1px; border-width: 0 1px 1px 0; }
+
+      .card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 92px;
+        height: 2px;
+        background: var(--accent);
+        box-shadow: 0 0 18px rgba(255,38,56,.8);
+      }
+
+      .card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 18px 22px;
+        border-bottom: 1px solid rgba(255,255,255,.24);
+        background: rgba(0,0,0,.14);
+      }
+
+      .card-head h2 {
+        margin: 0;
+        font-family: "Space Mono", monospace;
+        font-size: 12px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--success);
+        font-size: 9px;
+      }
+
+      .status::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 10px currentColor;
+      }
+
+      form { padding: 26px 22px 22px; }
+
+      .field { margin-bottom: 20px; }
+
+      .field label {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+        color: #b3b3b3;
+        font-size: 10px;
+      }
+
+      .required { color: var(--accent); }
+
+      input,
+      textarea {
+        width: 100%;
+        border: 1px solid rgba(255,255,255,.34);
+        border-radius: 0;
+        outline: 0;
+        background: rgba(0,0,0,.28);
+        color: var(--white);
+        font: 500 15px/1.4 Inter, sans-serif;
+        transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+      }
+
+      input { min-height: 51px; padding: 0 15px; }
+
+      textarea {
+        min-height: 126px;
+        padding: 14px 15px;
+        resize: vertical;
+      }
+
+      input::placeholder,
+      textarea::placeholder { color: rgba(255,255,255,.58); }
+
+      input:focus,
+      textarea:focus {
+        border-color: rgba(255,255,255,.85);
+        background: rgba(0,0,0,.42);
+        box-shadow: 0 0 0 3px rgba(255,255,255,.08);
+      }
+
+      input:user-invalid,
+      textarea:user-invalid { border-color: rgba(255,38,56,.7); }
+
+      .hint {
+        margin: 7px 0 0;
+        color: #686868;
+        font-size: 11px;
+        line-height: 1.4;
+      }
+
+      .counter {
+        display: block;
+        margin-top: 7px;
+        color: #626262;
+        font-size: 9px;
+        text-align: right;
+      }
+
+      .submit {
+        display: flex;
+        width: 100%;
+        min-height: 54px;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 8px;
+        padding: 0 18px;
+        border: 1px solid var(--white);
+        border-radius: 0;
+        background: var(--white);
+        color: #050505;
+        cursor: pointer;
+        font: 700 11px "Space Mono", monospace;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        transition: background .2s ease, color .2s ease, transform .2s ease;
+      }
+
+      .submit:hover {
+        background: transparent;
+        color: var(--white);
+        transform: translateY(-2px);
+      }
+
+      .submit:disabled {
+        cursor: wait;
+        opacity: .58;
+        transform: none;
+      }
+
+      .form-error {
+        display: none;
+        margin: 16px 0 0;
+        padding: 12px 14px;
+        border-left: 2px solid var(--accent);
+        background: rgba(255,38,56,.08);
+        color: #ff98a1;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .success {
+        display: none;
+        padding: 56px 26px;
+        text-align: center;
+      }
+
+      .success-mark {
+        display: grid;
+        width: 54px;
+        height: 54px;
+        place-items: center;
+        margin: 0 auto 20px;
+        border: 1px solid var(--success);
+        border-radius: 50%;
+        color: var(--success);
+        font-size: 23px;
+        box-shadow: 0 0 30px rgba(120,242,176,.12);
+      }
+
+      .success h2 {
+        margin: 0 0 12px;
+        font: 700 19px "Space Mono", monospace;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+
+      .success p {
+        max-width: 400px;
+        margin: 0 auto;
+        color: #929292;
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      .footer-note {
+        margin: 20px 0 0;
+        color: #4d4d4d;
+        font-size: 8px;
+        text-align: center;
+      }
+
+      @media (min-width: 620px) {
+        .two-cols {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        body { padding: 30px 14px 50px; }
+        .brand { width: 94px; }
+        .card-head, form { padding-left: 17px; padding-right: 17px; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          scroll-behavior: auto !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scanlines"></div>
+    <div class="scan-sweep"></div>
+    <div class="particles" id="particles"></div>
+    <main class="page">
+      <img class="brand" src="/images/logo.png" alt="Black Room">
+
+      <header class="hero">
+        <p class="eyebrow">Black Room Radio · Argentina</p>
+        <h1><span class="glitch" data-text="Argentina Application">Argentina Application</span></h1>
+      </header>
+
+      <section class="card" aria-labelledby="form-title">
+        <span class="corner tl"></span>
+        <span class="corner tr"></span>
+        <span class="corner bl"></span>
+        <span class="corner br"></span>
+        <div class="card-head">
+          <h2 id="form-title">Apply to play</h2>
+          <span class="status">Applications open</span>
+        </div>
+
+        <form id="dj-form">
+          <div class="two-cols">
+            <div class="field">
+              <label for="fullName">Name <span class="required">*</span></label>
+              <input id="fullName" name="fullName" type="text" autocomplete="name" maxlength="100" placeholder="Full name or artist name" required>
+            </div>
+
+            <div class="field">
+              <label for="instagram">Instagram <span class="required">*</span></label>
+              <input id="instagram" name="instagram" type="text" autocomplete="off" maxlength="100" placeholder="@yourhandle" required>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="email">Email <span class="required">*</span></label>
+            <input id="email" name="email" type="email" autocomplete="email" maxlength="254" placeholder="you@email.com" required>
+          </div>
+
+          <div class="field">
+            <label for="genres">Genres <span class="required">*</span></label>
+            <input id="genres" name="genres" type="text" maxlength="180" placeholder="Techno, hard groove, house…" required>
+            <p class="hint">List the genres that best represent your sound.</p>
+          </div>
+
+          <div class="field">
+            <label for="setUrl">Set link <span class="required">*</span></label>
+            <input id="setUrl" name="setUrl" type="url" inputmode="url" maxlength="500" placeholder="https://soundcloud.com/..." required>
+            <p class="hint">Share a public SoundCloud, Mixcloud, YouTube or similar link.</p>
+          </div>
+
+          <div class="field">
+            <label for="interest">Why do you want to play with us? <span class="required">*</span></label>
+            <textarea id="interest" name="interest" maxlength="500" placeholder="Tell us briefly why you want to be part of Black Room Radio Argentina…" required></textarea>
+            <span class="counter"><span id="char-count">0</span> / 500</span>
+          </div>
+
+          <button class="submit" type="submit">
+            <span>Send submission</span>
+            <span aria-hidden="true">→</span>
+          </button>
+          <p class="form-error" id="form-error" role="alert"></p>
+        </form>
+
+        <div class="success" id="success" role="status">
+          <div class="success-mark" aria-hidden="true">✓</div>
+          <h2>Application received</h2>
+          <p>Thank you for sharing your sound. Our team will review your application and contact you if you are selected to play with Black Room in Argentina.</p>
+        </div>
+      </section>
+
+      <p class="footer-note">Black Room Radio · Argentina</p>
+    </main>
+
+    <script>
+      const particles = document.getElementById('particles');
+      for (let index = 0; index < 28; index += 1) {
+        const particle = document.createElement('span');
+        particle.className = 'particle';
+        particle.style.left = `${Math.random() * 100}%`;
+        particle.style.animationDelay = `${Math.random() * 22}s`;
+        particle.style.animationDuration = `${16 + Math.random() * 14}s`;
+        particles.appendChild(particle);
+      }
+
+      const form = document.getElementById('dj-form');
+      const instagram = document.getElementById('instagram');
+      const interest = document.getElementById('interest');
+      const charCount = document.getElementById('char-count');
+      const errorBox = document.getElementById('form-error');
+
+      interest.addEventListener('input', () => {
+        charCount.textContent = interest.value.length;
+      });
+
+      instagram.addEventListener('blur', () => {
+        const value = instagram.value.trim();
+        if (value && !value.startsWith('@') && !value.includes('instagram.com')) {
+          instagram.value = `@${value}`;
+        }
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!form.reportValidity()) return;
+
+        const button = form.querySelector('.submit');
+        const originalContent = button.innerHTML;
+        const payload = Object.fromEntries(
+          [...new FormData(form).entries()].map(([key, value]) => [key, value.trim()])
+        );
+
+        button.disabled = true;
+        button.innerHTML = '<span>Sending…</span><span aria-hidden="true">•••</span>';
+        errorBox.style.display = 'none';
+
+        try {
+          const response = await fetch('/api/argentina-applications', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const result = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            throw new Error(result.error || 'We could not send your submission. Please try again.');
+          }
+
+          form.style.display = 'none';
+          document.getElementById('success').style.display = 'block';
+          document.querySelector('.card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (error) {
+          errorBox.textContent = error.message;
+          errorBox.style.display = 'block';
+          button.disabled = false;
+          button.innerHTML = originalContent;
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -33,7 +33,7 @@
     .btn-sm:hover { border-color: #444; color: var(--text); }
 
     /* SECTION CARDS */
-    .sections-grid { max-width: 1500px; margin: 0 auto 28px; padding: 0 24px; display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+    .sections-grid { max-width: 1500px; margin: 0 auto 28px; padding: 0 24px; display: grid; grid-template-columns: repeat(6,1fr); gap: 12px; }
     @media(max-width:900px){.sections-grid{grid-template-columns:repeat(2,1fr);}}
     @media(max-width:540px){.sections-grid{grid-template-columns:1fr;}}
     .section-card { background: var(--card); border: 1px solid var(--border2); padding: 20px 22px; cursor: pointer; transition: all .2s; position: relative; overflow: hidden; }
@@ -250,6 +250,18 @@
 
 <!-- SECTION CARDS -->
 <div class="sections-grid">
+  <div class="section-card" id="card-label" onclick="switchTab('label')">
+    <div class="sc-icon"><i class="fas fa-compact-disc"></i></div>
+    <div class="sc-label">Demos</div>
+    <div class="sc-count" id="cnt-label">—</div>
+    <div class="sc-desc">Label demo submissions</div>
+  </div>
+  <div class="section-card" id="card-djs" onclick="switchTab('djs')">
+    <div class="sc-icon"><i class="fas fa-record-vinyl"></i></div>
+    <div class="sc-label">Argentina</div>
+    <div class="sc-count" id="cnt-djs">—</div>
+    <div class="sc-desc">Argentina applications</div>
+  </div>
   <div class="section-card active" id="card-opendeck" onclick="switchTab('opendeck')">
     <div class="sc-icon"><i class="fas fa-headphones"></i></div>
     <div class="sc-label">Open Deck</div>
@@ -278,6 +290,22 @@
 
 <!-- PANELS -->
 <div class="panel-wrap">
+
+  <div class="panel" id="panel-label">
+    <div class="controls">
+      <div class="search-wrap"><i class="fas fa-search"></i><input type="text" placeholder="Search…" oninput="renderLabel()" id="q-label"></div>
+      <span class="stats-label" id="stats-label">— entries</span>
+    </div>
+    <div class="table-wrap" id="tbl-label"><div class="loading"><div class="spinner"></div> Loading…</div></div>
+  </div>
+
+  <div class="panel" id="panel-djs">
+    <div class="controls">
+      <div class="search-wrap"><i class="fas fa-search"></i><input type="text" placeholder="Search…" oninput="renderDJs()" id="q-djs"></div>
+      <span class="stats-label" id="stats-djs">— entries</span>
+    </div>
+    <div class="table-wrap" id="tbl-djs"><div class="loading"><div class="spinner"></div> Loading…</div></div>
+  </div>
 
   <div class="panel active" id="panel-opendeck">
     <div class="controls">
@@ -315,8 +343,10 @@
 
 <script>
   let currentTab = 'opendeck';
-  let openDeckData = [], teamData = [], academyData = [];
+  let labelData = [], djData = [], openDeckData = [], teamData = [], academyData = [];
   let sorts = {
+    label:       { col:'created_at', dir:-1 },
+    djs:         { col:'created_at', dir:-1 },
     opendeck:    { col:'created_at', dir:-1 },
     promoters:   { col:'created_at', dir:-1 },
     ambassadors: { col:'created_at', dir:-1 },
@@ -328,10 +358,24 @@
 
   // ── INIT ──
   async function init() {
-    await Promise.all([loadOpenDeck(), loadTeam(), loadAcademy()]);
+    await Promise.all([loadLabel(), loadDJs(), loadOpenDeck(), loadTeam(), loadAcademy()]);
     renderOpenDeck();
   }
 
+  async function loadLabel() {
+    try {
+      const r = await fetch('/api/admin/label-applications');
+      labelData = await r.json();
+      document.getElementById('cnt-label').textContent = labelData.length;
+    } catch(e){}
+  }
+  async function loadDJs() {
+    try {
+      const r = await fetch('/api/admin/argentina-applications');
+      djData = await r.json();
+      document.getElementById('cnt-djs').textContent = djData.length;
+    } catch(e){}
+  }
   async function loadOpenDeck() {
     try { const r = await fetch('/api/admin/open-deck-submissions'); openDeckData = await r.json(); document.getElementById('cnt-opendeck').textContent = openDeckData.length; } catch(e){}
   }
@@ -350,11 +394,13 @@
   function switchTab(tab) {
     currentTab = tab;
     closeDrawer();
-    ['opendeck','promoters','ambassadors','academy'].forEach(t => {
+    ['label','djs','opendeck','promoters','ambassadors','academy'].forEach(t => {
       document.getElementById(`card-${t}`).classList.toggle('active', t===tab);
       document.getElementById(`panel-${t}`).classList.toggle('active', t===tab);
     });
-    if (tab==='opendeck') renderOpenDeck();
+    if (tab==='label') renderLabel();
+    else if (tab==='djs') renderDJs();
+    else if (tab==='opendeck') renderOpenDeck();
     else if (tab==='promoters') renderTeam('promoters');
     else if (tab==='ambassadors') renderTeam('ambassadors');
     else renderAcademy();
@@ -371,9 +417,120 @@
   }
   function doSort(tab,col) {
     if(sorts[tab].col===col) sorts[tab].dir*=-1; else{sorts[tab].col=col;sorts[tab].dir=-1;}
-    if(tab==='opendeck') renderOpenDeck(); else if(tab==='promoters'||tab==='ambassadors') renderTeam(tab); else renderAcademy();
+    if(tab==='label') renderLabel(); else if(tab==='djs') renderDJs(); else if(tab==='opendeck') renderOpenDeck(); else if(tab==='promoters'||tab==='ambassadors') renderTeam(tab); else renderAcademy();
   }
   function q(tab){return(document.getElementById(`q-${tab}`)?.value||'').toLowerCase().trim();}
+
+  // ── LABEL APPLICATIONS ──
+  function renderLabel() {
+    const search=q('label');
+    let data=labelData.filter(r=>!search||[r.first_name,r.last_name,r.email,r.artist_name,r.instagram,r.soundcloud_url,r.track_url].some(f=>(f||'').toLowerCase().includes(search)));
+    data=sortData(data,'label');
+    document.getElementById('stats-label').textContent=`${data.length} entries`;
+    if(!data.length){document.getElementById('tbl-label').innerHTML=emptyHTML();return;}
+
+    const html=`<table>
+      <colgroup><col class="col-chk"><col class="col-id"><col class="col-name"><col class="col-name"><col class="col-std"><col class="col-std"><col class="col-std"><col class="col-date"><col class="col-act"></colgroup>
+      <thead><tr>
+        <th title="Contacted"><i class="fas fa-check"></i></th>
+        ${thSort('label','id','#')}
+        ${thSort('label','artist_name','Artist')}
+        ${thSort('label','last_name','Name')}
+        ${thSort('label','email','Email')}
+        ${thSort('label','instagram','Instagram')}
+        ${thSort('label','track_url','Track')}
+        ${thSort('label','created_at','Date')}
+        <th>Act</th>
+      </tr></thead>
+      <tbody>${data.map(r=>`
+        <tr onclick="openDrawerLabel('${r.id}')" id="row-label-${r.id}" class="${r.contacted?'contacted':''}">
+          <td class="chk-cell" onclick="event.stopPropagation()"><div class="chk ${r.contacted?'checked':''}" onclick="toggleContacted('label','${r.id}',this)"></div></td>
+          <td class="cell-id">${r.id}</td>
+          <td title="${esc(r.artist_name)}">${esc(r.artist_name)}</td>
+          <td title="${esc(`${r.first_name} ${r.last_name}`)}">${esc(`${r.first_name} ${r.last_name}`)}</td>
+          <td title="${esc(r.email)}">${emailLink(r.email)}</td>
+          <td title="${esc(r.instagram)}" onclick="event.stopPropagation()">${igLink(r.instagram)}</td>
+          <td onclick="event.stopPropagation()">${trackLink(r.track_url)}</td>
+          <td class="cell-date">${fmtDate(r.created_at)}</td>
+          <td onclick="event.stopPropagation()"><div class="actions">
+            <button class="btn-act del" onclick="askDel('${r.id}','label')"><i class="fas fa-trash"></i></button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody></table>`;
+    document.getElementById('tbl-label').innerHTML=html;
+  }
+
+  function openDrawerLabel(id) {
+    const r=labelData.find(x=>String(x.id)===String(id)); if(!r) return;
+    drawerRecord=r; drawerType='label';
+    document.getElementById('drawerName').textContent=r.artist_name;
+    document.getElementById('drawerTag').textContent=`Label Submission · ${fmtDate(r.created_at)}`;
+    document.getElementById('drawerEditBtn').style.display='none';
+    document.getElementById('drawerBody').innerHTML=`
+      ${df('Name', `${r.first_name} ${r.last_name}`)}
+      ${dfLink('Email', emailLink(r.email))}
+      ${dfLink('Instagram', igLink(r.instagram))}
+      ${dfLink('SoundCloud', trackLink(r.soundcloud_url, 'Open profile'))}
+      <hr class="drawer-divider">
+      ${dfLink('Submitted track', trackLink(r.track_url, 'Listen / Download'))}
+      ${df('Requirement', 'Track must be available for download')}`;
+    openDrawer();
+  }
+
+  // ── ARGENTINA APPLICATIONS ──
+  function renderDJs() {
+    const search=q('djs');
+    let data=djData.filter(r=>!search||[r.full_name,r.email,r.instagram,r.genres,r.set_url,r.interest].some(f=>(f||'').toLowerCase().includes(search)));
+    data=sortData(data,'djs');
+    document.getElementById('stats-djs').textContent=`${data.length} entries`;
+    if(!data.length){document.getElementById('tbl-djs').innerHTML=emptyHTML();return;}
+
+    const html=`<table>
+      <colgroup><col class="col-chk"><col class="col-id"><col class="col-name"><col class="col-std"><col class="col-std"><col class="col-std"><col class="col-std"><col class="col-date"><col class="col-act"></colgroup>
+      <thead><tr>
+        <th title="Contacted"><i class="fas fa-check"></i></th>
+        ${thSort('djs','id','#')}
+        ${thSort('djs','full_name','Name')}
+        ${thSort('djs','email','Email')}
+        ${thSort('djs','instagram','Instagram')}
+        ${thSort('djs','genres','Genres')}
+        ${thSort('djs','set_url','Set')}
+        ${thSort('djs','created_at','Date')}
+        <th>Act</th>
+      </tr></thead>
+      <tbody>${data.map(r=>`
+        <tr onclick="openDrawerDJ('${r.id}')" id="row-dj-${r.id}" class="${r.contacted?'contacted':''}">
+          <td class="chk-cell" onclick="event.stopPropagation()"><div class="chk ${r.contacted?'checked':''}" onclick="toggleContacted('djs','${r.id}',this)"></div></td>
+          <td class="cell-id">${r.id}</td>
+          <td title="${esc(r.full_name)}">${esc(r.full_name)}</td>
+          <td title="${esc(r.email)}">${emailLink(r.email)}</td>
+          <td title="${esc(r.instagram)}" onclick="event.stopPropagation()">${igLink(r.instagram)}</td>
+          <td title="${esc(r.genres)}">${esc(r.genres)}</td>
+          <td onclick="event.stopPropagation()">${setLink(r.set_url)}</td>
+          <td class="cell-date">${fmtDate(r.created_at)}</td>
+          <td onclick="event.stopPropagation()"><div class="actions">
+            <button class="btn-act del" onclick="askDel('${r.id}','djs')"><i class="fas fa-trash"></i></button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody></table>`;
+    document.getElementById('tbl-djs').innerHTML=html;
+  }
+
+  function openDrawerDJ(id) {
+    const r=djData.find(x=>String(x.id)===String(id)); if(!r) return;
+    drawerRecord=r; drawerType='djs';
+    document.getElementById('drawerName').textContent=r.full_name;
+    document.getElementById('drawerTag').textContent=`Argentina Application · ${fmtDate(r.created_at)}`;
+    document.getElementById('drawerEditBtn').style.display='none';
+    document.getElementById('drawerBody').innerHTML=`
+      ${dfLink('Email', emailLink(r.email))}
+      ${dfLink('Instagram', igLink(r.instagram))}
+      ${df('Genres', r.genres)}
+      ${dfLink('Set', setLink(r.set_url))}
+      <hr class="drawer-divider">
+      ${df('Why they want to play with us', r.interest)}`;
+    openDrawer();
+  }
 
   // ── OPEN DECK ──
   function renderOpenDeck() {
@@ -424,6 +581,7 @@
   function openDrawerOD(id) {
     const r=openDeckData.find(x=>String(x.id)===String(id)); if(!r) return;
     drawerRecord=r; drawerType='opendeck';
+    document.getElementById('drawerEditBtn').style.display='';
     document.getElementById('drawerName').textContent=r.full_name;
     document.getElementById('drawerTag').textContent=`Open Deck · ${fmtDate(r.created_at)}`;
     document.getElementById('drawerBody').innerHTML=`
@@ -493,6 +651,7 @@
   function openDrawerTeam(id) {
     const r=teamData.find(x=>String(x.id)===String(id)); if(!r) return;
     drawerRecord=r; drawerType='team';
+    document.getElementById('drawerEditBtn').style.display='';
     document.getElementById('drawerName').textContent=r.full_name;
     document.getElementById('drawerTag').textContent=`${r.role==='promoter'?'Promoter':'Ambassador'} · ${fmtDate(r.created_at)}`;
     let body=`
@@ -552,6 +711,7 @@
   function openDrawerAcademy(idx) {
     const r=academyData.find(x=>String(x._idx)===String(idx)); if(!r) return;
     drawerRecord=r; drawerType='academy';
+    document.getElementById('drawerEditBtn').style.display='none';
     document.getElementById('drawerName').textContent=r.name;
     document.getElementById('drawerTag').textContent=`Academy · ${fmtDate(r.createdAt)}`;
     document.getElementById('drawerBody').innerHTML=`
@@ -648,11 +808,13 @@
   async function confirmDel() {
     if(!delTarget) return;
     const {id,type}=delTarget;
-    const url=type==='opendeck'?`/api/admin/open-deck-submissions/${id}`:type==='team'?`/api/admin/team-applications/${id}`:`/api/admin/academy-registrations/${id}`;
+    const url=type==='label'?`/api/admin/label-applications/${id}`:type==='djs'?`/api/admin/argentina-applications/${id}`:type==='opendeck'?`/api/admin/open-deck-submissions/${id}`:type==='team'?`/api/admin/team-applications/${id}`:`/api/admin/academy-registrations/${id}`;
     try {
       const r=await fetch(url,{method:'DELETE'}); const d=await r.json();
       if(d.success){
-        if(type==='opendeck'){openDeckData=openDeckData.filter(x=>String(x.id)!==String(id)); document.getElementById('cnt-opendeck').textContent=openDeckData.length; renderOpenDeck();}
+        if(type==='label'){labelData=labelData.filter(x=>String(x.id)!==String(id)); document.getElementById('cnt-label').textContent=labelData.length; renderLabel();}
+        else if(type==='djs'){djData=djData.filter(x=>String(x.id)!==String(id)); document.getElementById('cnt-djs').textContent=djData.length; renderDJs();}
+        else if(type==='opendeck'){openDeckData=openDeckData.filter(x=>String(x.id)!==String(id)); document.getElementById('cnt-opendeck').textContent=openDeckData.length; renderOpenDeck();}
         else if(type==='team'){
           teamData=teamData.filter(x=>String(x.id)!==String(id));
           document.getElementById('cnt-promoters').textContent=teamData.filter(x=>x.role==='promoter').length;
@@ -672,7 +834,9 @@
   // ── EXPORT ──
   function exportCSV(){
     let data,filename;
-    if(currentTab==='opendeck'){data=openDeckData;filename='open-deck';}
+    if(currentTab==='label'){data=labelData;filename='label-applications';}
+    else if(currentTab==='djs'){data=djData;filename='argentina-applications';}
+    else if(currentTab==='opendeck'){data=openDeckData;filename='open-deck';}
     else if(currentTab==='promoters'){data=teamData.filter(x=>x.role==='promoter');filename='promoters';}
     else if(currentTab==='ambassadors'){data=teamData.filter(x=>x.role==='ambassador');filename='ambassadors';}
     else{data=academyData;filename='academy';}
@@ -694,7 +858,9 @@
     el.classList.toggle('checked', newVal);
     const tr = el.closest('tr'); if (tr) tr.classList.toggle('contacted', newVal);
     let url;
-    if (type==='opendeck') url = `/api/admin/open-deck-submissions/${id}/contacted`;
+    if (type==='label') url = `/api/admin/label-applications/${id}/contacted`;
+    else if (type==='djs') url = `/api/admin/argentina-applications/${id}/contacted`;
+    else if (type==='opendeck') url = `/api/admin/open-deck-submissions/${id}/contacted`;
     else if (type==='team') url = `/api/admin/team-applications/${id}/contacted`;
     else url = `/api/admin/academy-registrations/${id}/contacted`;
     try {
@@ -702,7 +868,9 @@
       const d = await r.json();
       if (!d.success) throw new Error();
       // update local cache
-      if (type==='opendeck') { const i=openDeckData.findIndex(x=>String(x.id)===String(id)); if(i>-1) openDeckData[i].contacted=newVal; }
+      if (type==='label') { const i=labelData.findIndex(x=>String(x.id)===String(id)); if(i>-1) labelData[i].contacted=newVal; }
+      else if (type==='djs') { const i=djData.findIndex(x=>String(x.id)===String(id)); if(i>-1) djData[i].contacted=newVal; }
+      else if (type==='opendeck') { const i=openDeckData.findIndex(x=>String(x.id)===String(id)); if(i>-1) openDeckData[i].contacted=newVal; }
       else if (type==='team') { const i=teamData.findIndex(x=>String(x.id)===String(id)); if(i>-1) teamData[i].contacted=newVal; }
       else { const i=academyData.findIndex(x=>String(x._idx)===String(id)); if(i>-1) academyData[i].contacted=newVal; }
     } catch(e){
@@ -735,6 +903,14 @@
     }
     return `<a class="clink" href="${esc(url)}" target="_blank" rel="noopener"><i class="fab fa-soundcloud"></i>${esc(sc)}</a>`;
   }
+  function setLink(url){
+    if(!url) return '<span style="color:var(--muted)">—</span>';
+    return `<a class="clink" href="${esc(url)}" target="_blank" rel="noopener"><i class="fas fa-play"></i>Listen</a>`;
+  }
+  function trackLink(url,label='Listen'){
+    if(!url) return '<span style="color:var(--muted)">—</span>';
+    return `<a class="clink" href="${esc(url)}" target="_blank" rel="noopener"><i class="fab fa-soundcloud"></i>${esc(label)}</a>`;
+  }
   function dfLink(label,htmlVal){return`<div class="drawer-field"><div class="df-label">${label}</div><div class="df-value">${htmlVal}</div></div>`;}
   function inp(field,val){return `<input class="edit-field" data-field="${field}" value="${esc(val)}">`;}
   function sel(field,current,options){return `<select class="edit-select" data-field="${field}">${options.map(([v,l])=>`<option value="${v}" ${current===v?'selected':''}>${l}</option>`).join('')}</select>`;}
@@ -749,7 +925,27 @@
 
   document.getElementById('delModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeDelModal();});
 
-  init();
+  async function authorizeAndInit() {
+    try {
+      const response = await fetch('/api/profile', { credentials: 'include' });
+      if (!response.ok) {
+        window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+      }
+
+      const user = await response.json();
+      if (!user.applicationsAccess && user.role !== 'admin' && !user.isAdmin) {
+        window.location.href = '/profile.html';
+        return;
+      }
+
+      await init();
+    } catch (error) {
+      window.location.href = '/profile.html';
+    }
+  }
+
+  authorizeAndInit();
 </script>
 </body>
 </html>

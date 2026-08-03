@@ -40,7 +40,9 @@ router.post("/", (req, res) => {
       email: user.email,
       name: user.name || user.email,
       fullName: user.fullName || user.name || user.email,
-      username: user.email
+      username: user.email,
+      role: user.role || 'user',
+      isAdmin: user.isAdmin === true || user.role === 'admin'
     };
 
     // Save session explicitly and wait for completion

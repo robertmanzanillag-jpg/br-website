@@ -1314,8 +1314,11 @@
           document.getElementById("admin-btn").style.display = "inline-flex";
           document.getElementById("links-btn").style.display = "inline-flex";
           document.getElementById("batch-btn").style.display = "inline-flex";
-          document.getElementById("apps-btn").style.display = "inline-flex";
           document.getElementById("sales-btn").style.display = "inline-flex";
+        }
+
+        if (user.applicationsAccess || user.role === 'admin' || user.isAdmin) {
+          document.getElementById("apps-btn").style.display = "inline-flex";
         }
 
         loadLikes(user);
