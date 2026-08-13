@@ -279,6 +279,8 @@
 
     .radio-title { color: #ff0000; font-size: 0.62rem; letter-spacing: 0.08em; line-height: 1.2; text-transform: uppercase; }
 
+    .day-radio-title { color: #ff0000; font-family: 'Space Mono', monospace; font-size: 0.68rem; letter-spacing: 0.08em; margin-bottom: 0.45rem; text-transform: uppercase; }
+
     .radio-event .event-time {
       color: rgba(255, 0, 0, 0.6);
     }
@@ -525,8 +527,11 @@
       let html = '';
       
       daysWithEvents.forEach(day => {
+        const radioTitles = [...new Set(day.events.filter(event => event.type === 'radio' && event.radioTitle).map(event => event.radioTitle))];
+        const radioTitleHtml = radioTitles.length ? '<div class="day-radio-title">' + radioTitles.join(' · ') + '</div>' : '';
         html += `
           <div class="day-column">
+            ${radioTitleHtml}
             <div class="day-column-header">
               <div class="day-name">${day.dayName}</div>
               <div class="day-month-date">${day.monthName}</div>
@@ -542,10 +547,7 @@
                     <div class="event-row radio-event">
                       ${event.time ? `<span class="event-time">${event.time}</span>` : ''}
                       <span class="event-play"><i class="fas fa-broadcast-tower"></i></span>
-                      <span class="radio-event-copy">
-                        <span class="radio-title">${event.radioTitle || 'Radio Miami'}</span>
-                        <span class="event-artist">${event.name}</span>
-                      </span>
+                      <span class="event-artist">${event.name}</span>
                     </div>
                   `;
                 }
