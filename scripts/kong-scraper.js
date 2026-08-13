@@ -6,9 +6,9 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const KONG_USER_ID = '414d4b95-6e98-4e2b-8a88-1d660f8f1e1b';
-const KONG_PROFILE_URL = `https://kongnightlife.com/user/${KONG_USER_ID}`;
-const KONG_ORGANIZED_EVENTS_URL = `https://kongnightlife.com/api/users/${KONG_USER_ID}/organized-events?includePast=true`;
+const KONG_ORGANIZER_ID = '414d4b95-6e98-4e2b-8a88-1d660f8f1e1b';
+const KONG_PROFILE_URL = `https://kongnightlife.com/user/${KONG_ORGANIZER_ID}`;
+const KONG_ORGANIZED_EVENTS_URL = `https://kongnightlife.com/api/users/${KONG_ORGANIZER_ID}/organized-events?includePast=true`;
 const KONG_EVENTS_URL = 'https://kongnightlife.com/events';
 const CACHE_FILE = path.join(__dirname, '../db/kong-events-cache.json');
 const DETAIL_LIMIT = Number.parseInt(process.env.KONG_DETAIL_LIMIT || '40', 10);
@@ -55,7 +55,7 @@ const KNOWN_VENUES = [
 
 function cleanText(value = '') {
   return value
-    .replace(/[^\x20-\x7EÀ-ÿ·]+/g, ' ')
+    .replace(/[^\x20-\x7EÃ€-Ã¿Â·]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -71,7 +71,7 @@ function slugify(value = '') {
 }
 
 function parseKongDate(dateText) {
-  const match = dateText.match(/\b([A-Z][a-z]{2})\s+(\d{1,2})\s+·\s+(\d{1,2}):(\d{2})\s*([AP]M)\b/);
+  const match = dateText.match(/\b([A-Z][a-z]{2})\s+(\d{1,2})\s+Â·\s+(\d{1,2}):(\d{2})\s*([AP]M)\b/);
   if (!match) return { parsedDate: '', time: '' };
 
   const [, monthName, dayRaw, hourRaw, minute, period] = match;
@@ -144,7 +144,7 @@ function formatDateText(date, timeZone = 'America/New_York') {
     month: 'short',
     day: 'numeric'
   }).format(date);
-  return `${datePart} · ${formatTimeInTimezone(date, timeZone)}`;
+  return `${datePart} Â· ${formatTimeInTimezone(date, timeZone)}`;
 }
 
 function formatPrice(value) {
@@ -182,7 +182,7 @@ function mapKongApiEvent(event = {}) {
     latitude: event.latitude || '',
     longitude: event.longitude || '',
     organizer: 'Black Room',
-    organizerId: event.organizerId || KONG_USER_ID,
+    organizerId: event.organizerId,
     slug: slugify(`${title}-${parsedDate || event.id}`),
     kongUrl: eventUrl,
     detailUrl: eventUrl,
@@ -200,6 +200,12 @@ function mapKongApiEvent(event = {}) {
   };
 }
 
+function filterExactOrganizerEvents(events = []) {
+  return events
+    .filter(event => event && event.organizerId === KONG_ORGANIZER_ID)
+    .map(mapKongApiEvent);
+}
+
 async function fetchKongProfileApiEvents() {
   const response = await fetch(KONG_ORGANIZED_EVENTS_URL, {
     headers: {
@@ -214,7 +220,7 @@ async function fetchKongProfileApiEvents() {
 
   const payload = await response.json();
   const rawEvents = Array.isArray(payload) ? payload : (payload.events || payload.data || []);
-  const events = filterUpcomingEvents(rawEvents.map(mapKongApiEvent));
+  const events = filterUpcomingEvents(filterExactOrganizerEvents(rawEvents));
 
   if (!ALLOW_EMPTY_CACHE && events.length === 0) {
     throw new Error('Kong organizer API returned 0 upcoming events; keeping previous cache');
@@ -265,7 +271,7 @@ function parseEventsFromText(pageText, imageUrls = []) {
     .replace(/\b\d+\s+events?\b/gi, ' ')
     .replace(/\bView All\b/gi, ' ');
 
-  const datePattern = /\b[A-Z][a-z]{2}\s+\d{1,2}\s+·\s+\d{1,2}:\d{2}\s*[AP]M\b/g;
+  const datePattern = /\b[A-Z][a-z]{2}\s+\d{1,2}\s+Â·\s+\d{1,2}:\d{2}\s*[AP]M\b/g;
   const scrapedAt = new Date().toISOString();
   const events = [];
   let cursor = 0;
@@ -363,7 +369,7 @@ async function loadPuppeteer() {
     const module = await import('puppeteer');
     return module.default || module;
   } catch (error) {
-    console.warn(`⚠️ Could not load puppeteer (${error.message}); trying puppeteer-core`);
+    console.warn(`âš ï¸ Could not load puppeteer (${error.message}); trying puppeteer-core`);
     const module = await import('puppeteer-core');
     return module.default || module;
   }
@@ -500,7 +506,7 @@ async function fetchStaticEventData(eventUrl) {
       purchaseUrl: eventUrl
     };
   } catch (error) {
-    console.log(`⚠️ Could not fetch static event data for ${eventUrl}: ${error.message}`);
+    console.log(`âš ï¸ Could not fetch static event data for ${eventUrl}: ${error.message}`);
     return {};
   }
 }
@@ -649,7 +655,7 @@ async function enrichEventsWithDetails(page, events) {
         purchaseUrl: eventUrl
       });
     } catch (error) {
-      console.log(`⚠️ Could not enrich ${event.title}: ${error.message}`);
+      console.log(`âš ï¸ Could not enrich ${event.title}: ${error.message}`);
       enriched.push(event);
     }
   }
@@ -662,7 +668,7 @@ async function enrichEventsWithDetails(page, events) {
 }
 
 async function scrapeKongEvents() {
-  console.log('🚀 Starting Kong Nightlife scraper...');
+  console.log('ðŸš€ Starting Kong Nightlife scraper...');
 
   try {
     const events = await fetchKongProfileApiEvents();
@@ -677,10 +683,10 @@ async function scrapeKongEvents() {
     };
 
     await fs.writeFile(CACHE_FILE, JSON.stringify(cacheData, null, 2));
-    console.log(`✅ Kong API sync done — ${events.length} events saved to cache`);
+    console.log(`âœ… Kong API sync done â€” ${events.length} events saved to cache`);
     return events;
   } catch (apiError) {
-    console.warn(`⚠️ Kong organizer API failed (${apiError.message}); trying browser fallback`);
+    console.warn(`âš ï¸ Kong organizer API failed (${apiError.message}); trying browser fallback`);
   }
 
   let browser;
@@ -716,10 +722,10 @@ async function scrapeKongEvents() {
     };
 
     await fs.writeFile(CACHE_FILE, JSON.stringify(cacheData, null, 2));
-    console.log(`✅ Kong sync done — ${events.length} events saved to cache`);
+    console.log(`âœ… Kong sync done â€” ${events.length} events saved to cache`);
     return events;
   } catch (error) {
-    console.error('❌ Kong scraping error:', error.message);
+    console.error('âŒ Kong scraping error:', error.message);
     throw error;
   } finally {
     if (browser) await browser.close();
@@ -744,12 +750,12 @@ async function getUpcomingKongEvents() {
     const hoursSinceUpdate = (now - lastUpdated) / (1000 * 60 * 60);
 
     if (hoursSinceUpdate < CACHE_MAX_AGE_HOURS) {
-      console.log(`📦 Using cached Kong events (${hoursSinceUpdate.toFixed(1)}h old)`);
+      console.log(`ðŸ“¦ Using cached Kong events (${hoursSinceUpdate.toFixed(1)}h old)`);
       return filterUpcomingEvents(cached.events || []);
     }
   }
 
-  console.log('🔄 Kong cache expired or missing, fetching fresh data...');
+  console.log('ðŸ”„ Kong cache expired or missing, fetching fresh data...');
   return scrapeKongEvents();
 }
 
@@ -758,7 +764,7 @@ export { scrapeKongEvents, getUpcomingKongEvents, loadCachedKongEvents, parseEve
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   scrapeKongEvents()
     .then(events => {
-      console.log('\n📊 Kong scraping complete!');
+      console.log('\nðŸ“Š Kong scraping complete!');
       console.log(`Total events: ${events.length}`);
       events.forEach(event => {
         console.log(`  - ${event.title} | ${event.parsedDate || event.dateText} | ${event.location}`);
@@ -769,3 +775,4 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       process.exit(1);
     });
 }
+
