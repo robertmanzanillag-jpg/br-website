@@ -452,13 +452,9 @@
     }
 
     function navigateMonth(direction) {
-      let attempts = 0;
-      do {
-        currentMonth += direction;
-        if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-        if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-        attempts++;
-      } while (getEventsForMonth(currentMonth, currentYear).length === 0 && attempts < 24);
+      currentMonth += direction;
+      if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+      if (currentMonth < 0) { currentMonth = 11; currentYear--; }
       updateCalendar();
     }
 
