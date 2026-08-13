@@ -657,7 +657,7 @@ app.get('/api/radio-schedule', async (req, res) => {
 
 function getRadioTitle(summary = '') {
   const clean=String(summary).replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
-  const withoutPrefix=clean.replace(/^radio\b\s*[:\-–—]?\s*/i,'').trim();
+  const withoutPrefix=clean.replace(/^radio\b\s*[:\-–—]?\s*/i,'').replace(/^black\s+room\s+radio\b\s*[:\-–—]?\s*/i,'').trim();
   if(!withoutPrefix) return 'Radio Miami';
   const region=withoutPrefix.split(/[|:–—-]/)[0].replace(/\bday\s+\d+\b/gi,'').trim();
   if(!region) return 'Radio Miami';
