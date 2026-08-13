@@ -574,7 +574,7 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-// Radio Schedule API endpoint - merges local JSON + Google Calendar for Thursdays
+// Radio Schedule API endpoint - merges local JSON + Google Calendar scheduled days
 app.get('/api/radio-schedule', async (req, res) => {
   try {
     const schedulePath = path.join(__dirname, 'db/radio-schedule.json');
@@ -654,27 +654,30 @@ app.get('/api/radio-schedule', async (req, res) => {
 function parseGoogleCalendarDJs(description) {
   if (!description) return [];
   const djs = [];
-  const lines = description.split('\n');
+  const lines = String(description).split(/\r?\n/);
 
   for (const line of lines) {
-    const match = line.match(/^(\d{1,2})\s*:\s*(.+)/);
-    if (match) {
-      const hour = parseInt(match[1]);
-      let djName = match[2].trim();
+    const cleanLine = line.replace(/<[^>]*>/g, "").trim();
+    const match = cleanLine.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?\s*[:\-]\s*(.+)$/i);
+    if (!match) continue;
 
-      djName = djName.replace(/https?:\/\/\S+/g, '').trim();
-      djName = djName.replace(/[?!]+$/, '').trim();
+    const hour = Number.parseInt(match[1], 10);
+    const minutes = match[2] || "00";
+    const ampm = match[3] ? match[3].toUpperCase() : (hour >= 7 ? "PM" : "AM");
+    const djName = match[4]
+      .replace(/https?:\/\/\S+/g, "")
+      .replace(/<[^>]*>/g, "")
+      .replace(/[?!]+$/, "")
+      .trim();
 
-      if (djName && djName.length > 0) {
-        const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
-        const ampm = hour >= 12 ? 'PM' : (hour < 7 ? 'AM' : 'PM');
-        djs.push({
-          name: djName.toUpperCase(),
-          time: `${displayHour}:00 ${ampm}`,
-          genre: 'Techno'
-        });
-      }
-    }
+    if (!djName) continue;
+
+    const displayHour = hour === 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+    djs.push({
+      name: djName.toUpperCase(),
+      time: displayHour + ":" + minutes + " " + ampm,
+      genre: "Techno"
+    });
   }
 
   return djs;

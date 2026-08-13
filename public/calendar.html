@@ -630,10 +630,7 @@
         const radioEvents = [];
         for (const entry of schedule) {
           const entryDate = new Date(entry.date + 'T00:00:00');
-          const isThursday = entryDate.getDay() === 4;
-          
-          if (!isThursday) continue;
-          if (entryDate < currentMonthStart) continue;
+if (entryDate < currentMonthStart) continue;
           
           for (const dj of entry.djs) {
             radioEvents.push({
