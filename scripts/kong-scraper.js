@@ -55,7 +55,7 @@ const KNOWN_VENUES = [
 
 function cleanText(value = '') {
   return value
-    .replace(/[^\x20-\x7EÃ€-Ã¿Â·]+/g, ' ')
+    .replace(/[^\x20-\x7E\u00C0-\u00FF\u00B7]+/g, String.fromCharCode(32))
     .replace(/\s+/g, ' ')
     .trim();
 }
