@@ -275,6 +275,10 @@
       color: rgba(255, 255, 255, 0.85);
     }
 
+    .radio-event-copy { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+
+    .radio-title { color: #ff0000; font-size: 0.62rem; letter-spacing: 0.08em; line-height: 1.2; text-transform: uppercase; }
+
     .radio-event .event-time {
       color: rgba(255, 0, 0, 0.6);
     }
@@ -538,7 +542,10 @@
                     <div class="event-row radio-event">
                       ${event.time ? `<span class="event-time">${event.time}</span>` : ''}
                       <span class="event-play"><i class="fas fa-broadcast-tower"></i></span>
-                      <span class="event-artist">${event.name}</span>
+                      <span class="radio-event-copy">
+                        <span class="radio-title">${event.radioTitle || 'Radio Miami'}</span>
+                        <span class="event-artist">${event.name}</span>
+                      </span>
                     </div>
                   `;
                 }
@@ -638,7 +645,8 @@ if (entryDate < currentMonthStart) continue;
               date: entryDate.toISOString(),
               time: dj.time || '8:00 PM',
               name: dj.name,
-              title: `${dj.name} - Black Room Radio`,
+              title: `${dj.name} - ${entry.radioTitle || 'Radio Miami'}`,
+              radioTitle: entry.radioTitle || 'Radio Miami',
               type: 'radio',
               genre: dj.genre || ''
             });

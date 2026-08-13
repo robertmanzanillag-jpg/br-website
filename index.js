@@ -582,6 +582,7 @@ app.get('/api/radio-schedule', async (req, res) => {
     if (fs.existsSync(schedulePath)) {
       localData = JSON.parse(fs.readFileSync(schedulePath, 'utf8'));
     }
+    localData.schedule = (localData.schedule || []).map(entry => ({ ...entry, radioTitle: entry.radioTitle || 'Radio Miami' }));
 
     if (process.env.GOOGLE_API_KEY) {
       try {
@@ -618,17 +619,20 @@ app.get('/api/radio-schedule', async (req, res) => {
             if (!eventDate) continue;
 
             const description = gcEvent.description || '';
+            const radioTitle = getRadioTitle(gcEvent.summary);
             const djs = parseGoogleCalendarDJs(description);
 
             const existingIdx = localData.schedule.findIndex(s => s.date === eventDate);
             if (djs.length > 0) {
               if (existingIdx >= 0) {
                 localData.schedule[existingIdx].djs = djs;
+                localData.schedule[existingIdx].radioTitle = radioTitle;
                 localData.schedule[existingIdx].source = 'google-calendar';
               } else {
                 localData.schedule.push({
                   date: eventDate,
                   djs: djs,
+                  radioTitle,
                   source: 'google-calendar'
                 });
               }
@@ -650,6 +654,16 @@ app.get('/api/radio-schedule', async (req, res) => {
     res.status(500).json({ error: 'Error loading radio schedule' });
   }
 });
+
+function getRadioTitle(summary = '') {
+  const clean=String(summary).replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
+  const withoutPrefix=clean.replace(/^radio\b\s*[:\-–—]?\s*/i,'').trim();
+  if(!withoutPrefix) return 'Radio Miami';
+  const region=withoutPrefix.split(/[|:–—-]/)[0].replace(/\bday\s+\d+\b/gi,'').trim();
+  if(!region) return 'Radio Miami';
+  const label=region.toLowerCase().replace(/\b[\p{L}]/gu,letter=>letter.toUpperCase());
+  return 'Radio '+label;
+}
 
 function parseGoogleCalendarDJs(description) {
   if (!description) return [];
