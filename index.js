@@ -819,48 +819,82 @@ function generateMockEvents(year, month) {
 
 
 // YouTube API endpoints
+function parseYouTubeDurationSeconds(duration = '') {
+  const match = String(duration).match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);
+  if (!match) return null;
+
+  const [, hours = '0', minutes = '0', seconds = '0'] = match;
+  return Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds);
+}
+
+function isYouTubeShort(item = {}) {
+  const title = item.snippet?.title || '';
+  const description = item.snippet?.description || '';
+  const text = `${title} ${description}`;
+  const durationSeconds = Number.isFinite(item.durationSeconds)
+    ? item.durationSeconds
+    : parseYouTubeDurationSeconds(item.contentDetails?.duration);
+
+  return /(?:^|[\s#])shorts\b/i.test(text) ||
+    /\/shorts\//i.test(item.url || '') ||
+    (durationSeconds !== null && durationSeconds < 60);
+}
+
+async function filterYouTubeShorts(items, fetch, apiKey) {
+  const videoIds = items.map(item => item.id?.videoId || item.id).filter(Boolean);
+  if (videoIds.length === 0) return [];
+
+  let detailedItems = [];
+  try {
+    const detailsResponse = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoIds.join(',')}&key=${apiKey}`
+    );
+    if (detailsResponse.ok) {
+      const detailsData = await detailsResponse.json();
+      detailedItems = detailsData.items || [];
+    }
+  } catch (error) {
+    console.warn('YouTube duration lookup failed; applying title/description filter:', error.message);
+  }
+
+  const detailsById = new Map(detailedItems.map(item => [item.id, item]));
+  return items
+    .map(item => {
+      const id = item.id?.videoId || item.id;
+      const details = detailsById.get(id);
+      const duration = parseYouTubeDurationSeconds(details?.contentDetails?.duration);
+      return {
+        ...item,
+        contentDetails: details?.contentDetails,
+        durationSeconds: duration,
+        isShort: isYouTubeShort({ ...item, contentDetails: details?.contentDetails, durationSeconds: duration })
+      };
+    })
+    .filter(item => !item.isShort);
+}
+
 app.get('/api/youtube/search', async (req, res) => {
-  const { q, maxResults = 50, channelId } = req.query;
+  const { q, maxResults = 50, channelId, excludeShorts } = req.query;
   const API_KEY = process.env.YOUTUBE_API_KEY || "AIzaSyBQeCjv948kI1CJDd9fzK6WYyLCbyMwHG8";
 
   try {
-    // Si se especifica channelId, buscar solo en ese canal (Black Room)
-    if (channelId) {
-      console.log(`🎵 Searching Black Room channel for: ${q}`);
+    const { default: fetch } = await import('node-fetch');
+    const searchUrl = channelId
+      ? `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q)}&channelId=${channelId}&maxResults=${maxResults}&type=video&key=${API_KEY}`
+      : `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q)}&maxResults=${maxResults}&key=${API_KEY}`;
+    const response = await fetch(searchUrl);
 
-      const { default: fetch } = await import('node-fetch');
-      const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q)}&channelId=${channelId}&maxResults=${maxResults}&type=video&key=${API_KEY}`
-      );
-
-      if (!response.ok) {
-        console.error(`YouTube API error: ${response.status} ${response.statusText}`);
-        throw new Error(`YouTube API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log(`✅ Found ${data.items.length} Black Room videos for query: ${q}`);
-      res.json(data.items);
-
-    } else {
-      // Búsqueda general en YouTube (solo para compatibilidad, no debería usarse)
-      console.log(`🔎 Searching YouTube general for: ${q} (WARNING: Should use channelId)`);
-
-      const { default: fetch } = await import('node-fetch');
-      const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q)}&maxResults=${maxResults}&key=${API_KEY}`
-      );
-
-      if (!response.ok) {
-        console.error(`YouTube API error: ${response.status} ${response.statusText}`);
-        throw new Error(`YouTube API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log(`✅ Found ${data.items.length} general videos on YouTube for query: ${q}`);
-      res.json(data.items);
+    if (!response.ok) {
+      console.error(`YouTube API error: ${response.status} ${response.statusText}`);
+      throw new Error(`YouTube API error: ${response.status}`);
     }
 
+    const data = await response.json();
+    const items = excludeShorts === '1'
+      ? await filterYouTubeShorts(data.items || [], fetch, API_KEY)
+      : data.items || [];
+    console.log(`✅ Found ${items.length} YouTube videos for query: ${q}`);
+    res.json(items);
   } catch (error) {
     console.error('Error searching YouTube:', error);
     res.status(500).json({ error: 'Failed to search YouTube' });
@@ -3084,6 +3118,7 @@ async function loadKongScraper() {
 
 // Main Kong events endpoint. /api/posh-events remains as a backward-compatible alias.
 const KONG_USER_ID = '414d4b95-6e98-4e2b-8a88-1d660f8f1e1b';
+const KONG_ORGANIZER_ID = KONG_USER_ID;
 const KONG_PROFILE_URL = `https://kongnightlife.com/user/${KONG_USER_ID}`;
 const KONG_CACHE_MAX_AGE_HOURS = Number.parseFloat(process.env.KONG_CACHE_MAX_AGE_HOURS || '1');
 let kongRefreshPromise = null;
@@ -3180,7 +3215,13 @@ const KNOWN_BLACK_ROOM_KONG_EVENTS = [
 ];
 
 function isBlackRoomEvent(event = {}) {
-  if (event.source === 'kong-profile' || event.organizerId === KONG_USER_ID) return true;
+  // Kong-sourced events must carry the exact Black Room organizer id.
+  if (event.source === 'kong-profile' || event.source === 'kong-cache' || event.organizerId) {
+    return event.organizerId === KONG_ORGANIZER_ID;
+  }
+
+  // These are manually curated Black Room entries, not arbitrary Kong data.
+  if (event.source === 'kong-known') return true;
 
   const haystack = [
     event.title,
@@ -3360,6 +3401,8 @@ async function handleKongEventsRequest(req, res) {
       console.log(`📦 Kong events cache: ${cacheData.eventCount} events, ${hoursSinceUpdate.toFixed(1)}h old`);
       
       for (const event of (cacheData.events || [])) {
+        if (event.organizerId !== KONG_ORGANIZER_ID) continue;
+
         const eventTitle = event.title || (event.fullTitle || '').split('|')[0].trim();
         const eventDate = event.parsedDate || event.date;
         const exists = allEvents.some(e =>
@@ -3392,6 +3435,7 @@ async function handleKongEventsRequest(req, res) {
         try {
           const events = await scraper.getUpcomingKongEvents();
           allEvents.push(...events
+            .filter(event => event.organizerId === KONG_ORGANIZER_ID)
             .map(event => normalizeKongEvent({
               ...event,
               date: event.parsedDate || event.date,
