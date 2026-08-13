@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <title>Events – Black Room</title>
+    <title>Events â€“ Black Room</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -556,19 +556,19 @@
     <div id="cart-modal">
       <div class="modal-header">
         <h3>SHOPPING CART</h3>
-        <span class="close-btn" onclick="toggleCart(event)">×</span>
+        <span class="close-btn" onclick="toggleCart(event)">Ã—</span>
       </div>
       <div class="modal-body"></div>
       <div class="modal-footer">
         <div>Subtotal: $<span id="modal-subtotal">0.00</span></div>
-        <button id="checkout-btn">Check Out →</button>
+        <button id="checkout-btn">Check Out â†’</button>
       </div>
     </div>
 
     <!-- Search Modal -->
     <div id="search-modal">
       <div class="modal-content">
-        <span class="close-btn" onclick="toggleSearch(event)">×</span>
+        <span class="close-btn" onclick="toggleSearch(event)">Ã—</span>
         <h2>Search</h2>
         <input
           type="text"
@@ -735,7 +735,7 @@
         const resultsDiv = document.getElementById("search-results");
 
         if (!query) {
-          resultsDiv.innerHTML = '<p style="color: var(--text-accent); text-align: center;">Ingresa un término de búsqueda</p>';
+          resultsDiv.innerHTML = '<p style="color: var(--text-accent); text-align: center;">Ingresa un tÃ©rmino de bÃºsqueda</p>';
           return;
         }
 
@@ -759,16 +759,17 @@
 
           // Search in videos if API available
           try {
-            const videoResponse = await fetch(`${window.location.origin}/api/youtube/search?q=${encodeURIComponent(query)}&maxResults=5`);
+            const videoResponse = await fetch(`${window.location.origin}/api/youtube/search?q=${encodeURIComponent(query)}&maxResults=5&excludeShorts=1`);
             if (videoResponse.ok) {
               const videoData = await videoResponse.json();
-              const videos = videoData.items || [];
-              videos.forEach((video) => {
+              const videos = Array.isArray(videoData) ? videoData : (videoData.items || []);
+              videos.filter(video => video.isShort !== true).forEach((video) => {
+                const videoId = video.id?.videoId || video.videoId || video.id;
                 results.push({
                   type: "video",
                   title: video.snippet.title,
-                  url: `watch.html?id=${video.id.videoId}`,
-                  thumbnail: video.snippet.thumbnails.medium.url,
+                  url: `watch.html?id=${videoId}`,
+                  thumbnail: video.snippet.thumbnails?.medium?.url || video.snippet.thumbnails?.default?.url,
                   description: video.snippet.description,
                 });
               });
@@ -795,7 +796,7 @@
           }
         } catch (error) {
           console.error("Search error:", error);
-          resultsDiv.innerHTML = '<p style="color: var(--error-color); text-align: center;">Error en la búsqueda</p>';
+          resultsDiv.innerHTML = '<p style="color: var(--error-color); text-align: center;">Error en la bÃºsqueda</p>';
         }
       }
 
@@ -848,7 +849,7 @@
     <script src="/js/global-header.js"></script>
     <!-- Shared Cart System -->
     <script src="/js/cart.js"></script>
-    <!-- 📊 Sistema de Tracking Automático -->
+    <!-- ðŸ“Š Sistema de Tracking AutomÃ¡tico -->
     <script src="/js/user-tracking.js"></script>
     <script src="/js/page-transitions.js"></script>
     
@@ -859,9 +860,10 @@
         const container = document.getElementById('global-liquid-bg');
         if (container && typeof LiquidDistortion !== 'undefined') {
           new LiquidDistortion(container, ['/images/black-room-tour-map.png']);
-          console.log('🗺️ Tour map liquid distortion initialized');
+          console.log('ðŸ—ºï¸ Tour map liquid distortion initialized');
         }
       });
     </script>
   </body>
 </html>
+
