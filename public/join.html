@@ -244,10 +244,6 @@
         transform: translateX(100%);
       }
 
-      .role-toggle[data-active="hostess"]::before {
-        transform: translateX(200%);
-      }
-
       .role-btn {
         flex: 1;
         padding: 1rem 1.5rem;
@@ -704,9 +700,6 @@
       <button type="button" class="role-btn" data-role="ambassador">
         <i class="fas fa-star"></i> Ambassador
       </button>
-      <button type="button" class="role-btn" data-role="hostess">
-        <i class="fas fa-gem"></i> Hostess
-      </button>
     </div>
 
     <div class="application-card">
@@ -857,94 +850,6 @@
           </button>
         </form>
 
-        <!-- HOSTESS FORM -->
-        <form id="hostessForm" class="role-form" data-role="hostess">
-          <div class="section-label">Personal Info</div>
-
-          <div class="form-group">
-            <label>Full Name <span class="required">*</span></label>
-            <div class="input-wrap">
-              <input type="text" name="fullName" placeholder="First and last name" required>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Age <span class="required">*</span></label>
-            <div class="input-wrap">
-              <input type="number" name="age" placeholder="e.g. 22" min="18" max="45" required>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Instagram Handle <span class="required">*</span></label>
-            <div class="input-wrap">
-              <input type="text" name="instagram" placeholder="@yourusername" required>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Phone Number <span class="required">*</span></label>
-            <div class="input-wrap">
-              <input type="tel" name="phone" placeholder="+1 (305) 000-0000" required>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Email Address <span class="required">*</span></label>
-            <div class="input-wrap">
-              <input type="email" name="email" placeholder="you@email.com" required>
-            </div>
-          </div>
-
-          <div class="form-divider"></div>
-          <div class="section-label">Availability & Experience</div>
-
-          <div class="form-group">
-            <label>When are you available? <span class="required">*</span></label>
-            <div class="radio-group">
-              <div class="radio-option">
-                <input type="radio" name="availability" id="avail-fri" value="Fridays" required>
-                <label for="avail-fri">Fridays</label>
-              </div>
-              <div class="radio-option">
-                <input type="radio" name="availability" id="avail-sat" value="Saturdays">
-                <label for="avail-sat">Saturdays</label>
-              </div>
-              <div class="radio-option">
-                <input type="radio" name="availability" id="avail-both" value="Fridays & Saturdays">
-                <label for="avail-both">Both</label>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Do you have experience in hospitality or nightlife? <span class="required">*</span></label>
-            <div class="radio-group">
-              <div class="radio-option">
-                <input type="radio" name="experience" id="hexp-yes" value="yes" required>
-                <label for="hexp-yes">Yes</label>
-              </div>
-              <div class="radio-option">
-                <input type="radio" name="experience" id="hexp-no" value="no">
-                <label for="hexp-no">No</label>
-              </div>
-            </div>
-          </div>
-
-          <div class="conditional" id="hostessExpWrap">
-            <label style="display:block;font-family:'Space Mono',monospace;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.15em;color:#ccc;margin-bottom:0.5rem;">Where? Describe your experience</label>
-            <div class="input-wrap">
-              <textarea name="experienceWhere" placeholder="Venues, brands, events..."></textarea>
-            </div>
-          </div>
-
-          <button type="submit" class="submit-btn">
-            <i class="fas fa-paper-plane"></i>
-            <span>Submit Application</span>
-            <span class="arrow">→</span>
-          </button>
-        </form>
-
         <div class="success-message" id="successMessage">
           <div class="check-circle"><i class="fas fa-check"></i></div>
           <h3>Application Received</h3>
@@ -977,7 +882,6 @@
       const titles = {
         promoter:   '<i class="fas fa-bullhorn"></i> Promoter Application',
         ambassador: '<i class="fas fa-star"></i> Ambassador Application',
-        hostess:    '<i class="fas fa-gem"></i> Hostess Application'
       };
 
       roleBtns.forEach(btn => {
@@ -1018,15 +922,6 @@
         r.addEventListener('change', () => {
           const wrap = document.getElementById('experienceWhereWrap');
           const isYes = document.querySelector('#promoterForm input[name="experience"]:checked')?.value === 'yes';
-          wrap.classList.toggle('show', isYes);
-        });
-      });
-
-      // Conditional "where" textarea — hostess
-      document.querySelectorAll('#hostessForm input[name="experience"]').forEach(r => {
-        r.addEventListener('change', () => {
-          const wrap = document.getElementById('hostessExpWrap');
-          const isYes = document.querySelector('#hostessForm input[name="experience"]:checked')?.value === 'yes';
           wrap.classList.toggle('show', isYes);
         });
       });
@@ -1075,7 +970,6 @@
 
       document.getElementById('promoterForm').addEventListener('submit',  e => { e.preventDefault(); handleSubmit(e.target); });
       document.getElementById('ambassadorForm').addEventListener('submit', e => { e.preventDefault(); handleSubmit(e.target); });
-      document.getElementById('hostessForm').addEventListener('submit',    e => { e.preventDefault(); handleSubmit(e.target); });
     </script>
   </body>
 </html>
