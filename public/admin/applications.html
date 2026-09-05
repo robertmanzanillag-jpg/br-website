@@ -276,9 +276,9 @@
   </div>
   <div class="section-card" id="card-ambassadors" onclick="switchTab('ambassadors')">
     <div class="sc-icon"><i class="fas fa-star"></i></div>
-    <div class="sc-label">Ambassadors</div>
+    <div class="sc-label">AMBASSADOR/CONTENT CREATOR</div>
     <div class="sc-count" id="cnt-ambassadors">—</div>
-    <div class="sc-desc">Brand ambassador applications</div>
+    <div class="sc-desc">Ambassador/content creator applications</div>
   </div>
   <div class="section-card" id="card-academy" onclick="switchTab('academy')">
     <div class="sc-icon"><i class="fas fa-graduation-cap"></i></div>
@@ -653,7 +653,7 @@
     drawerRecord=r; drawerType='team';
     document.getElementById('drawerEditBtn').style.display='';
     document.getElementById('drawerName').textContent=r.full_name;
-    document.getElementById('drawerTag').textContent=`${r.role==='promoter'?'Promoter':'Ambassador'} · ${fmtDate(r.created_at)}`;
+    document.getElementById('drawerTag').textContent=`${r.role==='promoter'?'Promoter':'AMBASSADOR/CONTENT CREATOR'} · ${fmtDate(r.created_at)}`;
     let body=`
       ${dfLink('Email', emailLink(r.email))}
       ${dfLink('Phone', phoneLink(r.phone))}
