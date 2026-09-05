@@ -677,6 +677,17 @@
         .radio-option { min-width: 100%; }
         .card-body { padding: 1.25rem; }
       }
+          /* Keep the role selector aligned with the application card. */
+      .role-toggle { max-width: 540px; box-sizing: border-box; }
+      .role-btn { min-width: 0; min-height: 64px; padding: 0.85rem 0.75rem; font-size: 0.68rem; letter-spacing: 0.12em; line-height: 1.35; }
+      .card-header h2 { flex: 1; min-width: 0; line-height: 1.4; }
+      .status { flex: 0 0 auto; }
+       (max-width: 480px) {
+        .role-btn { min-height: 70px; font-size: 0.58rem; padding: 0.75rem 0.35rem; letter-spacing: 0.08em; }
+        .card-header { align-items: flex-start; gap: 0.75rem; padding: 1rem; }
+        .card-header h2 { font-size: 0.72rem; letter-spacing: 0.12em; }
+        .status { font-size: 0.58rem; letter-spacing: 0.12em; }
+      }
     </style>
   </head>
   <body>
@@ -698,7 +709,7 @@
         <i class="fas fa-bullhorn"></i> Promoter
       </button>
       <button type="button" class="role-btn" data-role="ambassador">
-        <i class="fas fa-star"></i> Ambassador
+        <i class="fas fa-star"></i> AMBASSADOR/CONTENT CREATOR
       </button>
     </div>
 
@@ -881,7 +892,7 @@
       const successEl  = document.getElementById('successMessage');
       const titles = {
         promoter:   '<i class="fas fa-bullhorn"></i> Promoter Application',
-        ambassador: '<i class="fas fa-star"></i> Ambassador Application',
+        ambassador: '<i class="fas fa-star"></i> AMBASSADOR/CONTENT CREATOR APPLICATION',
       };
 
       roleBtns.forEach(btn => {

@@ -5328,7 +5328,7 @@ app.post('/api/team-application', async (req, res) => {
       return res.status(400).json({ error: 'Phone, email and experience are required for promoters' });
     }
     if (role === 'ambassador' && (!phone || !email || !canRepresent || !canAttendShoots)) {
-      return res.status(400).json({ error: 'Please answer all ambassador questions' });
+      return res.status(400).json({ error: 'Please answer all ambassador/content creator questions' });
     }
     if (role === 'hostess' && (!phone || !email || !availability || !experience)) {
       return res.status(400).json({ error: 'Please answer all hostess questions' });
@@ -5410,7 +5410,7 @@ app.post('/api/team-application', async (req, res) => {
         await emailTransporter.sendMail({
           from: '"Black Room" <theblackroom.us@gmail.com>',
           to: 'theblackroom.us@gmail.com',
-          subject: `📨 ${role === 'promoter' ? 'Promoter' : role === 'hostess' ? 'Hostess' : 'Ambassador'} application: ${fullName} (${instagram})`,
+          subject: `📨 ${role === 'promoter' ? 'Promoter' : role === 'hostess' ? 'Hostess' : 'AMBASSADOR/CONTENT CREATOR'} application: ${fullName} (${instagram})`,
           html: emailHtml
         });
       }
