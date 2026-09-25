@@ -529,6 +529,7 @@ class BlackRoomHeader {
             <ul class="nav-links header-nav" id="desktop-nav">
                 <li><a href="/events.html">Tickets</a></li>
                 <li><a href="/videos.html">Videos</a></li>
+                <li><a href="/media.html">Gallery</a></li>
                 <li><a href="/shop.html">Shop</a></li>
                 <li><a href="/calendar.html">Calendar</a></li>
             </ul>
@@ -558,6 +559,7 @@ class BlackRoomHeader {
             <ul class="mobile-nav">
                 <li><a href="/events.html">Tickets</a></li>
                 <li><a href="/videos.html">Videos</a></li>
+                <li><a href="/media.html">Gallery</a></li>
                 <li><a href="/shop.html">Shop</a></li>
                 <li><a href="/calendar.html">Calendar</a></li>
             </ul>
@@ -944,6 +946,7 @@ function createResponsiveHeader() {
           <li><a href="events.html">Tickets</a></li>
           <li><a href="shop.html">Shop</a></li>
           <li><a href="videos.html">Videos</a></li>
+          <li><a href="media.html">Gallery</a></li>
         </ul>
         <ul class="nav-right" id="nav-right"></ul>
       </nav>
