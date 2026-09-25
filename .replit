@@ -55,7 +55,7 @@ name = "nspr"
 
 [deployment]
 run = ["node", "index.js"]
-deploymentTarget = "autoscale"
+deploymentTarget = "gce"
 
 [[ports]]
 localPort = 5000
