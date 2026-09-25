@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-09-25T07:41:10.321Z",
+  "lastUpdated": "2026-09-25T10:10:19.810Z",
   "source": "https://kongnightlife.com/user/414d4b95-6e98-4e2b-8a88-1d660f8f1e1b",
   "apiSource": "https://kongnightlife.com/api/users/414d4b95-6e98-4e2b-8a88-1d660f8f1e1b/organized-events?includePast=true",
   "displaySource": "https://kongnightlife.com/events",
@@ -35,7 +35,7 @@
       "source": "kong-profile",
       "sourceId": "05bd8101-b1d0-4f78-8b1f-80d6c063b532",
       "sourceUrl": "https://kongnightlife.com/api/users/414d4b95-6e98-4e2b-8a88-1d660f8f1e1b/organized-events?includePast=true",
-      "scrapedAt": "2026-09-25T07:41:10.321Z",
+      "scrapedAt": "2026-09-25T10:10:19.810Z",
       "updatedAt": "2026-09-23T15:56:56.004Z"
     }
   ]
