@@ -1,29 +1,31 @@
-"""Import web-sized Drive media from column C of the Black Room workbook.
+"""Catalog complete public Drive collections from column C of the workbook.
 
 Usage: python scripts/import-bank-media.py path/to/Black-Room-Database.xlsx
-The importer skips unavailable collections and files already downloaded.
+The importer skips unavailable collections. Photos and video posters use
+public Drive thumbnail URLs, keeping the repository small. Public
+embedded folder views expose the full listing, unlike the normal Drive page,
+which embeds only the first 50 entries.
 """
 
-import ast
-import concurrent.futures
+import html
 import json
 import re
 import sys
 import urllib.error
 import urllib.request
-import warnings
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "public" / "images" / "media"
-CATALOG = ROOT / "public" / "data" / "bank-media.json"
+CATALOG = ROOT / "public" / "data" / "bank-media-drive-full.json"
 SHEET_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
-IVD = re.compile(r"window\['_DRIVE_ivd'\] = ('(?:\\.|[^'])*')")
 AGENT = {"User-Agent": "Mozilla/5.0 (compatible; BlackRoomMediaImporter/1.0)"}
+ENTRY = re.compile(r'<div class="flip-entry" id="entry-([^\"]+)".*?<div class="flip-entry-title">(.*?)</div>', re.S)
+FOLDER_ID = re.compile(r"/drive/folders/([A-Za-z0-9_-]+)")
+FILE_ID = re.compile(r"/file/d/([A-Za-z0-9_-]+)")
 
 
 def read_sources(workbook):
@@ -54,69 +56,79 @@ def read_sources(workbook):
         return sorted(sources, key=lambda item: item["row"])
 
 
-def drive_records(url):
+def drive_records(folder_id):
+    """Return all public entries, including subfolders, from an embedded view."""
+    url = f"https://drive.google.com/embeddedfolderview?id={folder_id}#list"
     request = urllib.request.Request(url, headers=AGENT)
-    with urllib.request.urlopen(request, timeout=30) as response:
-        html = response.read().decode("utf-8", "ignore")
-    match = IVD.search(html)
-    if not match:
-        return []
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", SyntaxWarning)
-        records = json.loads(ast.literal_eval(match.group(1)))[0]
-    return [record for record in records if isinstance(record, list) and len(record) > 3]
-
-
-def download_image(file_id, target):
-    if target.exists():
-        return True
-    url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w1200"
-    try:
-        with urllib.request.urlopen(urllib.request.Request(url, headers=AGENT), timeout=40) as response:
-            if not response.headers.get("Content-Type", "").startswith("image/"):
-                return False
-            data = response.read()
-        if not data:
-            return False
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(data)
-        return True
-    except (OSError, urllib.error.URLError):
-        return False
+    with urllib.request.urlopen(request, timeout=45) as response:
+        page = response.read().decode("utf-8", "ignore")
+    records = []
+    for match in ENTRY.finditer(page):
+        fragment = match.group(0)
+        file_id = match.group(1)
+        title = html.unescape(re.sub(r"<[^>]+>", "", match.group(2)))
+        icon = re.search(r'drive-thirdparty\.googleusercontent\.com/16/type/([^" ]+)', fragment)
+        mime = icon.group(1) if icon else ""
+        if not mime and ('/drive/folders/' in fragment or 'alt="Folder"' in fragment):
+            mime = "folder"
+        records.append((file_id, title, mime))
+    return records
 
 
 def import_source(source):
     url = source["sourceUrl"]
-    if "drive.google.com/drive/folders/" not in url:
+    if source["row"] in (46, 47) or "HIGH VOLTAGE" in source["title"].upper():
         return None
-    try:
-        records = drive_records(url)
-    except (OSError, urllib.error.URLError, ValueError):
+    folder_match = FOLDER_ID.search(url)
+    file_match = FILE_ID.search(url)
+    if not folder_match and not file_match:
         return None
+    records = []
+    if file_match:
+        # Some shared folder URLs in the workbook use /file/d/ instead of
+        # /drive/folders/. Probe the folder view before treating them as files.
+        try:
+            records = drive_records(file_match.group(1))
+        except (OSError, urllib.error.URLError, ValueError):
+            records = []
+    if records or folder_match:
+        pending = [folder_match.group(1)] if folder_match else []
+        seen_folders = set()
+        while pending:
+            folder_id = pending.pop()
+            if folder_id in seen_folders:
+                continue
+            seen_folders.add(folder_id)
+            try:
+                folder_records = drive_records(folder_id)
+            except (OSError, urllib.error.URLError, ValueError) as error:
+                print(f"C{source['row']}: folder {folder_id} unavailable: {error}", flush=True)
+                continue
+            for record in folder_records:
+                if record[2] == "folder":
+                    pending.append(record[0])
+                else:
+                    records.append(record)
+    elif file_match:
+        records = [(file_match.group(1), source["title"], "video/mp4")]
     if not records:
         return None
-    folder = f"bank-{source['row']:02d}"
     media = []
-    images = []
     for record in records:
-        file_id, name, mime = record[0], record[2], record[3]
+        file_id, name, mime = record
         if not isinstance(file_id, str) or not isinstance(name, str) or not isinstance(mime, str):
             continue
         if mime.startswith("image/"):
-            target = OUTPUT / folder / f"{file_id}.jpg"
-            images.append((file_id, target))
-            media.append({"type": "image", "title": name, "url": f"/images/media/{folder}/{file_id}.jpg"})
+            media.append({"type": "image", "title": name,
+                          "url": f"https://drive.google.com/thumbnail?id={file_id}&sz=w1200"})
         elif mime.startswith("video/"):
-            media.append({"type": "video", "title": name, "url": f"https://drive.google.com/file/d/{file_id}/view"})
-    downloaded = {}
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-        futures = {executor.submit(download_image, file_id, target): file_id for file_id, target in images}
-        for future in concurrent.futures.as_completed(futures):
-            downloaded[futures[future]] = future.result()
-    media = [item for item in media if item["type"] == "video" or downloaded.get(item["url"].split("/")[-1][:-4])]
+            media.append({"type": "video", "title": name,
+                          "url": f"https://drive.google.com/file/d/{file_id}/view",
+                          "embedUrl": f"https://drive.google.com/file/d/{file_id}/preview",
+                          "poster": f"https://drive.google.com/thumbnail?id={file_id}&sz=w640"})
     if not media:
         return None
-    return {**source, "mayHaveMore": len(records) == 50, "media": media}
+    return {**source, "media": media}
 
 
 def main():
