@@ -16,16 +16,13 @@
     .filter[aria-pressed=true],.filter:hover{background:#fff;color:#000;border-color:#fff}
     .collection{margin-bottom:68px}.collection-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:12px;padding-bottom:16px;border-bottom:1px solid #333;margin-bottom:20px}
     .collection h2{margin:0;text-transform:uppercase;font-size:clamp(1.1rem,2.4vw,1.9rem);letter-spacing:.07em}
-    .collection-meta{color:#888;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase}
     .carousel-shell{position:relative}
     .media-track{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:#777 #151515;padding:0 0 16px;-webkit-overflow-scrolling:touch}
     .media-track:focus-visible{outline:2px solid #fff;outline-offset:3px}
     .media-card{flex:0 0 clamp(210px,28vw,360px);aspect-ratio:4/3;background:#141414;border:1px solid #252525;overflow:hidden;scroll-snap-align:start}
     .photo-button,.video-button{display:block;position:relative;width:100%;height:100%;padding:0;border:0;background:transparent;color:#fff;cursor:pointer;text-align:left;overflow:hidden}
     .photo-button{cursor:zoom-in}.photo-button img,.video-button img,.video-button video{display:block;width:100%;height:100%;object-fit:cover;transition:transform .3s}.photo-button:hover img,.video-button:hover img,.video-button:hover video{transform:scale(1.04)}
-    .video-button::after{content:'';position:absolute;inset:35% 0 0;background:linear-gradient(transparent,rgba(0,0,0,.82));pointer-events:none}
     .play-icon{position:absolute;z-index:1;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:58px;height:58px;border:1px solid rgba(255,255,255,.85);border-radius:50%;background:rgba(0,0,0,.62);font-size:18px;padding-left:3px}
-    .video-name{position:absolute;z-index:1;left:16px;right:16px;bottom:16px;font-size:.82rem;font-weight:700;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .carousel-nav{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}.carousel-arrow{width:44px;height:44px;border:1px solid #555;background:#111;color:#fff;font-size:30px;line-height:1;cursor:pointer}.carousel-arrow:hover{background:#fff;color:#000}
     .empty{color:#aaa;padding:60px 0}dialog{border:0;padding:0;max-width:min(94vw,1300px);max-height:94vh;background:#0a0a0a;color:white}dialog::backdrop{background:rgba(0,0,0,.92)}
     .viewer{display:grid;grid-template-columns:50px minmax(0,1fr) 50px;align-items:center}.viewer img{display:block;max-width:100%;max-height:82vh;margin:auto;object-fit:contain}.viewer button,.close{color:white;border:0;background:transparent;cursor:pointer;font-size:28px}.close{position:absolute;top:6px;right:12px;z-index:1}.caption{padding:10px 50px 20px;color:#aaa;text-align:center;font-size:.8rem}
@@ -57,6 +54,6 @@
     <div class="video-title" id="video-title"></div>
   </dialog>
   <script src="/js/global-header.js"></script>
-  <script src="/js/bank-gallery.js?v=20260925-4" defer></script>
+  <script src="/js/bank-gallery.js?v=20260925-5" defer></script>
 </body>
 </html>
