@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Media Gallery | BLACK ROOM</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    body{margin:0;background:#050505;color:#fff;font-family:Arial,sans-serif}
+    main{max-width:1500px;margin:auto;padding:130px clamp(18px,4vw,64px) 80px}
+    .eyebrow{color:#aaa;font-size:.75rem;letter-spacing:.24em;text-transform:uppercase}
+    h1{font-size:clamp(3rem,8vw,7rem);line-height:.94;letter-spacing:-.07em;text-transform:uppercase;margin:12px 0}
+    .intro{color:#aaa;max-width:620px;line-height:1.6}
+    .controls{display:flex;flex-wrap:wrap;gap:10px;margin:40px 0 50px}
+    .filter{padding:12px 20px;border:1px solid #555;background:transparent;color:#ddd;cursor:pointer;text-transform:uppercase;letter-spacing:.12em;font-size:.75rem}
+    .filter[aria-pressed=true],.filter:hover{background:#fff;color:#000;border-color:#fff}
+    .collection{margin-bottom:68px}.collection-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:12px;padding-bottom:16px;border-bottom:1px solid #333;margin-bottom:20px}
+    .collection h2{margin:0;text-transform:uppercase;font-size:clamp(1.1rem,2.4vw,1.9rem);letter-spacing:.07em}
+    .collection-meta{color:#888;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase}.collection-meta a{color:#ddd;margin-left:12px;text-decoration:underline;text-underline-offset:4px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+    .media-card{aspect-ratio:4/3;background:#141414;border:1px solid #252525;overflow:hidden}
+    .photo-button{display:block;width:100%;height:100%;padding:0;border:0;background:transparent;cursor:zoom-in}.photo-button img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .3s}.photo-button:hover img{transform:scale(1.04)}
+    .video-link{display:flex;height:100%;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:18px;color:white;text-align:center;text-decoration:none;overflow-wrap:anywhere}.video-link::before{content:'▶';display:grid;place-items:center;width:56px;height:56px;border:1px solid #777;border-radius:50%;font-size:18px}.video-link span{font-size:.8rem;line-height:1.3}.video-link:hover{background:#262626}
+    .empty{color:#aaa;padding:60px 0}dialog{border:0;padding:0;max-width:min(94vw,1300px);max-height:94vh;background:#0a0a0a;color:white}dialog::backdrop{background:rgba(0,0,0,.92)}
+    .viewer{display:grid;grid-template-columns:50px minmax(0,1fr) 50px;align-items:center}.viewer img{display:block;max-width:100%;max-height:82vh;margin:auto;object-fit:contain}.viewer button,.close{color:white;border:0;background:transparent;cursor:pointer;font-size:28px}.close{position:absolute;top:6px;right:12px;z-index:1}.caption{padding:10px 50px 20px;color:#aaa;text-align:center;font-size:.8rem}
+    @media(max-width:600px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.viewer{grid-template-columns:36px minmax(0,1fr) 36px}}
+  </style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">Black Room / Media</p><h1>Gallery</h1>
+    <p class="intro">Photos and videos from the Black Room archive. Browse by collection or open a photo to view it full size.</p>
+    <p class="intro">Looking for earlier event albums? <a href="/gallery.html" style="color:#fff;text-decoration:underline;text-underline-offset:4px">View the event gallery</a>.</p>
+    <div class="controls" role="group" aria-label="Filter media">
+      <button class="filter" data-filter="all" aria-pressed="true">All media</button>
+      <button class="filter" data-filter="image" aria-pressed="false">Photos</button>
+      <button class="filter" data-filter="video" aria-pressed="false">Videos</button>
+    </div>
+    <div id="collections" aria-live="polite"><p class="empty">Loading media…</p></div>
+  </main>
+  <dialog id="lightbox" aria-label="Photo viewer">
+    <button class="close" id="close" aria-label="Close photo">×</button>
+    <div class="viewer"><button id="previous" aria-label="Previous photo">‹</button><img id="full-photo" alt=""><button id="next" aria-label="Next photo">›</button></div>
+    <div class="caption" id="caption"></div>
+  </dialog>
+  <script src="/js/global-header.js"></script>
+  <script src="/js/bank-gallery.js" defer></script>
+</body>
+</html>

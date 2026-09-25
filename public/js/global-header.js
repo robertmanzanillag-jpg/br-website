@@ -361,6 +361,7 @@
       <ul class="nav-links">
         <li><a href="/events.html">Tickets</a></li>
         <li><a href="/videos.html">Videos</a></li>
+        <li><a href="/media.html">Gallery</a></li>
         <li><a href="/shop.html">Shop</a></li>
         <li><a href="/calendar.html">Calendar</a></li>
         <li><a href="/residents.html">Residents</a></li>
@@ -394,6 +395,7 @@
       <ul>
         <li><a href="/events.html">Tickets</a></li>
         <li><a href="/videos.html">Videos</a></li>
+        <li><a href="/media.html">Gallery</a></li>
         <li><a href="/shop.html">Shop</a></li>
         <li><a href="/calendar.html">Calendar</a></li>
         <li><a href="/residents.html">Residents</a></li>
