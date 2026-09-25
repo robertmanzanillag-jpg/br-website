@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "public" / "data"
 OUTPUT = DATA / "bank-media.json"
-DURATIONS = DATA / "bank-video-durations.json"
+DURATIONS = ROOT / "scripts" / "bank-video-durations.json"
 PHOTO_EXCLUSIONS = ROOT / "scripts" / "bank-photo-exclusions.json"
 SOURCES = (
     DATA / "bank-media-drive-full.json",
@@ -44,8 +44,8 @@ COLLECTIONS = (
 
 
 def main():
-    durations = json.loads(DURATIONS.read_text(encoding="utf-8")) if DURATIONS.exists() else {}
-    excluded = json.loads(PHOTO_EXCLUSIONS.read_text(encoding="utf-8")) if PHOTO_EXCLUSIONS.exists() else {}
+    durations = json.loads(DURATIONS.read_text(encoding="utf-8"))
+    excluded = json.loads(PHOTO_EXCLUSIONS.read_text(encoding="utf-8"))
     excluded_drive = set(excluded.get("driveFileIds", []))
     excluded_zoho = set(excluded.get("zohoFileIds", []))
     by_row = {}
