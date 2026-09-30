@@ -6,6 +6,7 @@
   const videoDialog = document.getElementById('video-viewer');
   const videoStage = document.getElementById('video-stage');
   const videoTitle = document.getElementById('video-title');
+  const countStatus = document.getElementById('gallery-count');
   let collections = [];
   let filter = 'all';
   let photos = [];
@@ -29,6 +30,25 @@
 
   function driveId(url) {
     return url?.match(/drive\.google\.com\/file\/d\/([^/]+)/)?.[1] || null;
+  }
+
+  function mediaIdentity(item) {
+    if (item.sourceProvider === 'zoho' && item.sourceFileId) return `zoho:${item.sourceFileId}`;
+    try {
+      const url = new URL(item.url);
+      if (/drive\.google\.com$/i.test(url.hostname)) {
+        const id = url.searchParams.get('id') || url.pathname.match(/\/file\/d\/([^/]+)/)?.[1];
+        if (id) return `drive:${id}`;
+      }
+      if (/dropbox\.com$/i.test(url.hostname)) return `dropbox:${url.pathname.toLowerCase()}`;
+      return `url:${url.href}`;
+    } catch {
+      return `url:${item.url}`;
+    }
+  }
+
+  function normalizedTitle(title) {
+    return (title || '').trim().replace(/\s+/g, ' ').toLowerCase();
   }
 
   function posterFor(item) {
@@ -170,6 +190,18 @@
   function render() {
     previewObserver?.disconnect();
     container.replaceChildren();
+    const counts = collections.reduce((result, collection) => {
+      for (const item of collection.media) {
+        result[item.type] = (result[item.type] || 0) + 1;
+      }
+      return result;
+    }, { image: 0, video: 0 });
+    const total = counts.image + counts.video;
+    document.querySelectorAll('.filter').forEach(button => {
+      const count = button.dataset.filter === 'all' ? total : counts[button.dataset.filter];
+      button.textContent = `${button.dataset.label} (${new Intl.NumberFormat().format(count || 0)})`;
+    });
+
     photos = collections.flatMap(collection => collection.media
       .filter(item => item.type === 'image')
       .map(item => ({ ...item, collection: collection.title })));
@@ -180,10 +212,20 @@
       shown += items.length;
       const section = element('section', '', 'collection');
       const head = element('div', '', 'collection-head');
-      head.append(element('h2', collection.title));
+      head.append(
+        element('h2', collection.title),
+        element('span', `${new Intl.NumberFormat().format(items.length)} ${items.length === 1 ? 'item' : 'items'}`, 'collection-count'),
+      );
       section.append(head, makeCarousel(items, collection.title));
       container.append(section);
     }
+    const visibleCollections = collections.filter(collection =>
+      collection.media.some(item => filter === 'all' || item.type === filter),
+    ).length;
+    const label = filter === 'all'
+      ? `${new Intl.NumberFormat().format(shown)} items · ${new Intl.NumberFormat().format(counts.image)} photos · ${new Intl.NumberFormat().format(counts.video)} videos`
+      : `${new Intl.NumberFormat().format(shown)} ${filter === 'image' ? 'photos' : 'videos'}`;
+    countStatus.textContent = `${label} across ${visibleCollections} ${visibleCollections === 1 ? 'collection' : 'collections'}`;
     if (!shown) container.append(element('p', 'No media available in this category.', 'empty'));
   }
 
@@ -211,10 +253,33 @@
     touchStartX = null;
   }, { passive: true });
 
-  fetch('/data/bank-media.json', { cache: 'no-store' })
-    .then(response => { if (!response.ok) throw new Error('Media unavailable'); return response.json(); })
-    .then(data => {
-      collections = data.filter(collection => collection.row !== 46 && collection.row !== 47 && !/high voltage/i.test(collection.title));
+  Promise.all([
+    fetch('/data/bank-media.json', { cache: 'no-store' })
+      .then(response => { if (!response.ok) throw new Error('Media catalog unavailable'); return response.json(); }),
+    fetch('/data/bank-media-hidden.json', { cache: 'no-store' })
+      .then(response => { if (!response.ok) throw new Error('Curated item list unavailable'); return response.json(); }),
+  ])
+    .then(([data, manifest]) => {
+      // The manifest stores stable identities directly. Match those identities
+      // without altering any catalog item or its source URL.
+      const identityKeys = new Set(manifest.items.map(item =>
+        `${item.row}|${item.identity}|${item.type}|${normalizedTitle(item.title)}|${item.occurrence}`,
+      ));
+      collections = data
+        .filter(collection => collection.row !== 46 && collection.row !== 47 && !/high voltage/i.test(collection.title))
+        .map(collection => {
+          const occurrences = new Map();
+          const media = collection.media.filter(item => {
+            const identity = mediaIdentity(item);
+            const title = normalizedTitle(item.title);
+            const occurrenceKey = `${identity}|${item.type}|${title}`;
+            const occurrence = occurrences.get(occurrenceKey) || 0;
+            occurrences.set(occurrenceKey, occurrence + 1);
+            return !identityKeys.has(`${collection.row}|${identity}|${item.type}|${title}|${occurrence}`);
+          });
+          return { ...collection, media };
+        })
+        .filter(collection => collection.media.length);
       render();
     })
     .catch(() => { container.replaceChildren(element('p', 'Media could not be loaded. Please try again later.', 'empty')); });

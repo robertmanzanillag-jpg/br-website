@@ -1,0 +1,1 @@
+- [Gallery duplicate evidence](gallery-curation.md) — repeated filenames can be different shots; hide only confirmed duplicates and preserve source links.
