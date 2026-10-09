@@ -155,6 +155,15 @@
       overflow: hidden;
     }
 
+    .link-preview .link-flyer {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      position: relative;
+      z-index: 1;
+      background: #111;
+    }
+
     .link-preview::before {
       content: '';
       position: absolute;
@@ -1073,6 +1082,7 @@
     </div>
   </div>
 
+  <script src="/js/link-flyers.js"></script>
   <script>
     const BRAND_ICONS = ['instagram', 'tiktok', 'youtube', 'spotify', 'twitter', 'facebook', 'discord', 'twitch', 'soundcloud', 'apple', 'whatsapp', 'telegram', 'linkedin', 'pinterest', 'snapchat', 'reddit', 'patreon', 'paypal', 'github', 'dribbble', 'behance', 'medium', 'vimeo', 'mixcloud'];
 
@@ -1165,7 +1175,7 @@
       return `
         <a href="/go/${link.id}" ${isExternal ? 'target="_blank" rel="noopener noreferrer"' : ''} class="link-button ${styleClass}" style="${inlineStyle}">
           <div class="link-preview ${previewStyles[icon] || ''}">
-            <i class="${iconClass}"></i>
+            ${LinkFlyers.render(link, `<i class="${iconClass}"></i>`)}
           </div>
           <div class="link-content">
             <div class="link-title">${link.title}</div>
