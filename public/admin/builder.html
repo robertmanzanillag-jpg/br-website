@@ -864,6 +864,14 @@
       flex-shrink: 0;
     }
     
+    .element-link-icon .link-flyer {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: inherit;
+      background: #111;
+    }
+
     .element-link-text {
       flex: 1;
       min-width: 0;
@@ -2348,6 +2356,10 @@
         <input type="url" id="newLinkUrl" placeholder="https://...">
       </div>
       <div class="form-group">
+        <label>Flyer image URL (optional)</label>
+        <input type="url" id="newLinkImageUrl" placeholder="https://.../flyer.jpg">
+      </div>
+      <div class="form-group">
         <label>Icon</label>
         <div class="icon-grid" id="newLinkIconGrid"></div>
       </div>
@@ -2680,6 +2692,7 @@
     </div>
   </div>
 
+  <script src="/js/link-flyers.js"></script>
   <script>
     const ICONS = [
       'link', 'globe', 'external-link-alt',
@@ -2721,6 +2734,11 @@
       try {
         const res = await fetch('/api/admin/bio-elements', { credentials: 'include' });
         elements = await res.json();
+        for (const el of elements) {
+          if (el.element_type !== 'link') continue;
+          const image = LinkFlyers.imageUrl(el);
+          if (image) el.metadata = { ...el.metadata, image_url: image };
+        }
         saveHistory();
         renderElements();
         loadStats();
@@ -2825,7 +2843,7 @@
         
         return `<div class="element-link ${meta.show_progress ? 'has-progress' : ''}" style="${bgStyle}border-radius:12px;">
           <div class="element-link-icon" style="background:${style === 'filled' ? 'rgba(255,255,255,0.1)' : iconColor}22;">
-            <i class="${el.icon && BRAND_ICONS.includes(el.icon) ? 'fab' : 'fas'} fa-${el.icon || 'link'}"></i>
+            ${LinkFlyers.render(el, `<i class="${el.icon && BRAND_ICONS.includes(el.icon) ? 'fab' : 'fas'} fa-${el.icon || 'link'}"></i>`)}
           </div>
           <div class="element-link-text">
             <h4>${el.title || 'Untitled'}</h4>
@@ -3063,6 +3081,10 @@
           <div class="form-group">
             <label>URL</label>
             <input type="url" value="${el.url || ''}" onchange="updateField('url', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Flyer image URL</label>
+            <input type="url" value="${LinkFlyers.escapeAttribute(LinkFlyers.imageUrl(el))}" onchange="updateFlyer(this.value)" placeholder="https://.../flyer.jpg">
           </div>
           <div class="form-group">
             <label>Icon</label>
@@ -3402,12 +3424,13 @@
     async function saveAllChanges() {
       try {
         for (const el of elements) {
-          await fetch(`/api/admin/bio-elements/${el.id}`, {
+          const response = await fetch(`/api/admin/bio-elements/${el.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify(el)
           });
+          if (!response.ok) throw new Error('Unable to save element');
         }
         showToast('All changes saved!', 'success');
       } catch (err) {
@@ -3472,6 +3495,14 @@
       document.getElementById(inputId + 'Text').value = color;
     }
     
+    function updateFlyer(value) {
+      if (value.trim() && !LinkFlyers.safeImageUrl(value)) {
+        showToast('Use an HTTPS image URL or a local /images/ path', 'error');
+        return;
+      }
+      updateMeta('image_url', value.trim());
+    }
+
     async function createLink() {
       const iconGrid = document.getElementById('newLinkIconGrid');
       const selectedIcon = iconGrid.querySelector('.icon-option.selected');
@@ -3492,6 +3523,14 @@
         showToast('Please enter a title', 'error');
         return;
       }
+
+      const flyer = document.getElementById('newLinkImageUrl').value.trim();
+      if (flyer && !LinkFlyers.safeImageUrl(flyer)) {
+        showToast('Use an HTTPS image URL or a local /images/ path', 'error');
+        return;
+      }
+      const image = flyer || LinkFlyers.imageUrl(data);
+      if (image) data.metadata.image_url = image;
       
       await createElementAPI(data, 'linkModal');
     }
@@ -3682,6 +3721,7 @@
           body: JSON.stringify(data)
         });
         const newEl = await res.json();
+        if (!res.ok) throw new Error('Unable to create element');
         elements.push(newEl);
         saveHistory();
         renderElements();
