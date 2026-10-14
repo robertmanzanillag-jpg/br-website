@@ -53,5 +53,21 @@
     return `<img class="link-flyer" src="${escapeAttribute(image)}" alt="${escapeAttribute(link.title)} flyer" loading="lazy" decoding="async" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden>${fallbackIcon}</span>`;
   }
 
-  window.LinkFlyers = { imageUrl, safeImageUrl, escapeAttribute, render };
+  const pending = new Map();
+  async function resolve(url) {
+    if (!pending.has(url)) {
+      const request = fetch('/api/admin/link-flyer', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      }).then(async response => {
+        if (!response.ok) return '';
+        return safeImageUrl((await response.json()).image_url);
+      }).catch(() => '').finally(() => pending.delete(url));
+      pending.set(url, request);
+    }
+    return pending.get(url);
+  }
+
+  window.LinkFlyers = { imageUrl, safeImageUrl, escapeAttribute, render, resolve };
 })();
