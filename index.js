@@ -1,3 +1,4 @@
+import { resolveLinkFlyer } from './utils/linkFlyerResolver.js';
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -4412,6 +4413,21 @@ app.get('/api/admin/bio-elements', async (req, res) => {
   } catch (error) {
     console.error('Error fetching all bio elements:', error);
     res.status(500).json({ error: 'Error loading elements' });
+  }
+});
+
+// Admin: resolve artwork without modifying the saved link.
+app.post('/api/admin/link-flyer', async (req, res) => {
+  const user = req.session?.user;
+  if (!(user?.isAdmin || user?.role === 'admin' || user?.email === 'robert.manzanillag@gmail.com')) {
+    return res.status(403).json({ error: 'Admin only' });
+  }
+  try {
+    const image_url = await resolveLinkFlyer(req.body?.url);
+    res.set('Cache-Control', 'no-store');
+    res.json({ image_url });
+  } catch (error) {
+    res.status(422).json({ error: error.message });
   }
 });
 

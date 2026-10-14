@@ -2353,11 +2353,11 @@
       </div>
       <div class="form-group">
         <label>URL</label>
-        <input type="url" id="newLinkUrl" placeholder="https://...">
+        <input type="url" id="newLinkUrl" placeholder="https://..." oninput="queueNewLinkFlyer()">
       </div>
       <div class="form-group">
         <label>Flyer image URL (optional)</label>
-        <input type="url" id="newLinkImageUrl" placeholder="https://.../flyer.jpg">
+        <input type="url" id="newLinkImageUrl" placeholder="https://.../flyer.jpg" oninput="delete this.dataset.sourceUrl">
       </div>
       <div class="form-group">
         <label>Icon</label>
@@ -3080,11 +3080,11 @@
           </div>
           <div class="form-group">
             <label>URL</label>
-            <input type="url" value="${el.url || ''}" onchange="updateField('url', this.value)">
+            <input type="url" value="${el.url || ''}" oninput="updateField('url', this.value)">
           </div>
           <div class="form-group">
             <label>Flyer image URL</label>
-            <input type="url" value="${LinkFlyers.escapeAttribute(LinkFlyers.imageUrl(el))}" onchange="updateFlyer(this.value)" placeholder="https://.../flyer.jpg">
+            <input type="url" value="${LinkFlyers.escapeAttribute(LinkFlyers.imageUrl(el))}" data-link-flyer oninput="updateFlyer(this.value)" onchange="updateFlyer(this.value, true)" placeholder="https://.../flyer.jpg">
           </div>
           <div class="form-group">
             <label>Icon</label>
@@ -3324,9 +3324,71 @@
       }).join('');
     }
     
+    let newFlyerTimer;
+    let linkModalGeneration = 0;
+    let creatingLink = false;
+    const flyerTimers = new Map();
+    const flyerEditRevisions = new WeakMap();
+    const flyerJobs = new Set();
+    function trackFlyer(job) {
+      flyerJobs.add(job);
+      job.finally(() => flyerJobs.delete(job));
+      return job;
+    }
+    async function fillLinkFlyer(el) {
+      const url = el.url;
+      const before = el.metadata?.image_url;
+      const revision = flyerEditRevisions.get(el);
+      if (before && !el.metadata?.image_source_url) return;
+      const image = await LinkFlyers.resolve(url);
+      // A late result must never replace another URL or a manually edited photo.
+      if (el.url !== url || el.metadata?.image_url !== before || flyerEditRevisions.get(el) !== revision || !elements.includes(el)) return;
+      if (!image) { showToast('No se encontró foto. Puedes añadirla en Flyer image URL.', 'error'); return; }
+      el.metadata = { ...el.metadata, image_url: image, image_source_url: url };
+      renderElements();
+      if (selectedElement === el) {
+        const output = document.getElementById('settingsPanel').querySelector('[data-link-flyer]');
+        if (output && document.activeElement !== output) output.value = image;
+      }
+    }
+    function queueNewLinkFlyer() {
+      const output = document.getElementById('newLinkImageUrl');
+      if (output.dataset.sourceUrl && output.dataset.sourceUrl !== document.getElementById('newLinkUrl').value.trim()) {
+        output.value = '';
+        delete output.dataset.sourceUrl;
+      }
+      clearTimeout(newFlyerTimer);
+      newFlyerTimer = setTimeout(() => trackFlyer(fillNewLinkFlyer()), 350);
+    }
+    async function fillNewLinkFlyer() {
+      const generation = linkModalGeneration;
+      const input = document.getElementById('newLinkUrl');
+      const output = document.getElementById('newLinkImageUrl');
+      const url = input.value.trim();
+      const before = output.value;
+      if (!url || before) return;
+      const image = await LinkFlyers.resolve(url);
+      if (generation === linkModalGeneration && input.value.trim() === url && output.value === before && image) {
+        output.value = image;
+        output.dataset.sourceUrl = url;
+      }
+    }
+
     function updateField(field, value) {
       if (!selectedElement) return;
-      selectedElement[field] = value;
+      const el = selectedElement;
+      if (field === 'url' && el.element_type === 'link' && el.url !== value) {
+        clearTimeout(flyerTimers.get(el));
+        if (el.metadata?.image_source_url) {
+          delete el.metadata.image_url;
+          delete el.metadata.image_source_url;
+        }
+        el[field] = value;
+        flyerTimers.set(el, setTimeout(() => {
+          flyerTimers.delete(el);
+          trackFlyer(fillLinkFlyer(el));
+        }, 350));
+      } else el[field] = value;
       renderElements();
     }
     
@@ -3423,6 +3485,10 @@
     
     async function saveAllChanges() {
       try {
+        for (const timer of flyerTimers.values()) clearTimeout(timer);
+        flyerTimers.clear();
+        await Promise.all([...flyerJobs]);
+        await Promise.all(elements.filter(el => el.element_type === 'link' && el.url && !LinkFlyers.imageUrl(el) && !Object.hasOwn(el.metadata || {}, 'image_url')).map(fillLinkFlyer));
         for (const el of elements) {
           const response = await fetch(`/api/admin/bio-elements/${el.id}`, {
             method: 'PUT',
@@ -3477,10 +3543,12 @@
     document.getElementById('socialSelector')?.addEventListener('change', updateSocialUrls);
     
     function openModal(id) {
+      if (id === 'linkModal') linkModalGeneration++;
       document.getElementById(id).classList.add('active');
     }
     
     function closeModal(id) {
+      if (id === 'linkModal') { linkModalGeneration++; clearTimeout(newFlyerTimer); }
       document.getElementById(id).classList.remove('active');
     }
     
@@ -3495,15 +3563,22 @@
       document.getElementById(inputId + 'Text').value = color;
     }
     
-    function updateFlyer(value) {
+    function updateFlyer(value, validate = false) {
+      if (!selectedElement) return;
+      flyerEditRevisions.set(selectedElement, (flyerEditRevisions.get(selectedElement) || 0) + 1);
       if (value.trim() && !LinkFlyers.safeImageUrl(value)) {
-        showToast('Use an HTTPS image URL or a local /images/ path', 'error');
+        if (validate) showToast('Use an HTTPS image URL or a local /images/ path', 'error');
         return;
       }
-      updateMeta('image_url', value.trim());
+      delete selectedElement.metadata?.image_source_url;
+      selectedElement.metadata = { ...selectedElement.metadata, image_url: value.trim() };
+      renderElements();
     }
 
     async function createLink() {
+      if (creatingLink) return;
+      clearTimeout(newFlyerTimer);
+      const generation = linkModalGeneration;
       const iconGrid = document.getElementById('newLinkIconGrid');
       const selectedIcon = iconGrid.querySelector('.icon-option.selected');
       
@@ -3529,10 +3604,17 @@
         showToast('Use an HTTPS image URL or a local /images/ path', 'error');
         return;
       }
-      const image = flyer || LinkFlyers.imageUrl(data);
-      if (image) data.metadata.image_url = image;
-      
-      await createElementAPI(data, 'linkModal');
+      const source = document.getElementById('newLinkImageUrl').dataset.sourceUrl;
+      creatingLink = true;
+      try {
+        const image = flyer || LinkFlyers.imageUrl(data) || await LinkFlyers.resolve(data.url.trim());
+        if (generation !== linkModalGeneration) return;
+        if (image) {
+          data.metadata.image_url = image;
+          if (!flyer || source === data.url.trim()) data.metadata.image_source_url = data.url.trim();
+        }
+        await createElementAPI(data, 'linkModal');
+      } finally { creatingLink = false; }
     }
     
     async function createPromo() {
