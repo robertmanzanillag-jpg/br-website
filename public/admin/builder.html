@@ -2357,7 +2357,7 @@
       </div>
       <div class="form-group">
         <label>Flyer image URL (optional)</label>
-        <input type="url" id="newLinkImageUrl" placeholder="https://.../flyer.jpg" oninput="delete this.dataset.sourceUrl">
+        <input type="url" id="newLinkImageUrl" placeholder="https://.../flyer.jpg" oninput="newFlyerEditRevision++; delete this.dataset.sourceUrl">
       </div>
       <div class="form-group">
         <label>Icon</label>
@@ -3329,6 +3329,8 @@
     let creatingLink = false;
     const flyerTimers = new Map();
     const flyerEditRevisions = new WeakMap();
+    const manualFlyerEdits = new WeakSet();
+    let newFlyerEditRevision = 0;
     const flyerJobs = new Set();
     function trackFlyer(job) {
       flyerJobs.add(job);
@@ -3336,6 +3338,7 @@
       return job;
     }
     async function fillLinkFlyer(el) {
+      if (manualFlyerEdits.has(el)) return;
       const url = el.url;
       const before = el.metadata?.image_url;
       const revision = flyerEditRevisions.get(el);
@@ -3362,13 +3365,14 @@
     }
     async function fillNewLinkFlyer() {
       const generation = linkModalGeneration;
+      const editRevision = newFlyerEditRevision;
       const input = document.getElementById('newLinkUrl');
       const output = document.getElementById('newLinkImageUrl');
       const url = input.value.trim();
       const before = output.value;
       if (!url || before) return;
       const image = await LinkFlyers.resolve(url);
-      if (generation === linkModalGeneration && input.value.trim() === url && output.value === before && image) {
+      if (generation === linkModalGeneration && editRevision === newFlyerEditRevision && input.value.trim() === url && output.value === before && image) {
         output.value = image;
         output.dataset.sourceUrl = url;
       }
@@ -3565,6 +3569,7 @@
     
     function updateFlyer(value, validate = false) {
       if (!selectedElement) return;
+      manualFlyerEdits.add(selectedElement);
       flyerEditRevisions.set(selectedElement, (flyerEditRevisions.get(selectedElement) || 0) + 1);
       if (value.trim() && !LinkFlyers.safeImageUrl(value)) {
         if (validate) showToast('Use an HTTPS image URL or a local /images/ path', 'error');
