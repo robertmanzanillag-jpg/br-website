@@ -42,7 +42,7 @@
     const photo = photos[photoIndex];
     fullPhoto.src = photo.url;
     fullPhoto.alt = photo.title;
-    caption.textContent = `${photo.title} · ${photo.collection}`;
+    caption.textContent = photo.collection;
     if (!photoDialog.open) photoDialog.showModal();
   }
 
@@ -51,9 +51,9 @@
     videoStage.replaceChildren();
   }
 
-  function showVideo(item) {
+  function showVideo(item, collectionTitle) {
     videoStage.replaceChildren();
-    videoTitle.textContent = item.title;
+    videoTitle.textContent = collectionTitle;
     const id = driveId(item.url);
     if (item.sourceProvider === 'zoho' || item.sourceProvider === 'dropbox' || item.mimeType?.startsWith('video/') || (item.url && /\.(mp4|webm|ogg)(\?|$)/i.test(item.url))) {
       const video = document.createElement('video');
@@ -77,7 +77,7 @@
     videoDialog.showModal();
   }
 
-  function makeCard(item) {
+  function makeCard(item, collectionTitle) {
     const card = element('div', '', 'media-card');
     const button = element('button', '', item.type === 'image' ? 'photo-button' : 'video-button');
     button.type = 'button';
@@ -105,8 +105,8 @@
         }, { once: true });
         button.append(image);
       }
-      button.append(element('span', '▶', 'play-icon'), element('span', item.title, 'video-name'));
-      button.addEventListener('click', () => showVideo(item));
+      button.append(element('span', '▶', 'play-icon'));
+      button.addEventListener('click', () => showVideo(item, collectionTitle));
     } else {
       const image = document.createElement('img');
       image.src = item.url;
@@ -132,7 +132,7 @@
     let rendered = 0;
     const appendBatch = () => {
       const fragment = document.createDocumentFragment();
-      for (const item of items.slice(rendered, rendered + 24)) fragment.append(makeCard(item));
+      for (const item of items.slice(rendered, rendered + 24)) fragment.append(makeCard(item, title));
       rendered = Math.min(rendered + 24, items.length);
       track.append(fragment);
     };
@@ -181,7 +181,6 @@
       const section = element('section', '', 'collection');
       const head = element('div', '', 'collection-head');
       head.append(element('h2', collection.title));
-      head.append(element('div', `${items.length} ${items.length === 1 ? 'item' : 'items'}`, 'collection-meta'));
       section.append(head, makeCarousel(items, collection.title));
       container.append(section);
     }
