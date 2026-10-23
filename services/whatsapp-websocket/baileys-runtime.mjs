@@ -1,19 +1,42 @@
 import { createRequire } from 'node:module';
+import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 import { readFile, writeFile } from 'node:fs/promises';
 
 const VERSION = '7.0.0-rc14';
-const PATCH_MARKER = '// BR_COMPANION_REG_REFRESH_PATCH';
+const PATCH_MARKER = '// BR_COMPANION_REG_REFRESH_PATCH_V2';
 const require = createRequire(import.meta.url);
+
+export function handleCompanionRegRefresh(node, { creds, emitCredsUpdate, refreshQR, logger, getChild }) {
+  const validChild = getChild(node, 'companion_reg_refresh') || getChild(node, 'pair-device-rotate-qr');
+  if (!validChild) {
+    logger.warn({}, 'ignored malformed companion registration refresh');
+    return 'ignored_malformed';
+  }
+  if (creds.me) {
+    logger.debug({}, 'ignored companion registration refresh for registered session');
+    return 'ignored_registered';
+  }
+  creds.advSecretKey = randomBytes(32).toString('base64');
+  emitCredsUpdate({ advSecretKey: creds.advSecretKey });
+  logger.info({}, 'refreshed pending pairing QR material');
+  refreshQR();
+  return 'rotated';
+}
 
 export function rewritePairingSocket(source) {
   if (source.includes(PATCH_MARKER)) return source;
-  const start = source.indexOf("    // QR gen\n    ws.on('CB:iq,type:set,pair-device'");
+  const priorPatch = source.indexOf('    // BR_COMPANION_REG_REFRESH_PATCH');
+  const start = priorPatch >= 0
+    ? priorPatch
+    : source.indexOf("    // QR gen\n    ws.on('CB:iq,type:set,pair-device'");
   const end = source.indexOf('    // device paired for the first time', start);
-  if (start < 0 || end < 0 || source.indexOf("const advB64 = creds.advSecretKey;", start) < 0) {
+  if (start < 0 || end < 0 || (priorPatch < 0 && source.indexOf("const advB64 = creds.advSecretKey;", start) < 0)) {
     throw new Error('Baileys pairing implementation does not match the supported patch target');
   }
+  const helperSource = `const handleCompanionRegRefresh = ${handleCompanionRegRefresh.toString()};`;
   const replacement = `    ${PATCH_MARKER}
+    ${helperSource}
     let refreshPairingQR;
     // QR gen
     ws.on('CB:iq,type:set,pair-device', async (stanza) => {
@@ -51,20 +74,13 @@ export function rewritePairingSocket(source) {
         genPairQR();
     });
     ws.on('CB:notification,type:companion_reg_refresh', node => {
-        const validChild = getBinaryNodeChild(node, 'companion_reg_refresh')
-            || getBinaryNodeChild(node, 'pair-device-rotate-qr');
-        if (!validChild) {
-            logger.warn({}, 'ignored malformed companion registration refresh');
-            return;
-        }
-        if (creds.me) {
-            logger.debug({}, 'ignored companion registration refresh for registered session');
-            return;
-        }
-        creds.advSecretKey = randomBytes(32).toString('base64');
-        ev.emit('creds.update', { advSecretKey: creds.advSecretKey });
-        logger.info({}, 'refreshed pending pairing QR material');
-        refreshPairingQR?.();
+        handleCompanionRegRefresh(node, {
+            creds,
+            emitCredsUpdate: update => ev.emit('creds.update', update),
+            refreshQR: () => refreshPairingQR?.(),
+            logger,
+            getChild: getBinaryNodeChild
+        });
     });
 `;
   return source.slice(0, start) + replacement + source.slice(end);
