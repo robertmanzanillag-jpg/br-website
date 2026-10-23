@@ -9,7 +9,7 @@
 <img id="qr" hidden alt="QR privado para vincular WhatsApp">
 <p id="scan" hidden>En tu teléfono: WhatsApp → Dispositivos vinculados → Vincular un dispositivo. Escanea este QR.</p>
 <ul id="groups"></ul>
-<p id="count"></p><small id="diagnostic"></small>
+<p id="count"></p><p id="monitor" aria-live="polite"></p><small id="diagnostic"></small>
 <h2>Bandeja privada</h2><p id="history">Historial reciente: aún no confirmado por WhatsApp.</p>
 <button id="refreshInbox" type="button">Actualizar bandeja</button><section id="inbox" aria-live="polite"></section>
 <small>Solo se muestran mensajes guardados de los cuatro grupos autorizados. WhatsApp puede no entregar historial anterior. Esta bandeja es de solo lectura.</small>
@@ -30,6 +30,16 @@ function show(data){
   ? 'Se conserva la sesión cifrada; no se generará otro QR. El lector reintentará el almacenamiento con espera.'
   : data.startupCode ? 'Diagnóstico de inicio: '+data.startupCode : (data.disconnectCode ? 'Último código de conexión: '+data.disconnectCode : '');
  document.querySelector('#count').textContent='Novedades guardadas en esta ejecución: '+(data.processed||0);
+  const fmt=value=>value?new Date(value).toLocaleString():'Sin registro';
+  document.querySelector('#monitor').textContent=[
+   'Última conexión: '+fmt(data.lastConnectionAt),
+   'Último mensaje autorizado recibido: '+fmt(data.lastIncomingAt),
+   'Último guardado: '+fmt(data.lastSavedAt),
+   'Totales de esta instancia · recibidos: '+(data.received||0)+' · guardados: '+(data.saved||0)+' · descartados: '+(data.discarded||0),
+   data.storageFailure?'Último fallo de almacenamiento: '+data.storageFailure.code+' · operación '+data.storageFailure.operation+' · '+fmt(data.storageFailureAt):'Sin fallo de almacenamiento registrado',
+   data.recoveryScheduledAt?'Recuperación programada: '+fmt(data.recoveryScheduledAt):'',
+   data.recoveryLastAttemptAt?'Último intento de recuperación: '+fmt(data.recoveryLastAttemptAt):'',
+  ].filter(Boolean).join(' | ');
   const history={awaiting_recent:'Historial reciente: esperando confirmación de WhatsApp; puede que no se entregue.',recent_received:'Historial reciente: WhatsApp entregó datos de al menos un grupo autorizado.',recent_complete:'Historial reciente: sincronización completada.',not_delivered:'Historial reciente: WhatsApp no entregó mensajes autorizados.'};
   document.querySelector('#history').textContent=history[data.historyCoverage]||'Historial reciente: no confirmado.';
  document.querySelector('#start').disabled=busy||!csrf||['connecting','qr_required','pairing_accepted','reading','reconnecting'].includes(data.state);

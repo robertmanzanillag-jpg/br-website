@@ -37,10 +37,12 @@ test('transient PostgreSQL outage is retried with one reader and recovers withou
   await host.start();
   assert.equal(host.snapshot().state, 'database_unavailable');
   assert.equal(host.snapshot().recoveryAttempt, 1);
+  assert.ok(host.snapshot().recoveryScheduledAt);
   assert.ok(host.snapshot().retryAt);
   await delay(60);
   assert.equal(factories, 2);
   assert.equal(host.snapshot().state, 'reading');
+  assert.ok(host.snapshot().recoveryLastAttemptAt);
   await host.stop();
 });
 

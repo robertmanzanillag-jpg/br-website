@@ -7,14 +7,34 @@ const TRANSIENT_PG_CODES = new Set([
   'ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT', 'EPIPE',
   'ENETUNREACH', 'EHOSTUNREACH', 'EAI_AGAIN',
 ]);
+const SAFE_PG_CODES = new Set([
+  ...TRANSIENT_PG_CODES, '28P01', '3D000', '42501', '42P01', '57014',
+  '22001', '23505', '23503', '23514',
+]);
+const SAFE_DB_OPERATIONS = new Set(['connect', 'lease', 'schema', 'load', 'transaction', 'budget', 'save', 'commit', 'rollback', 'list', 'unlock']);
 
 export function isTransientDatabaseError(error) {
   return TRANSIENT_PG_CODES.has(error?.code);
 }
 
-function storageError(error) {
-  if (!isTransientDatabaseError(error)) return error;
-  return Object.assign(new Error('database_unavailable'), { code: 'database_unavailable' });
+export function safeDatabaseDiagnostic(error, operation) {
+  return {
+    code: SAFE_PG_CODES.has(error?.code) ? error.code : 'unclassified',
+    operation: SAFE_DB_OPERATIONS.has(operation) ? operation : 'query',
+  };
+}
+
+function storageError(error, operation, onStorageFailure) {
+  const diagnostic = safeDatabaseDiagnostic(error, operation);
+  try { onStorageFailure?.(diagnostic); } catch {}
+  if (isTransientDatabaseError(error)) {
+    return Object.assign(new Error('database_unavailable'), {
+      code: 'database_unavailable', diagnosticCode: diagnostic.code, operation: diagnostic.operation,
+    });
+  }
+  return Object.assign(new Error('storage_operation_failed'), {
+    code: diagnostic.code, diagnosticCode: diagnostic.code, operation: diagnostic.operation,
+  });
 }
 
 export function codec(base64Key) {
@@ -47,33 +67,33 @@ export class PostgresStore {
   constructor(client, key, { maxStoredBytes = 128 * 1024 * 1024, maxMonthlyBytes = 5 * 1024 ** 3 } = {}) {
     this.db = client; this.crypt = codec(key);
     this.maxStoredBytes = maxStoredBytes; this.maxMonthlyBytes = maxMonthlyBytes;
-    this.tail = Promise.resolve(); this.locked = false;
+    this.tail = Promise.resolve(); this.locked = false; this.onStorageFailure = null;
   }
   async acquire() {
-    const result = await this.query('SELECT pg_try_advisory_lock(1263488831,20261024) AS acquired');
+    const result = await this.query('SELECT pg_try_advisory_lock(1263488831,20261024) AS acquired', undefined, 'lease');
     if (!result.rows[0]?.acquired) throw new Error('reader_already_running');
     this.locked = true;
     await this.query(`CREATE TABLE IF NOT EXISTS br_wa_ws_state (
       id text PRIMARY KEY, payload bytea NOT NULL, updated_at timestamptz NOT NULL DEFAULT now());
       CREATE TABLE IF NOT EXISTS br_wa_ws_budget (
-      month date PRIMARY KEY, bytes bigint NOT NULL DEFAULT 0);`);
+      month date PRIMARY KEY, bytes bigint NOT NULL DEFAULT 0);`, undefined, 'schema');
   }
   serial(task) {
     const next = this.tail.then(task);
     this.tail = next.catch(() => {});
     return next;
   }
-  async query(sql, params) {
+  async query(sql, params, operation = 'query') {
     try {
       return await this.db.query(sql, params);
     } catch (error) {
-      throw storageError(error);
+      throw storageError(error, operation, this.onStorageFailure);
     }
   }
   async load(id) {
     if (!this.locked) throw new Error('lease_required');
     return this.serial(async () => {
-      const result = await this.query('SELECT payload FROM br_wa_ws_state WHERE id=$1', [id]);
+      const result = await this.query('SELECT payload FROM br_wa_ws_state WHERE id=$1', [id], 'load');
       return result.rows.length ? this.crypt.open(result.rows[0].payload, id) : null;
     });
   }
@@ -81,18 +101,18 @@ export class PostgresStore {
     if (!this.locked) throw new Error('lease_required');
     const data = this.crypt.seal(value, id);
     return this.serial(async () => {
-      await this.query('BEGIN');
+      await this.query('BEGIN', undefined, 'transaction');
       try {
-        const previous = await this.query('SELECT octet_length(payload) AS size FROM br_wa_ws_state WHERE id=$1', [id]);
-        if (insertOnly && previous.rows.length) { await this.query('COMMIT'); return false; }
-        const size = Number((await this.query('SELECT COALESCE(sum(octet_length(payload)),0) AS size FROM br_wa_ws_state')).rows[0].size);
-        await this.query("INSERT INTO br_wa_ws_budget(month) VALUES(date_trunc('month',now())::date) ON CONFLICT DO NOTHING");
-        const budget = await this.query("SELECT bytes FROM br_wa_ws_budget WHERE month=date_trunc('month',now())::date FOR UPDATE");
+        const previous = await this.query('SELECT octet_length(payload) AS size FROM br_wa_ws_state WHERE id=$1', [id], 'budget');
+        if (insertOnly && previous.rows.length) { await this.query('COMMIT', undefined, 'commit'); return false; }
+        const size = Number((await this.query('SELECT COALESCE(sum(octet_length(payload)),0) AS size FROM br_wa_ws_state', undefined, 'budget')).rows[0].size);
+        await this.query("INSERT INTO br_wa_ws_budget(month) VALUES(date_trunc('month',now())::date) ON CONFLICT DO NOTHING", undefined, 'budget');
+        const budget = await this.query("SELECT bytes FROM br_wa_ws_budget WHERE month=date_trunc('month',now())::date FOR UPDATE", undefined, 'budget');
         if (size - Number(previous.rows[0]?.size || 0) + data.length > this.maxStoredBytes || Number(budget.rows[0].bytes) + data.length > this.maxMonthlyBytes) throw new Error('storage_limit');
         await this.query(`INSERT INTO br_wa_ws_state(id,payload) VALUES($1,$2)
-          ON CONFLICT(id) DO UPDATE SET payload=$2,updated_at=now()`, [id, data]);
-        await this.query("UPDATE br_wa_ws_budget SET bytes=bytes+$1 WHERE month=date_trunc('month',now())::date", [data.length]);
-        await this.query('COMMIT'); return true;
+          ON CONFLICT(id) DO UPDATE SET payload=$2,updated_at=now()`, [id, data], 'save');
+        await this.query("UPDATE br_wa_ws_budget SET bytes=bytes+$1 WHERE month=date_trunc('month',now())::date", [data.length], 'budget');
+        await this.query('COMMIT', undefined, 'commit'); return true;
       } catch (error) { await this.db.query('ROLLBACK').catch(() => {}); throw error; }
     });
   }
@@ -107,7 +127,7 @@ export class PostgresStore {
     const patterns = groupIds.map(groupId => `inbox:${createHash('sha256').update(groupId).digest('hex')}:%`);
     const rows = await this.serial(async () => this.query(
       "SELECT id,payload FROM br_wa_ws_state WHERE id LIKE ANY($1::text[]) OR id ~ '^inbox:[a-f0-9]{64}$' ORDER BY updated_at DESC LIMIT $2",
-      [patterns, Math.max(1, Math.min(100, Number(limit) || 100))]
+      [patterns, Math.max(1, Math.min(100, Number(limit) || 100))], 'list'
     ));
     const allowed = new Set(groupIds);
     return rows.rows.map(row => this.crypt.open(row.payload, row.id)).filter(item => allowed.has(item.groupId));

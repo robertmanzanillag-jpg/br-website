@@ -1,6 +1,6 @@
 import pg from 'pg';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
-import { PostgresStore } from './store.mjs';
+import { PostgresStore, isTransientDatabaseError, safeDatabaseDiagnostic } from './store.mjs';
 import { WebSocketReader } from './reader.mjs';
 import QRCode from 'qrcode';
 import { readFileSync } from 'node:fs';
@@ -68,10 +68,16 @@ export async function createProductionReader({ databaseUrl, encryptionKey, legac
     await db.connect();
   } catch (error) {
     await db.end().catch(() => {});
-    throw error;
+    const diagnostic = safeDatabaseDiagnostic(error, 'connect');
+    throw Object.assign(new Error(isTransientDatabaseError(error) ? 'database_unavailable' : 'storage_operation_failed'), { diagnostic });
   }
   const reader = new WebSocketReader({ store });
-  db.on('error', () => { void reader.stop('database_unavailable'); });
+  store.onStorageFailure = diagnostic => reader.recordStorageFailure(diagnostic);
+  db.on('error', error => {
+    const diagnostic = safeDatabaseDiagnostic(error, 'connect');
+    reader.recordStorageFailure(diagnostic);
+    void reader.stop(isTransientDatabaseError(error) ? 'database_unavailable' : 'processing_failed');
+  });
   return {
     reader,
     async shutdown() { await reader.stop(); await db.end(); },

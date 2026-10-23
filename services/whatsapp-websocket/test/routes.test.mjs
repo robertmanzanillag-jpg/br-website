@@ -12,7 +12,7 @@ test('owner-only QR, CSRF and streamed state work behind real compression', asyn
   // Test fixture only; production receives its existing session, never this route.
   app.post('/test-session', (req, res) => { req.session.user = { id: req.body.id }; res.sendStatus(204); });
   const reader = new EventEmitter(); let started = 0;
-  reader.snapshot = () => ({ state: 'stopped' }); reader.pairingQr = () => 'test-sensitive-qr';
+  reader.snapshot = () => ({ state: 'stopped', received: 4, saved: 2, discarded: 2, lastConnectionAt: '2026-01-01T00:00:00.000Z', storageFailure: { code: '08006', operation: 'save' } }); reader.pairingQr = () => 'test-sensitive-qr';
   reader.start = async () => { started++; }; reader.stop = async () => {};
   reader.listInbox = async () => ({ items: [{ group: 'SPACE TABLES', text: 'test-only' }], truncated: false });
   mountOwnerRoutes(app, reader, { isOwner: user => user?.id === 'owner' });
@@ -28,7 +28,10 @@ test('owner-only QR, CSRF and streamed state work behind real compression', asyn
     const cookie = login.headers.get('set-cookie').split(';')[0];
     const status = await fetch(`${endpoint}/status`, { headers: { cookie } });
     assert.match(status.headers.get('cache-control'), /no-store/);
-    const { csrf } = await status.json();
+    const statusData = await status.json();
+    const { csrf } = statusData;
+    assert.equal(statusData.storageFailure.code, '08006');
+    assert.equal(JSON.stringify(statusData).includes('sensitive SQL'), false);
     const inbox = await fetch(`${endpoint}/inbox`, { headers: { cookie } });
     assert.match(inbox.headers.get('cache-control'), /no-store/);
     assert.deepEqual((await inbox.json()).items.map(item => item.group), ['SPACE TABLES']);
@@ -40,7 +43,7 @@ test('owner-only QR, CSRF and streamed state work behind real compression', asyn
     assert.match(svg.headers.get('cache-control'), /no-store/);
     assert.match(await svg.text(), /<svg/);
     const panel = await (await fetch(`${endpoint}/panel`, { headers: { cookie } })).text();
-    assert.match(panel, /WhatsApp en la nube/); assert.equal(panel.includes('__API_PREFIX__'), false);
+    assert.match(panel, /WhatsApp en la nube/); assert.match(panel, /Última conexión/); assert.match(panel, /descar.*data/); assert.equal(panel.includes('__API_PREFIX__'), false);
     const abort = new AbortController();
     const stream = await fetch(`${endpoint}/events`, { headers: { cookie, 'Accept-Encoding': 'gzip' }, signal: abort.signal });
     const output = stream.body.getReader();

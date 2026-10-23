@@ -1,6 +1,7 @@
 import makeWASocket, { initAuthCreds, proto, normalizeMessageContent, downloadMediaMessage, DisconnectReason } from './baileys-runtime.mjs';
 import pino from 'pino';
 import { EventEmitter } from 'node:events';
+import { safeDatabaseDiagnostic } from './store.mjs';
 
 export const GROUP_NAMES = Object.freeze(['Promoters 🖤👾🖤', 'LIV MIAMI', 'SPACE TABLES', 'STUDIO 60 PROMO']);
 const GROUP_ID = /^\d+(?:-\d+)?@g\.us$/;
@@ -64,12 +65,23 @@ export class WebSocketReader extends EventEmitter {
     this.delays = reconnectDelays; this.attempt = 0; this.generation = 0;
     this.active = false; this.ready = false; this.pending = 0; this.queue = Promise.resolve();
     this.validationQueue = [];
-    this.status = { state: 'stopped', processed: 0, historyCoverage: 'awaiting_recent', historySaved: 0, groups: [] };
+    this.status = {
+      state: 'stopped', processed: 0, received: 0, saved: 0, discarded: 0,
+      lastConnectionAt: null, lastIncomingAt: null, lastSavedAt: null,
+      storageFailure: null, storageFailureAt: null,
+      historyCoverage: 'awaiting_recent', historySaved: 0, groups: [],
+    };
   }
   snapshot() { return structuredClone(this.status); }
   report(state) {
     this.status = { ...this.status, state, at: new Date().toISOString() };
     this.emit('status', this.snapshot());
+  }
+  recordStorageFailure(detail) {
+    const diagnostic = safeDatabaseDiagnostic({ code: detail?.code }, detail?.operation);
+    this.status.storageFailure = diagnostic;
+    this.status.storageFailureAt = new Date().toISOString();
+    this.report(this.status.state);
   }
   async start() {
     if (this.active) return;
@@ -117,6 +129,7 @@ export class WebSocketReader extends EventEmitter {
       if (update.connection === 'open') safe(async () => {
         clearTimeout(this.connectTimer);
         this.qr = null;
+        this.status.lastConnectionAt = new Date().toISOString();
         const groups = resolveGroups(await socket.groupFetchAllParticipating(), this.pins);
         if (!current()) return;
         await this.store.save('groups', groups);
@@ -185,15 +198,23 @@ export class WebSocketReader extends EventEmitter {
     const key = message?.key;
     // Check source JID before reading the message body or touching an attachment.
     if (!current() || !key?.id || key.fromMe || !Object.values(this.pins || {}).includes(key.remoteJid)) return;
+    this.status.received++;
+    this.status.lastIncomingAt = new Date().toISOString();
     if (origin === 'history') this.status.historyCoverage = 'recent_received';
     if (!this.ready) {
       // During a reconnect, encrypted group pins let us safely hold only authorized
       // messages until the live metadata has revalidated those same identities.
       if (!this.pins || this.validationQueue.length >= 128) {
-        if (this.validationQueue.length >= 128) void this.stop('queue_limit');
+        if (this.validationQueue.length >= 128) {
+          this.status.discarded++;
+          this.report(this.status.state);
+          void this.stop('queue_limit');
+        }
+        this.report(this.status.state);
         return;
       }
       this.validationQueue.push({ message, origin: origin === 'history' ? 'history' : 'reconnect' });
+      this.report(this.status.state);
       return;
     }
     this.enqueue(message, current, origin);
@@ -202,17 +223,17 @@ export class WebSocketReader extends EventEmitter {
     const key = message?.key;
     // This gate runs BEFORE inspecting/decrypting application message bodies or downloading media.
     if (!this.ready || !key?.id || key.fromMe || !Object.values(this.pins || {}).includes(key.remoteJid)) return;
-    if (this.pending >= 128) { void this.stop('queue_limit'); return; }
+    if (this.pending >= 128) { this.status.discarded++; this.report(this.status.state); void this.stop('queue_limit'); return; }
     this.pending++;
     this.queue = this.queue.then(async () => {
       if (!current() || !this.ready) return;
-      if (containsPrivateView(message.message)) return;
+      if (containsPrivateView(message.message)) { this.status.discarded++; this.report(this.status.state); return; }
       const body = normalizeMessageContent(message.message);
-      if (!body) return;
+      if (!body) { this.status.discarded++; this.report(this.status.state); return; }
       // No view-once content, documents, audio, contacts, or location ingestion.
       const content = body.editedMessage?.message ? normalizeMessageContent(body.editedMessage.message) : body;
       const text = content?.conversation ?? content?.extendedTextMessage?.text ?? content?.imageMessage?.caption ?? '';
-      if (Buffer.byteLength(text) > MAX_TEXT) throw new Error('message_limit');
+      if (Buffer.byteLength(text) > MAX_TEXT) { this.status.discarded++; this.report(this.status.state); return; }
       let media = null;
       const image = content?.imageMessage;
       if (image && /^image\/(jpeg|png|webp)$/.test(image.mimetype || '')) {
@@ -233,14 +254,16 @@ export class WebSocketReader extends EventEmitter {
           } catch { media = { state: 'unavailable' }; }
         }
       }
-      if (!text && !image) return;
+      if (!text && !image) { this.status.discarded++; this.report(this.status.state); return; }
       const timestamp = Number(message.messageTimestamp);
       const inserted = await this.store.saveMessage({ groupId: key.remoteJid, id: key.id, text, media, origin,
         sentAt: Number.isSafeInteger(timestamp) && timestamp > 0 ? timestamp : null });
       if (inserted) {
         this.status.processed++;
+        this.status.saved++;
+        this.status.lastSavedAt = new Date().toISOString();
         if (origin === 'history') this.status.historySaved++;
-      }
+      } else this.status.discarded++;
       this.report('reading');
     }).catch(error => { void this.stop(error?.message === 'database_unavailable' ? 'database_unavailable' : 'processing_failed'); }).finally(() => { this.pending--; });
   }

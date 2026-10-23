@@ -5,7 +5,7 @@ import { Readable } from 'node:stream';
 import { randomBytes } from 'node:crypto';
 import { WebSocketReader, GROUP_NAMES, resolveGroups, encryptedAuth } from '../reader.mjs';
 import { proto } from '../baileys-runtime.mjs';
-import { codec, PostgresStore } from '../store.mjs';
+import { codec, PostgresStore, safeDatabaseDiagnostic } from '../store.mjs';
 import { PGlite } from '@electric-sql/pglite';
 
 const key = randomBytes(32).toString('base64');
@@ -25,6 +25,7 @@ function memory() {
 }
 async function fixture(options = {}) {
   const store = options.store || memory(); let config; const sockets = [];
+  const outbound = { messages: 0, receipts: 0, reactions: 0 };
   if (!options.store) await store.save('groups', resolveGroups(metadata));
   const reader = new WebSocketReader({ store, reconnectDelays: [1], ...options,
     socketFactory: value => {
@@ -32,15 +33,16 @@ async function fixture(options = {}) {
       const socket = { ev: new EventEmitter(), ended: false,
         groupFetchAllParticipating: options.groupFetchAllParticipating || (async () => metadata),
         end() { this.ended = true; },
-        sendMessage() { throw Error('outbound forbidden'); },
-        readMessages() { throw Error('read receipt forbidden'); },
+        sendMessage() { outbound.messages++; throw Error('outbound forbidden'); },
+        readMessages() { outbound.receipts++; throw Error('read receipt forbidden'); },
+        sendReaction() { outbound.reactions++; throw Error('reaction forbidden'); },
         sendPresenceUpdate() { throw Error('presence forbidden'); },
       };
       sockets.push(socket); return socket;
     },
   });
   await reader.start();
-  return { reader, store, sockets, config, async open() { sockets.at(-1).ev.emit('connection.update', { connection: 'open' }); await tick(); } };
+  return { reader, store, sockets, config, outbound, async open() { sockets.at(-1).ev.emit('connection.update', { connection: 'open' }); await tick(); } };
 }
 const msg = (jid = '100@g.us', text = 'VIP $200') => ({ key: { remoteJid: jid, id: 'm1', fromMe: false }, messageTimestamp: 100, message: { conversation: text } });
 
@@ -104,6 +106,29 @@ test('recent history filters unauthorized JIDs before body access and deduplicat
   assert.equal(inbox.items[0].group, GROUP_NAMES[0]);
   assert.equal(inbox.items[0].sourceId, 'm1');
   await f.reader.stop();
+});
+test('diagnostics count only authorized arrivals, saves and discards; outbound methods remain unused', async () => {
+  const f = await fixture(); await f.open();
+  const authorized = msg('100@g.us', 'VIP $200');
+  const viewOnce = { ...msg('100@g.us', 'private'), key: { ...msg().key, id: 'm2' },
+    message: { viewOnceMessage: { message: { conversation: 'private' } } } };
+  const unrelated = { key: { remoteJid: '999@g.us', id: 'other' }, get message() { throw Error('unapproved body read'); } };
+  f.sockets[0].ev.emit('messages.upsert', { messages: [authorized, { ...authorized }, viewOnce, unrelated] });
+  await f.reader.queue;
+  const state = f.reader.snapshot();
+  assert.equal(state.received, 3);
+  assert.equal(state.saved, 1);
+  assert.equal(state.discarded, 2);
+  assert.ok(state.lastConnectionAt && state.lastIncomingAt && state.lastSavedAt);
+  assert.deepEqual(f.outbound, { messages: 0, receipts: 0, reactions: 0 });
+  f.reader.recordStorageFailure({ code: '08006', operation: 'save' });
+  assert.deepEqual(f.reader.snapshot().storageFailure, { code: '08006', operation: 'save' });
+  assert.equal(JSON.stringify(f.reader.snapshot()).includes('SQL'), false);
+  await f.reader.stop();
+});
+test('storage diagnostics expose only allowlisted code and operation', () => {
+  assert.deepEqual(safeDatabaseDiagnostic({ code: '08006', message: 'password=private SELECT *' }, 'save'), { code: '08006', operation: 'save' });
+  assert.deepEqual(safeDatabaseDiagnostic({ code: 'PRIVATE_ERROR', message: 'sensitive SQL' }, 'raw query'), { code: 'unclassified', operation: 'query' });
 });
 test('authorized live and history messages wait in memory until reconnect group validation finishes', async () => {
   let completeGroups;

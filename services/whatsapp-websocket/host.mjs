@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { createProductionReader, mountOwnerRoutes } from './integration.mjs';
-import { isTransientDatabaseError } from './store.mjs';
+import { isTransientDatabaseError, safeDatabaseDiagnostic } from './store.mjs';
 
 export const isWhatsAppLinkOwner = user => typeof user?.email === 'string'
   && user.email.toLowerCase() === 'robert.manzanillag@gmail.com';
@@ -10,20 +10,44 @@ export const isWhatsAppLinkOwner = user => typeof user?.email === 'string'
 export class HostedReader extends EventEmitter {
   constructor(factory, { retryDelays = [5000, 15000, 30000, 60000, 120000, 300000] } = {}) {
     super(); this.factory = factory; this.resource = null; this.tail = Promise.resolve();
-    this.closed = false; this.state = { state: 'stopped', processed: 0, groups: [], historyCoverage: 'not_verified' };
+    this.closed = false; this.state = {
+      state: 'stopped', processed: 0, received: 0, saved: 0, discarded: 0, groups: [],
+      historyCoverage: 'not_verified', storageFailure: null,
+    };
     this.retryDelays = retryDelays; this.retryAttempt = 0; this.retryTimer = null; this.wanted = false; this.starting = null;
+    this.metricTotals = { received: 0, saved: 0, discarded: 0 };
+    this.resourceMetrics = { received: 0, saved: 0, discarded: 0 };
     this.forward = state => {
-      this.state = state;
-      if (state.state === 'reading') this.retryAttempt = 0;
+      for (const metric of Object.keys(this.metricTotals)) {
+        if (Number.isFinite(state[metric])) {
+          this.metricTotals[metric] += Math.max(0, state[metric] - this.resourceMetrics[metric]);
+          this.resourceMetrics[metric] = state[metric];
+        }
+      }
+      const previous = this.state;
+      this.state = { ...previous, ...state, ...this.metricTotals };
+      for (const field of ['lastConnectionAt', 'lastIncomingAt', 'lastSavedAt', 'storageFailure', 'storageFailureAt']) {
+        if (state[field] == null && previous[field] != null) this.state[field] = previous[field];
+      }
+      if (state.state === 'reading') {
+        this.retryAttempt = 0;
+        this.state.retryAt = null;
+        this.state.recoveryScheduledAt = null;
+      }
       const retryable = state.state === 'database_unavailable'
         || (state.state === 'startup_failed' && ['database_unavailable', 'reader_already_running'].includes(state.startupCode));
       if (this.wanted && !this.closed && retryable && !this.retryTimer) {
         const delay = this.retryDelays[Math.min(this.retryAttempt, this.retryDelays.length - 1)];
         this.retryAttempt++;
-        this.state = { ...state, recoveryAttempt: this.retryAttempt, retryAt: new Date(Date.now() + delay).toISOString() };
+        const now = new Date().toISOString();
+        this.state = { ...this.state, recoveryAttempt: this.retryAttempt, recoveryScheduledAt: now, retryAt: new Date(Date.now() + delay).toISOString() };
         this.retryTimer = setTimeout(() => {
           this.retryTimer = null;
-          if (this.wanted && !this.closed) void this.start();
+          if (this.wanted && !this.closed) {
+            this.state = { ...this.state, recoveryLastAttemptAt: new Date().toISOString(), retryAt: null };
+            this.emit('status', this.snapshot());
+            void this.start();
+          }
         }, delay);
         this.retryTimer.unref?.();
       }
@@ -59,6 +83,7 @@ export class HostedReader extends EventEmitter {
         if (!this.resource) {
           this.forward({ ...this.state, state: 'connecting' });
           this.resource = await this.factory();
+          this.resourceMetrics = { received: 0, saved: 0, discarded: 0 };
           this.resource.reader.on('status', this.forward);
         }
         await this.resource.reader.start();
@@ -70,7 +95,10 @@ export class HostedReader extends EventEmitter {
           ['invalid_encryption_key', 'encrypted_state_unreadable', 'reader_already_running', 'group_identity_unverified'].includes(error?.message)
             ? error.message : 'startup_failed'
         );
-        this.forward({ ...this.state, state: transient ? 'database_unavailable' : 'startup_failed', startupCode });
+        const storageFailure = error?.diagnostic
+          ? safeDatabaseDiagnostic({ code: error.diagnostic.code }, error.diagnostic.operation)
+          : this.state.storageFailure;
+        this.forward({ ...this.state, state: transient ? 'database_unavailable' : 'startup_failed', startupCode, storageFailure });
       }
     });
     this.starting = operation.finally(() => { this.starting = null; });
