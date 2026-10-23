@@ -27,10 +27,11 @@
   <main>
     <h1>Vinculación privada de WhatsApp</h1>
     <p>Esta pantalla solo está disponible con la sesión del propietario. Al iniciar, el servicio genera su propio QR; no usa ni copia la sesión de otro navegador.</p>
-    <p class="notice">Esta primera etapa solo vincula la cuenta y muestra el estado. No consulta chats ni mensajes, y no envía mensajes, respuestas ni reacciones. La sesión todavía no tiene respaldo persistente y puede perderse al reiniciar o publicar.</p>
+    <p class="notice">Esta etapa solo vincula la cuenta y respalda cifrada la sesión en el bucket privado ya contratado. No consulta chats ni mensajes, y no envía mensajes, respuestas ni reacciones. Si se alcanza un límite de almacenamiento o transferencia, el servicio se detiene; no se garantiza disponibilidad continua.</p>
     <div id="status" role="status" aria-live="polite">Comprobando estado…</div>
     <div id="qr-wrap"><img id="qr" alt="QR temporal del servicio WhatsApp de Black Room"></div>
     <p id="qr-help" class="small" hidden>Escanea este QR desde el teléfono del propietario. No compartas ni captures esta imagen.</p>
+    <p id="usage" class="small">Límites: hasta 256 MiB almacenados y 10 GiB transferidos al mes; el lector se detiene antes de excederlos.</p>
     <div class="actions">
       <button id="start">Iniciar vinculación</button>
       <button id="stop" class="secondary" hidden>Detener</button>
@@ -46,9 +47,8 @@
     const stopButton = document.getElementById('stop');
     const errorNode = document.getElementById('error');
     let csrfToken = '';
-    let polling = true;
-
     const labels = {
+      storage_unconfigured: 'Falta la clave dedicada de cifrado; el servicio no puede vincularse',
       idle: 'Desconectado · vinculación no iniciada',
       connecting: 'Iniciando el servicio…',
       qr_required: 'Esperando el escaneo del QR',
@@ -58,8 +58,17 @@
       disconnected: 'Desconectado',
       expired: 'QR vencido; inicia una nueva vinculación',
       stopped: 'Vinculación detenida',
+      budget_stopped: 'Detenido: se alcanzó un límite de almacenamiento o transferencia',
+      backup_failed: 'Detenido: no se pudo guardar un respaldo seguro',
+      backup_corrupt: 'Detenido: el respaldo está dañado y no se abrirá',
       error: 'No se pudo iniciar el servicio'
     };
+
+    function formatBytes(value) {
+      if (!value) return '0 MiB';
+      if (value >= 1024 ** 3) return `${(value / 1024 ** 3).toFixed(2)} GiB`;
+      return `${(value / 1024 ** 2).toFixed(0)} MiB`;
+    }
 
     function render(data) {
       statusNode.textContent = labels[data.state] || 'Estado no disponible';
@@ -67,10 +76,15 @@
       qrWrap.style.display = showQr ? 'block' : 'none';
       qrHelp.hidden = !showQr;
       qrImage.src = showQr ? data.qrDataUrl : '';
-      startButton.disabled = ['connecting', 'qr_required', 'authenticated', 'connected'].includes(data.state);
+      startButton.disabled = data.persistence === 'key-required'
+        || ['connecting', 'qr_required', 'authenticated', 'connected', 'budget_stopped', 'backup_failed', 'backup_corrupt'].includes(data.state);
       stopButton.hidden = !['connecting', 'qr_required', 'authenticated', 'connected'].includes(data.state);
       errorNode.hidden = true;
       csrfToken = data.csrfToken || csrfToken;
+      if (data.usage) {
+        document.getElementById('usage').textContent =
+          `Respaldo cada ${data.usage.backupIntervalHours} h · transferencia mensual ${formatBytes(data.usage.transferBytes)} / ${formatBytes(data.usage.transferLimitBytes)} · sesión ${formatBytes(data.usage.storedBytes)} / ${formatBytes(data.usage.maxSessionBytes)}.`;
+      }
     }
 
     async function refresh() {
@@ -113,7 +127,12 @@
     startButton.addEventListener('click', () => post('start'));
     stopButton.addEventListener('click', () => post('stop'));
     refresh();
-    const timer = setInterval(() => { if (polling) refresh(); else clearInterval(timer); }, 2000);
+    const updates = new EventSource('/api/admin/whatsapp-link/events', { withCredentials: true });
+    updates.onmessage = event => render(JSON.parse(event.data));
+    updates.onerror = () => {
+      updates.close();
+      statusNode.textContent = 'Se perdió el canal de estado. Recarga la página para volver a conectar.';
+    };
   </script>
 </body>
 </html>

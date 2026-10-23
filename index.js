@@ -181,7 +181,11 @@ const usersFile = path.join(__dirname, "db/users.json");
 import registerRouter from './routes/register.js';
 import loginRouter from './routes/login.js';
 import logoutRouter from './routes/logout.js';
-import { whatsAppLinkApiRouter, whatsAppLinkPageRouter } from './routes/whatsapp-link.js';
+import {
+  shutdownWhatsAppLinkService,
+  whatsAppLinkApiRouter,
+  whatsAppLinkPageRouter
+} from './routes/whatsapp-link.js';
 import profileRouter from './routes/profile.js';
 import likesRouter from './routes/likes.js';
 import ordersRouter from './routes/orders.js';
@@ -6266,6 +6270,25 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server ready for external connections`);
   console.log(`⚡ Server listening successfully at ${new Date().toISOString()}`);
 });
+
+async function stopWhatsAppBeforeExit(signal) {
+  console.log(`🛑 ${signal}: saving the private WhatsApp session before shutdown`);
+  const deadline = setTimeout(() => process.exit(1), 20_000);
+  deadline.unref?.();
+  try {
+    await shutdownWhatsAppLinkService();
+  } catch {
+    console.error('⚠️ WhatsApp session backup could not finish before shutdown');
+  } finally {
+    server.close(() => {
+      clearTimeout(deadline);
+      process.exit(0);
+    });
+  }
+}
+
+process.once('SIGTERM', () => { void stopWhatsAppBeforeExit('SIGTERM'); });
+process.once('SIGINT', () => { void stopWhatsAppBeforeExit('SIGINT'); });
 
 server.on('error', (error) => {
   console.error('❌ Server error:', error);

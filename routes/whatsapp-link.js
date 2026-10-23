@@ -1,10 +1,13 @@
 import express from 'express';
 import os from 'node:os';
 import path from 'node:path';
+import fs from 'node:fs/promises';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import QRCode from 'qrcode';
 import whatsapp from 'whatsapp-web.js';
+import { Client as StorageClient } from '@replit/object-storage';
+import { WhatsAppRemoteSessionStore, WhatsAppStoreError } from '../services/whatsapp-reader/session-store.js';
 
 const OWNER_EMAIL = 'robert.manzanillag@gmail.com';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -12,6 +15,22 @@ const PAGE_PATH = path.join(__dirname, '../private/whatsapp-link.html');
 const SESSION_PATH = process.env.BLACKROOM_WHATSAPP_SESSION_DIR
   || path.join(os.tmpdir(), 'blackroom-whatsapp-link');
 const QR_LIFETIME_MS = 5 * 60 * 1000;
+const SESSION_BACKUP_INTERVAL_MS = 6 * 60 * 60 * 1000;
+
+class GuardedRemoteAuth extends whatsapp.RemoteAuth {
+  constructor(options, onFailure) {
+    super(options);
+    this.onFailure = onFailure;
+    this.syncPromise = Promise.resolve();
+  }
+
+  async storeRemoteSession(options) {
+    const sync = () => super.storeRemoteSession(options).catch(error => this.onFailure(error));
+    const pending = this.syncPromise.then(sync, sync);
+    this.syncPromise = pending.then(() => undefined, () => undefined);
+    return pending;
+  }
+}
 
 export function isWhatsAppLinkOwner(user) {
   return typeof user?.email === 'string'
@@ -42,25 +61,40 @@ function safeTokenEquals(expected, actual) {
 }
 
 export class WhatsAppLinkController {
-  constructor({ clientFactory, qrEncoder = QRCode.toDataURL, qrLifetimeMs = QR_LIFETIME_MS }) {
-    this.clientFactory = clientFactory || (() => new whatsapp.Client({
-      authStrategy: new whatsapp.LocalAuth({
-        clientId: 'blackroom-owner-link',
-        dataPath: SESSION_PATH
-      }),
-      puppeteer: {
-        headless: true,
-        args: ['--disable-dev-shm-usage']
-      }
-    }));
+  constructor({ clientFactory, sessionStore, storage, encryptionKey, qrEncoder = QRCode.toDataURL, qrLifetimeMs = QR_LIFETIME_MS }) {
     this.qrEncoder = qrEncoder;
     this.qrLifetimeMs = qrLifetimeMs;
     this.client = null;
+    this.authStrategy = null;
     this.qrTimer = null;
     this.generation = 0;
     this.state = 'idle';
     this.qrDataUrl = null;
     this.updatedAt = new Date().toISOString();
+    this.listeners = new Set();
+    this.sessionStore = sessionStore || new WhatsAppRemoteSessionStore({
+      storage: storage || new StorageClient(),
+      encryptionKey,
+      dataPath: SESSION_PATH,
+      onLimit: error => this.handleStoreFailure(error)
+    });
+    if (!clientFactory && !this.sessionStore.isConfigured) this.state = 'storage_unconfigured';
+    this.clientFactory = clientFactory || (() => {
+      this.authStrategy = new GuardedRemoteAuth({
+        clientId: 'blackroom-owner-link',
+        dataPath: SESSION_PATH,
+        store: this.sessionStore,
+        backupSyncIntervalMs: SESSION_BACKUP_INTERVAL_MS
+      }, error => this.handleStoreFailure(error));
+      return new whatsapp.Client({
+        authStrategy: this.authStrategy,
+        puppeteer: {
+          headless: true,
+          args: ['--disable-dev-shm-usage']
+        }
+      });
+    });
+    this.usesProductionFactory = !clientFactory;
   }
 
   snapshot() {
@@ -68,7 +102,8 @@ export class WhatsAppLinkController {
       state: this.state,
       qrDataUrl: this.qrDataUrl,
       updatedAt: this.updatedAt,
-      persistence: 'temporary-session'
+      persistence: this.sessionStore.isConfigured ? 'encrypted-object-storage' : 'key-required',
+      usage: this.sessionStore.snapshot()
     };
   }
 
@@ -76,6 +111,12 @@ export class WhatsAppLinkController {
     this.state = state;
     this.qrDataUrl = qrDataUrl;
     this.updatedAt = new Date().toISOString();
+    for (const listener of this.listeners) listener(this.snapshot());
+  }
+
+  subscribe(listener) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
   }
 
   clearQrTimer() {
@@ -93,10 +134,15 @@ export class WhatsAppLinkController {
 
   async start() {
     if (this.client) return this.snapshot();
+    if (this.usesProductionFactory && !this.sessionStore.isConfigured) {
+      this.setState('storage_unconfigured');
+      return this.snapshot();
+    }
 
     const generation = ++this.generation;
     let client;
     try {
+      await fs.mkdir(SESSION_PATH, { recursive: true, mode: 0o700 });
       client = this.clientFactory();
     } catch {
       this.setState('error');
@@ -143,7 +189,14 @@ export class WhatsAppLinkController {
     // No chat/message listeners or outbound operations are registered here.
     void Promise.resolve()
       .then(() => client.initialize())
-      .catch(() => this.finishClient(client, generation, 'error'));
+      .catch(error => {
+        const state = error?.code === 'WA_BACKUP_CORRUPT' || error?.code === 'WA_METER_CORRUPT'
+          ? 'backup_corrupt'
+          : error?.code === 'WA_BUDGET_LIMIT' || error?.code === 'WA_STORAGE_LIMIT'
+            ? 'budget_stopped'
+            : 'error';
+        this.finishClient(client, generation, state);
+      });
     return this.snapshot();
   }
 
@@ -155,8 +208,22 @@ export class WhatsAppLinkController {
     void client.destroy().catch(() => {});
   }
 
-  async stop() {
+  handleStoreFailure(error) {
+    const state = error?.code === 'WA_BUDGET_LIMIT' || error?.code === 'WA_STORAGE_LIMIT'
+      ? 'budget_stopped'
+      : 'backup_failed';
     const client = this.client;
+    const generation = this.generation;
+    if (client) this.finishClient(client, generation, state);
+    else this.setState(state);
+  }
+
+  async stop({ backup = true } = {}) {
+    const client = this.client;
+    if (client && backup && this.state === 'connected' && this.authStrategy?.storeRemoteSession) {
+      await this.authStrategy.storeRemoteSession();
+    }
+    if (client !== this.client) return this.snapshot();
     this.generation++;
     this.client = null;
     this.clearQrTimer();
@@ -169,6 +236,10 @@ export class WhatsAppLinkController {
       }
     }
     return this.snapshot();
+  }
+
+  async shutdownForRestart() {
+    return this.stop({ backup: true });
   }
 }
 
@@ -183,10 +254,29 @@ export function createWhatsAppLinkSystem(options = {}) {
   });
 
   apiRouter.get('/status', ownerOnly, (req, res) => {
-    if (!req.session.whatsAppLinkCsrf) {
-      req.session.whatsAppLinkCsrf = randomBytes(32).toString('base64url');
-    }
+    ensureCsrf(req);
     res.json({ ...controller.snapshot(), csrfToken: req.session.whatsAppLinkCsrf });
+  });
+
+  apiRouter.get('/events', ownerOnly, (req, res) => {
+    ensureCsrf(req);
+    res.status(200).set({
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no'
+    });
+    res.flushHeaders?.();
+    const send = snapshot => {
+      res.write(`data: ${JSON.stringify({ ...snapshot, csrfToken: req.session.whatsAppLinkCsrf })}\n\n`);
+    };
+    send(controller.snapshot());
+    const unsubscribe = controller.subscribe(send);
+    const heartbeat = setInterval(() => res.write(': keep-alive\n\n'), 30_000);
+    heartbeat.unref?.();
+    req.on('close', () => {
+      clearInterval(heartbeat);
+      unsubscribe();
+    });
   });
 
   apiRouter.post('/start', ownerOnly, async (req, res) => {
@@ -206,6 +296,13 @@ export function createWhatsAppLinkSystem(options = {}) {
   return { pageRouter, apiRouter, controller };
 }
 
+function ensureCsrf(req) {
+  if (!req.session.whatsAppLinkCsrf) {
+    req.session.whatsAppLinkCsrf = randomBytes(32).toString('base64url');
+  }
+}
+
 const whatsAppLinkSystem = createWhatsAppLinkSystem();
 export const whatsAppLinkPageRouter = whatsAppLinkSystem.pageRouter;
 export const whatsAppLinkApiRouter = whatsAppLinkSystem.apiRouter;
+export const shutdownWhatsAppLinkService = () => whatsAppLinkSystem.controller.shutdownForRestart();
