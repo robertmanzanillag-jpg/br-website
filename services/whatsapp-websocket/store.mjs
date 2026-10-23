@@ -1,0 +1,86 @@
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
+import { BufferJSON } from '@whiskeysockets/baileys';
+
+export function codec(base64Key) {
+  if (!/^[A-Za-z0-9+/]{43}=$/.test(base64Key || '')) throw new Error('invalid_encryption_key');
+  const key = Buffer.from(base64Key, 'base64');
+  return {
+    seal(value, context) {
+      const iv = randomBytes(12);
+      const cipher = createCipheriv('aes-256-gcm', key, iv);
+      cipher.setAAD(Buffer.from(context));
+      const payload = Buffer.from(JSON.stringify(value, BufferJSON.replacer));
+      if (payload.length > 8 * 1024 * 1024) throw new Error('record_limit');
+      return Buffer.concat([iv, cipher.update(payload), cipher.final(), cipher.getAuthTag()]);
+    },
+    open(data, context) {
+      try {
+        const bytes = Buffer.from(data);
+        const decipher = createDecipheriv('aes-256-gcm', key, bytes.subarray(0, 12));
+        decipher.setAAD(Buffer.from(context));
+        decipher.setAuthTag(bytes.subarray(-16));
+        return JSON.parse(Buffer.concat([decipher.update(bytes.subarray(12, -16)), decipher.final()]).toString(), BufferJSON.reviver);
+      } catch { throw new Error('encrypted_state_unreadable'); }
+    },
+  };
+}
+
+// One dedicated pg Client owns the lease. Callers must not give this client to
+// unrelated queries; transactions and the advisory lock belong to this reader.
+export class PostgresStore {
+  constructor(client, key, { maxStoredBytes = 128 * 1024 * 1024, maxMonthlyBytes = 5 * 1024 ** 3 } = {}) {
+    this.db = client; this.crypt = codec(key);
+    this.maxStoredBytes = maxStoredBytes; this.maxMonthlyBytes = maxMonthlyBytes;
+    this.tail = Promise.resolve(); this.locked = false;
+  }
+  async acquire() {
+    const result = await this.db.query('SELECT pg_try_advisory_lock(1263488831,20261024) AS acquired');
+    if (!result.rows[0]?.acquired) throw new Error('reader_already_running');
+    this.locked = true;
+    await this.db.query(`CREATE TABLE IF NOT EXISTS br_wa_ws_state (
+      id text PRIMARY KEY, payload bytea NOT NULL, updated_at timestamptz NOT NULL DEFAULT now());
+      CREATE TABLE IF NOT EXISTS br_wa_ws_budget (
+      month date PRIMARY KEY, bytes bigint NOT NULL DEFAULT 0);`);
+  }
+  serial(task) {
+    const next = this.tail.then(task);
+    this.tail = next.catch(() => {});
+    return next;
+  }
+  async load(id) {
+    if (!this.locked) throw new Error('lease_required');
+    return this.serial(async () => {
+      const result = await this.db.query('SELECT payload FROM br_wa_ws_state WHERE id=$1', [id]);
+      return result.rows.length ? this.crypt.open(result.rows[0].payload, id) : null;
+    });
+  }
+  async save(id, value, { insertOnly = false } = {}) {
+    if (!this.locked) throw new Error('lease_required');
+    const data = this.crypt.seal(value, id);
+    return this.serial(async () => {
+      await this.db.query('BEGIN');
+      try {
+        const previous = await this.db.query('SELECT octet_length(payload) AS size FROM br_wa_ws_state WHERE id=$1', [id]);
+        if (insertOnly && previous.rows.length) { await this.db.query('COMMIT'); return false; }
+        const size = Number((await this.db.query('SELECT COALESCE(sum(octet_length(payload)),0) AS size FROM br_wa_ws_state')).rows[0].size);
+        await this.db.query("INSERT INTO br_wa_ws_budget(month) VALUES(date_trunc('month',now())::date) ON CONFLICT DO NOTHING");
+        const budget = await this.db.query("SELECT bytes FROM br_wa_ws_budget WHERE month=date_trunc('month',now())::date FOR UPDATE");
+        if (size - Number(previous.rows[0]?.size || 0) + data.length > this.maxStoredBytes || Number(budget.rows[0].bytes) + data.length > this.maxMonthlyBytes) throw new Error('storage_limit');
+        await this.db.query(`INSERT INTO br_wa_ws_state(id,payload) VALUES($1,$2)
+          ON CONFLICT(id) DO UPDATE SET payload=$2,updated_at=now()`, [id, data]);
+        await this.db.query("UPDATE br_wa_ws_budget SET bytes=bytes+$1 WHERE month=date_trunc('month',now())::date", [data.length]);
+        await this.db.query('COMMIT'); return true;
+      } catch (error) { await this.db.query('ROLLBACK'); throw error; }
+    });
+  }
+  saveMessage(message) {
+    const revision = createHash('sha256').update(JSON.stringify([message.text, message.media])).digest('hex');
+    const id = createHash('sha256').update(`${message.groupId}:${message.id}:${revision}`).digest('hex');
+    return this.save(`inbox:${id}`, { ...message, revision, state: 'pending_review' }, { insertOnly: true });
+  }
+  async release() {
+    await this.tail;
+    if (this.locked) await this.db.query('SELECT pg_advisory_unlock(1263488831,20261024)');
+    this.locked = false;
+  }
+}
