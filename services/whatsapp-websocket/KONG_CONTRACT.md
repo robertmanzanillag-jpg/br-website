@@ -1,0 +1,9 @@
+# KONG receiver contract verified from KONG source documentation
+Destination: https://kongnightlife.com/api/integrations/black-room/table-price-updates
+POST UTF-8 JSON. Dedicated shared secret env BLACK_ROOM_TABLE_READER_HMAC_SECRET (minimum 32 characters, no surrounding whitespace); never use personal/admin/VIP refresh tokens. Do not log or expose this secret.
+Headers: X-Kong-BlackRoom-Timestamp = Unix seconds (10 digits, +/- 5 minutes); X-Kong-BlackRoom-Signature = sha256= + HMAC-SHA256 hex of exact timestamp + '.' + raw JSON bytes. Content-Type application/json. Maximum body 128 KiB.
+Payload keys: sourceGroup, sourceMessageId, sourceTimestamp (ISO), venueName, eventDate (YYYY-MM-DD local event date), tableType, priceKind ('minimum_spend'), minimumSpend (decimal string), currency (3 letters), minimumSpendDisplay, conditions, evidenceExcerpt.
+Allowed exact group names: Promoters 🖤👾🖤; LIV MIAMI; SPACE TABLES; STUDIO 60 PROMO. Sender must validate pinned actual group ID before any processing.
+Missing/ambiguous fields must remain missing and pending; never infer a price from a ticket or guess dates/conditions. Preserve original evidence. Receipt ID is idempotent per sourceGroup+sourceMessageId; differing content for same ID is a conflict. Older than 7 days is pending. Multiple table quotations in same message need stable per-item identity retaining original message reference.
+Responses: 200 status applied/duplicate; 202 status pending with reason; 401 invalid signature;403 forbidden group;503 integration_disabled if secret missing. 202 is persisted review evidence, not a published price. No automated sends into WhatsApp under any circumstances.
+Receiver implementation is not yet published or configured. Do not transmit until explicit host configuration is ready; tests use synthetic local fixtures only.
