@@ -1,3 +1,4 @@
 - [Gallery duplicate evidence](gallery-curation.md) — repeated filenames can be different shots; hide only confirmed duplicates and preserve source links.
 - [WhatsApp event approval](whatsapp-event-approval.md) — never write production event or price changes from WhatsApp until the exact event match is verified.
 - [WhatsApp sync scope](whatsapp-account-sync-scope.md) — account-wide Web sync is owner-authorized; KONG processing stays limited to the four exact approved groups.
+- [WhatsApp Chromium runtime](whatsapp-chromium-runtime.md) — use Replit's system Chromium on `PATH`; Puppeteer's bundled browser may lack VM shared libraries.

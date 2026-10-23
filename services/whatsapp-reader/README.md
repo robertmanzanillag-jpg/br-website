@@ -10,6 +10,7 @@ The exact metadata resolver accepts only the four approved visible names, report
 
 ## Encryption and recovery
 
+- Browser startup uses the Replit-provided system Chromium found on `PATH`. Puppeteer's downloaded browser can fail in the VM image when a shared library such as `libgbm.so.1` is unavailable; do not silently fall back to it.
 - The service uses `RemoteAuth` with the project's existing private App Storage bucket.
 - The remote Chromium profile archive is encrypted with AES-256-GCM before upload. The required key is a dedicated Replit Secret named `WHATSAPP_SESSION_ENCRYPTION_KEY`: exactly 32 random bytes encoded as base64. It must not reuse `SESSION_SECRET`, API keys, or another purpose's secret.
 - A valid prior backup is restored before Chromium starts. Missing/corrupt meter data, a missing archive that the meter says exists, an invalid authentication tag, or an unavailable storage service fails closed; it does not silently create a replacement linked session.

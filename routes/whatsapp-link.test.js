@@ -258,6 +258,31 @@ test('a dropped linked client performs a bounded encrypted-session reconnect att
   await system.controller.stop({ backup: false });
 });
 
+test('initialization errors expose only a sanitized stage and cause', async () => {
+  const system = createWhatsAppLinkSystem({
+    sessionStore: {
+      isConfigured: true,
+      snapshot: () => ({ transferBytes: 0 })
+    },
+    clientFactory: () => {
+      const client = new FakeClient();
+      client.initialize = async () => {
+        throw new Error('libgbm.so.1 missing; private-token-value');
+      };
+      return client;
+    }
+  });
+  await system.controller.start();
+  await new Promise(resolve => setTimeout(resolve, 0));
+  const snapshot = system.controller.snapshot();
+  assert.equal(snapshot.state, 'error');
+  assert.deepEqual(snapshot.diagnostics, {
+    stage: 'initializing_whatsapp',
+    cause: 'CHROMIUM_MISSING_LIBRARY'
+  });
+  assert.equal(JSON.stringify(snapshot).includes('private-token-value'), false);
+});
+
 test('a WhatsApp disconnection is visible and does not start a message reader', async () => {
   const client = new FakeClient();
   const system = createWhatsAppLinkSystem({
