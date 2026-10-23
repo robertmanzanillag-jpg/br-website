@@ -54,6 +54,7 @@ name = "nss"
 name = "nspr"
 
 [deployment]
+build = ["sh", "-c", "npm ci --prefix services/whatsapp-websocket --omit=dev --ignore-scripts --no-audit --no-fund"]
 run = ["node", "index.js"]
 deploymentTarget = "gce"
 
