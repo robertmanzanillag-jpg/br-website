@@ -122,6 +122,8 @@
       WA_CHROMIUM_NOT_FOUND: 'no se encontró Chromium del sistema',
       CHROMIUM_MISSING_LIBRARY: 'Chromium no puede cargar una biblioteca del sistema',
       CHROMIUM_SANDBOX_FAILURE: 'Chromium no pudo iniciar su aislamiento',
+      CHROMIUM_PROCESS_EXITED: 'el proceso Chromium terminó antes de completar la carga',
+      CHROMIUM_PROCESS_SIGNALED: 'el proceso Chromium fue detenido por una señal del sistema',
       CHROMIUM_NOT_FOUND: 'no se encontró el ejecutable de Chromium',
       WHATSAPP_START_TIMEOUT: 'se agotó el tiempo de inicialización',
       WHATSAPP_AUTH_FAILED: 'WhatsApp Web rechazó la autenticación',
@@ -144,7 +146,14 @@
       statusNode.textContent = labels[data.state] || 'Estado no disponible';
       const stage = stageLabels[data.diagnostics?.stage] || 'etapa no clasificada';
       const cause = causeLabels[data.diagnostics?.cause];
-      diagnosticsNode.textContent = `Diagnóstico: ${stage}${cause ? ` · ${cause}` : ''}`;
+      const processDetails = Number.isInteger(data.diagnostics?.processExitCode)
+        ? ` · código de salida ${data.diagnostics.processExitCode}`
+        : data.diagnostics?.processExitSignal
+          ? ` · señal ${data.diagnostics.processExitSignal}` : '';
+      const processObservation = data.diagnostics?.processObservation === 'browser_handle_not_returned'
+        ? ' · Puppeteer no devolvió un navegador antes del límite; no se observó estado de proceso'
+        : '';
+      diagnosticsNode.textContent = `Diagnóstico: ${stage}${cause ? ` · ${cause}` : ''}${processDetails}${processObservation}`;
       diagnosticTimes = {
         startedAt: data.diagnostics?.startedAt || null,
         stageStartedAt: data.diagnostics?.stageStartedAt || null

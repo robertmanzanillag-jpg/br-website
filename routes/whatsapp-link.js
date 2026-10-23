@@ -39,10 +39,15 @@ const SAFE_DIAGNOSTIC_CAUSES = new Set([
   'WA_BUDGET_LIMIT', 'WA_STORAGE_LIMIT', 'WA_STORAGE_ERROR', 'WA_READER_STATE_INVALID',
   'WA_STORAGE_TIMEOUT', 'CHROMIUM_LAUNCH_TIMEOUT', 'WHATSAPP_WEB_LOAD_TIMEOUT', 'QR_WAIT_TIMEOUT',
   'WA_CHROMIUM_NOT_FOUND', 'CHROMIUM_MISSING_LIBRARY', 'CHROMIUM_SANDBOX_FAILURE',
+  'CHROMIUM_PROCESS_EXITED', 'CHROMIUM_PROCESS_SIGNALED',
   'CHROMIUM_NOT_FOUND', 'WHATSAPP_START_TIMEOUT', 'WHATSAPP_WEB_UNREACHABLE',
   'WHATSAPP_START_FAILED', 'WHATSAPP_AUTH_FAILED', 'WHATSAPP_DISCONNECTED',
   'QR_ENCODING_FAILED', 'QR_EXPIRED', 'groups_missing_or_duplicated',
   'group_reader_start_failed', 'budget_stopped'
+]);
+const SAFE_PROCESS_SIGNALS = new Set([
+  'SIGABRT', 'SIGBUS', 'SIGFPE', 'SIGHUP', 'SIGILL', 'SIGINT', 'SIGKILL',
+  'SIGPIPE', 'SIGQUIT', 'SIGSEGV', 'SIGTERM', 'SIGTRAP', 'SIGUSR1', 'SIGUSR2'
 ]);
 
 class GuardedRemoteAuth extends whatsapp.RemoteAuth {
@@ -321,6 +326,31 @@ export class WhatsAppLinkController {
           if (value) {
             if (this.client === client && this.generation === generation) {
               this.setDiagnostic('loading_whatsapp_web');
+              try {
+                const child = value.process?.();
+                if (child) {
+                  child.once('error', error => {
+                    if (this.client !== client || this.generation !== generation
+                        || !['connecting', 'authenticated'].includes(this.state)) return;
+                    this.finishClient(client, generation, 'error', {
+                      stage: this.diagnostics.stage,
+                      cause: classifyWhatsAppStartupFailure(error)
+                    });
+                  });
+                  child.once('exit', (code, signal) => {
+                    if (this.client !== client || this.generation !== generation
+                        || !['connecting', 'authenticated'].includes(this.state)) return;
+                    this.finishClient(client, generation, 'error', {
+                      stage: this.diagnostics.stage,
+                      cause: signal ? 'CHROMIUM_PROCESS_SIGNALED' : 'CHROMIUM_PROCESS_EXITED',
+                      processExitCode: Number.isInteger(code) && code >= 0 && code <= 255 ? code : null,
+                      processExitSignal: SAFE_PROCESS_SIGNALS.has(signal) ? signal : null
+                    });
+                  });
+                }
+              } catch {
+                // Process diagnostics are best-effort and never expose raw browser errors.
+              }
             } else {
               void Promise.resolve(value.close?.()).catch(() => {});
             }
@@ -433,6 +463,16 @@ export class WhatsAppLinkController {
       startedAt: this.diagnostics.startedAt || new Date().toISOString(),
       stageStartedAt: new Date().toISOString()
     };
+    if (Number.isInteger(finalDiagnostic.processExitCode)
+        && finalDiagnostic.processExitCode >= 0 && finalDiagnostic.processExitCode <= 255) {
+      this.diagnostics.processExitCode = finalDiagnostic.processExitCode;
+    }
+    if (SAFE_PROCESS_SIGNALS.has(finalDiagnostic.processExitSignal)) {
+      this.diagnostics.processExitSignal = finalDiagnostic.processExitSignal;
+    }
+    if (finalDiagnostic.cause === 'CHROMIUM_LAUNCH_TIMEOUT') {
+      this.diagnostics.processObservation = 'browser_handle_not_returned';
+    }
     this.updatedAt = new Date().toISOString();
     this.publish();
     this.setState(state);
@@ -578,10 +618,14 @@ export function createWhatsAppLinkSystem(options = {}) {
     res.flushHeaders?.();
     const send = snapshot => {
       res.write(`data: ${JSON.stringify({ ...snapshot, csrfToken: req.session.whatsAppLinkCsrf })}\n\n`);
+      res.flush?.();
     };
     send(controller.snapshot());
     const unsubscribe = controller.subscribe(send);
-    const heartbeat = setInterval(() => res.write(': keep-alive\n\n'), 30_000);
+    const heartbeat = setInterval(() => {
+      res.write(': keep-alive\n\n');
+      res.flush?.();
+    }, 30_000);
     heartbeat.unref?.();
     req.on('close', () => {
       clearInterval(heartbeat);
