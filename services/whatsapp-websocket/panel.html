@@ -21,7 +21,7 @@ function show(data){
  if(pairing && qrRevision!==data.qrRevision){qrRevision=data.qrRevision;img.src=api+'/qr.svg?v='+encodeURIComponent(qrRevision);}else if(!pairing){qrRevision=null;img.removeAttribute('src');}
  const groups=document.querySelector('#groups');groups.replaceChildren();
  for(const group of data.groups||[]){const item=document.createElement('li');item.textContent=group.name+' · identificado';groups.append(item);}
- document.querySelector('#diagnostic').textContent=data.disconnectCode ? 'Último código de conexión: '+data.disconnectCode : '';
+ document.querySelector('#diagnostic').textContent=data.startupCode ? 'Diagnóstico de inicio: '+data.startupCode : (data.disconnectCode ? 'Último código de conexión: '+data.disconnectCode : '');
  document.querySelector('#count').textContent='Novedades guardadas en esta ejecución: '+(data.processed||0);
  document.querySelector('#start').disabled=busy||!csrf||['connecting','qr_required','pairing_accepted','reading','reconnecting'].includes(data.state);
  document.querySelector('#stop').disabled=busy||!csrf;

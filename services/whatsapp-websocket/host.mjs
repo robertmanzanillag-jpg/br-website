@@ -22,6 +22,12 @@ export class HostedReader extends EventEmitter {
   start() {
     return this.enqueue(async () => {
       if (this.closed) return;
+      if (this.resource && ['database_unavailable', 'startup_failed'].includes(this.state.state)) {
+        const failed = this.resource;
+        this.resource = null;
+        failed.reader.off('status', this.forward);
+        await failed.shutdown().catch(() => {});
+      }
       if (!this.resource) {
         this.forward({ ...this.state, state: 'connecting' });
         this.resource = await this.factory();

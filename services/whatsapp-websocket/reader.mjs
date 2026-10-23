@@ -79,7 +79,11 @@ export class WebSocketReader extends EventEmitter {
       this.pins = await this.store.load('groups');
       this.auth = await encryptedAuth(this.store);
       await this.connect();
-    } catch { await this.stop('startup_failed'); }
+    } catch (error) {
+      const known = ['reader_already_running', 'encrypted_state_unreadable', 'storage_limit', 'invalid_encryption_key'];
+      this.status.startupCode = known.includes(error?.message) ? error.message : (/^[0-9A-Z]{5}$/.test(error?.code || '') ? error.code : 'connection_or_storage_failed');
+      await this.stop('startup_failed');
+    }
   }
   async connect() {
     if (!this.active) return;
