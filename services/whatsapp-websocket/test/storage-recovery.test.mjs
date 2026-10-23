@@ -98,3 +98,10 @@ test('invalid key, unreadable auth and revoked sessions do not enter the retry l
   assert.equal(revoked.snapshot().state, 'relink_required');
   await revoked.stop();
 });
+
+test('deployment lock contention recovers automatically without overlapping readers', async () => {
+ let factories=0; let running=0; let shutdowns=0;
+ const host=new HostedReader(async()=>{factories++;const resource=fakeResource(async report=>{if(factories<3)throw new Error('reader_already_running'); running++;assert.equal(running,1);report('reading');});const close=resource.shutdown;resource.shutdown=async()=>{shutdowns++;await close();};return resource;},{retryDelays:[10]});
+ try{await host.start();assert.equal(host.snapshot().startupCode,'reader_already_running');assert.ok(host.snapshot().retryAt);for(let i=0;i<50&&host.snapshot().state!=='reading';i++)await delay(10);assert.equal(host.snapshot().state,'reading');assert.equal(factories,3);assert.equal(shutdowns,2);}finally{await host.shutdown();}
+});
+test('owner stop cancels lock-contention retry',async()=>{let attempts=0;const host=new HostedReader(async()=>{attempts++;throw new Error('reader_already_running');},{retryDelays:[20]});await host.start();await host.stop();await delay(50);assert.equal(attempts,1);assert.equal(host.snapshot().state,'stopped');await host.shutdown();});

@@ -16,7 +16,7 @@ export class HostedReader extends EventEmitter {
       this.state = state;
       if (state.state === 'reading') this.retryAttempt = 0;
       const retryable = state.state === 'database_unavailable'
-        || (state.state === 'startup_failed' && state.startupCode === 'database_unavailable');
+        || (state.state === 'startup_failed' && ['database_unavailable', 'reader_already_running'].includes(state.startupCode));
       if (this.wanted && !this.closed && retryable && !this.retryTimer) {
         const delay = this.retryDelays[Math.min(this.retryAttempt, this.retryDelays.length - 1)];
         this.retryAttempt++;
