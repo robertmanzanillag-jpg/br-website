@@ -30,9 +30,15 @@
     <p class="notice">La vinculación está bloqueada: la librería instalada conecta eventos de mensajes de todos los chats y no permite garantizar el aislamiento antes de que el contenido llegue al proceso. No vincules ni escanees un QR hasta sustituirla o demostrar un filtro previo seguro. No se consultan mensajes ni se envían mensajes, respuestas o reacciones desde esta app.</p>
     <p class="small">La futura lista exacta será: Promoters 🖤👾🖤, LIV MIAMI, SPACE TABLES y STUDIO 60 PROMO. Nombres ausentes o repetidos bloquearán cualquier lectura; nunca se ampliará la lista automáticamente.</p>
     <div id="status" role="status" aria-live="polite">Comprobando estado…</div>
+    <section aria-labelledby="reader-heading">
+      <h2 id="reader-heading">Lectura para revisión</h2>
+      <p id="reader-status" class="small">Comprobando estado…</p>
+      <ul id="group-status" class="small"></ul>
+      <p id="review-count" class="small">Elementos guardados: 0</p>
+    </section>
     <div id="qr-wrap"><img id="qr" alt="QR temporal del servicio WhatsApp de Black Room"></div>
     <p id="qr-help" class="small" hidden>Escanea este QR desde el teléfono del propietario. No compartas ni captures esta imagen.</p>
-    <p id="usage" class="small">Límites: hasta 256 MiB almacenados y 10 GiB transferidos al mes; el lector se detiene antes de excederlos.</p>
+    <p id="usage" class="small">Límites compartidos: hasta 256 MiB almacenados y 10 GiB transferidos al mes; el lector se detiene antes de excederlos.</p>
     <div class="actions">
       <button id="start">Iniciar vinculación</button>
       <button id="stop" class="secondary" hidden>Detener</button>
@@ -47,6 +53,9 @@
     const startButton = document.getElementById('start');
     const stopButton = document.getElementById('stop');
     const errorNode = document.getElementById('error');
+    const readerStatusNode = document.getElementById('reader-status');
+    const groupStatusNode = document.getElementById('group-status');
+    const reviewCountNode = document.getElementById('review-count');
     let csrfToken = '';
     const labels = {
       storage_unconfigured: 'Falta la clave dedicada de cifrado; el servicio no puede vincularse',
@@ -65,6 +74,12 @@
       backup_corrupt: 'Detenido: el respaldo está dañado y no se abrirá',
       error: 'No se pudo iniciar el servicio'
     };
+    const readerLabels = {
+      prepared: 'Preparado · sin conexión',
+      blocked: 'Bloqueado por privacidad o límite',
+      disconnected: 'Desconectado',
+      active: 'Activo'
+    };
 
     function formatBytes(value) {
       if (!value) return '0 MiB';
@@ -74,6 +89,16 @@
 
     function render(data) {
       statusNode.textContent = labels[data.state] || 'Estado no disponible';
+      const reader = data.reader || {};
+      readerStatusNode.textContent = `${readerLabels[reader.status] || 'Estado no disponible'}${reader.stopReason ? ` · ${reader.stopReason}` : ''}`;
+      groupStatusNode.replaceChildren();
+      for (const [name, group] of Object.entries(reader.groups || {})) {
+        const row = document.createElement('li');
+        const last = group.lastProcessedAt ? new Date(group.lastProcessedAt).toLocaleString() : 'Sin procesamiento';
+        row.textContent = `${name}: ${group.status || 'blocked'} · ${group.idPinned ? 'ID fijado' : 'ID sin fijar'} · ${last}`;
+        groupStatusNode.append(row);
+      }
+      reviewCountNode.textContent = `Elementos guardados: ${reader.pendingCount || 0}`;
       const showQr = data.state === 'qr_required' && data.qrDataUrl;
       qrWrap.style.display = showQr ? 'block' : 'none';
       qrHelp.hidden = !showQr;
@@ -85,8 +110,8 @@
       csrfToken = data.csrfToken || csrfToken;
       if (data.usage) {
         document.getElementById('usage').textContent = data.usage.loaded
-          ? `Respaldo cada ${data.usage.backupIntervalHours} h · transferencia mensual ${formatBytes(data.usage.transferBytes)} / ${formatBytes(data.usage.transferLimitBytes)} · sesión ${formatBytes(data.usage.storedBytes)} / ${formatBytes(data.usage.maxSessionBytes)}.`
-          : 'Límites activos: 256 MiB almacenados y 10 GiB transferidos por mes; el uso se consulta al iniciar el servicio.';
+          ? `Respaldo de sesión cada ${data.usage.backupIntervalHours} h · transferencia mensual compartida ${formatBytes(data.usage.transferBytes)} / ${formatBytes(data.usage.transferLimitBytes)} · almacenamiento total ${formatBytes(data.usage.storedBytes)} / ${formatBytes(data.usage.storageLimitBytes)} (sesión ${formatBytes(data.usage.sessionBytes)}, revisión ${formatBytes(data.usage.readerBytes)}).`
+          : 'Límites activos y compartidos: 256 MiB almacenados y 10 GiB transferidos por mes; el uso se consulta al iniciar el servicio.';
       }
     }
 

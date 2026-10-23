@@ -8,6 +8,7 @@ import QRCode from 'qrcode';
 import whatsapp from 'whatsapp-web.js';
 import { Client as StorageClient } from '@replit/object-storage';
 import { WhatsAppRemoteSessionStore, WhatsAppStoreError } from '../services/whatsapp-reader/session-store.js';
+import { APPROVED_GROUP_NAMES } from '../services/whatsapp-reader/group-policy.js';
 
 const OWNER_EMAIL = 'robert.manzanillag@gmail.com';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -76,6 +77,7 @@ export class WhatsAppLinkController {
     storage,
     encryptionKey,
     privacyIsolationVerified = false,
+    reviewReader = null,
     qrEncoder = QRCode.toDataURL,
     qrLifetimeMs = QR_LIFETIME_MS
   }) {
@@ -98,6 +100,7 @@ export class WhatsAppLinkController {
     });
     if (!clientFactory && !this.sessionStore.isConfigured) this.state = 'storage_unconfigured';
     this.privacyIsolationVerified = privacyIsolationVerified === true;
+    this.reviewReader = reviewReader;
     if (!clientFactory && this.sessionStore.isConfigured && !this.privacyIsolationVerified) {
       this.state = 'privacy_blocked';
     }
@@ -125,7 +128,17 @@ export class WhatsAppLinkController {
       qrDataUrl: this.qrDataUrl,
       updatedAt: this.updatedAt,
       persistence: this.sessionStore.isConfigured ? 'encrypted-object-storage' : 'key-required',
-      usage: this.sessionStore.snapshot()
+      usage: this.sessionStore.snapshot(),
+      reader: this.reviewReader?.snapshot() || {
+        status: 'blocked',
+        stopReason: 'privacy_isolation_unverified',
+        pendingCount: 0,
+        groups: Object.fromEntries(APPROVED_GROUP_NAMES.map(name => [name, {
+          idPinned: false,
+          lastProcessedAt: null,
+          status: 'blocked'
+        }]))
+      }
     };
   }
 

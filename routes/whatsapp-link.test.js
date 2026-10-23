@@ -104,6 +104,8 @@ test('linking page and endpoints are private; no client starts before owner acti
     assert.equal(statusResponse.status, 200);
     const status = await statusResponse.json();
     assert.equal(status.state, 'idle');
+    assert.equal(status.reader.status, 'blocked');
+    assert.equal(status.reader.groups['Promoters 🖤👾🖤'].lastProcessedAt, null);
 
     const badCsrf = await fetch(`${base}/api/admin/whatsapp-link/start`, {
       method: 'POST',
