@@ -189,7 +189,7 @@ test('a service without its dedicated encryption key cannot start Chromium', asy
   assert.equal(factoryCalled, false);
 });
 
-test('production linking stays blocked until message-event isolation is verified', async () => {
+test('production linking stays blocked without explicit account-sync consent', async () => {
   let factoryCalled = false;
   const system = createWhatsAppLinkSystem({
     sessionStore: {
@@ -206,6 +206,56 @@ test('production linking stays blocked until message-event isolation is verified
   const status = await system.controller.start();
   assert.equal(status.state, 'privacy_blocked');
   assert.equal(factoryCalled, false);
+});
+
+test('startup resumes only when an encrypted session backup exists', async () => {
+  let factoryCalls = 0;
+  const client = new FakeClient();
+  const system = createWhatsAppLinkSystem({
+    accountSyncConsented: true,
+    sessionStore: {
+      isConfigured: true,
+      snapshot: () => ({ transferBytes: 0 }),
+      sessionExists: async () => false
+    }
+  });
+  system.controller.clientFactory = () => {
+    factoryCalls++;
+    return client;
+  };
+  system.controller.usesProductionFactory = true;
+  assert.deepEqual(await system.controller.resumePersistedSession(), { resumed: false, state: 'idle' });
+  assert.equal(factoryCalls, 0);
+  system.controller.sessionStore.sessionExists = async () => true;
+  const resumed = await system.controller.resumePersistedSession();
+  assert.equal(resumed.resumed, true);
+  assert.equal(factoryCalls, 1);
+  await system.controller.stop({ backup: false });
+});
+
+test('a dropped linked client performs a bounded encrypted-session reconnect attempt', async () => {
+  const clients = [];
+  const system = createWhatsAppLinkSystem({
+    accountSyncConsented: true,
+    reconnectDelaysMs: [1],
+    sessionStore: {
+      isConfigured: true,
+      snapshot: () => ({ transferBytes: 0 }),
+      sessionExists: async () => true
+    }
+  });
+  system.controller.usesProductionFactory = true;
+  system.controller.clientFactory = () => {
+    const client = new FakeClient();
+    clients.push(client);
+    return client;
+  };
+  await system.controller.resumePersistedSession();
+  clients[0].emit('disconnected');
+  await new Promise(resolve => setTimeout(resolve, 30));
+  assert.equal(clients.length, 2);
+  assert.equal(clients[1].calls.includes('initialize'), true);
+  await system.controller.stop({ backup: false });
 });
 
 test('a WhatsApp disconnection is visible and does not start a message reader', async () => {

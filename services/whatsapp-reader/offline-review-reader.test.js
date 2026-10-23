@@ -64,6 +64,27 @@ test('rejects an unapproved chat before inspecting body, media, or downloading a
   assert.equal(downloads, 0);
 });
 
+test('refuses to download an image with unknown or over-limit advertised size', async () => {
+  const reader = readerFor(new MemoryStorage());
+  await reader.initialize();
+  let downloads = 0;
+  const result = await reader.processIncoming({
+    chatId: 'authorized-0@g.us',
+    messageId: 'unknown-size-image',
+    body: 'Flyer details',
+    type: 'image',
+    hasMedia: true,
+    mediaSize: null,
+    downloadAttachments: async () => {
+      downloads++;
+      return [Buffer.alloc(1)];
+    }
+  });
+  assert.equal(result.accepted, true);
+  assert.equal(downloads, 0);
+  assert.equal(reader.getReviewItems()[0].attachmentsStatus, 'skipped_size_unknown_or_over_limit');
+});
+
 test('deduplicates repeats, stores edits and attachments encrypted, and restores after restart', async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'wa-reader-offline-'));
   const storage = new MemoryStorage();

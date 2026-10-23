@@ -31,6 +31,18 @@ export function resolveApprovedGroupMetadata(chats) {
       candidates
     }];
   }));
+  const idCounts = new Map();
+  for (const name of APPROVED_GROUP_NAMES) {
+    if (groups[name].status !== 'unique') continue;
+    const id = groups[name].candidates[0].id;
+    idCounts.set(id, (idCounts.get(id) || 0) + 1);
+  }
+  for (const name of APPROVED_GROUP_NAMES) {
+    const group = groups[name];
+    if (group.status === 'unique' && idCounts.get(group.candidates[0].id) > 1) {
+      group.status = 'duplicate_id';
+    }
+  }
   const uniqueIds = APPROVED_GROUP_NAMES
     .map(name => groups[name])
     .filter(group => group.status === 'unique')

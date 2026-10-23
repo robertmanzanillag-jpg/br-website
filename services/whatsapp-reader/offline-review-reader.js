@@ -200,7 +200,7 @@ export class OfflineWhatsAppReviewReader {
   }
 
   getReviewItems() {
-    return this.state.items.map(item => ({
+    return (this.state?.items || []).map(item => ({
       ...item,
       attachments: item.attachments.map(encoded => Buffer.from(encoded, 'base64'))
     }));

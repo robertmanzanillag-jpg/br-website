@@ -79,6 +79,7 @@ export class WhatsAppLinkController {
     encryptionKey,
     accountSyncConsented = false,
     readerRuntimeFactory,
+    reconnectDelaysMs = [30_000, 60_000, 120_000],
     reviewReader = null,
     qrEncoder = QRCode.toDataURL,
     qrLifetimeMs = QR_LIFETIME_MS
@@ -88,6 +89,9 @@ export class WhatsAppLinkController {
     this.client = null;
     this.authStrategy = null;
     this.qrTimer = null;
+    this.reconnectTimer = null;
+    this.reconnectAttempts = 0;
+    this.reconnectDelaysMs = reconnectDelaysMs;
     this.generation = 0;
     this.state = 'idle';
     this.qrDataUrl = null;
@@ -192,6 +196,10 @@ export class WhatsAppLinkController {
 
   async start() {
     if (this.client) return this.snapshot();
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
     if (this.usesProductionFactory && !this.sessionStore.isConfigured) {
       this.setState('storage_unconfigured');
       return this.snapshot();
@@ -248,8 +256,9 @@ export class WhatsAppLinkController {
     this.qrTimer = setTimeout(() => this.expireQr(client, generation), this.qrLifetimeMs);
     this.qrTimer.unref?.();
 
-    // Initialization is deliberately triggered only by the owner's POST /start.
-    // No chat/message listeners or outbound operations are registered here.
+    // Initialization is triggered by the owner's POST /start or by a confirmed
+    // encrypted backup at server startup. The read runtime attaches only after
+    // exact group metadata has been resolved; it never registers outbound actions.
     void Promise.resolve()
       .then(() => client.initialize())
       .catch(error => {
@@ -273,6 +282,18 @@ export class WhatsAppLinkController {
     this.setState(state);
     this.client = null;
     void client.destroy().catch(() => {});
+    if (state === 'disconnected') this.scheduleReconnect();
+  }
+
+  scheduleReconnect() {
+    if (!this.accountSyncConsented || !this.sessionStore.isConfigured
+        || this.reconnectTimer || this.reconnectAttempts >= this.reconnectDelaysMs.length) return;
+    const delay = this.reconnectDelaysMs[this.reconnectAttempts++];
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      void this.resumePersistedSession();
+    }, delay);
+    this.reconnectTimer.unref?.();
   }
 
   async startGroupReader(client, generation) {
@@ -316,6 +337,9 @@ export class WhatsAppLinkController {
     if (client !== this.client) return this.snapshot();
     this.generation++;
     this.client = null;
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    this.reconnectTimer = null;
+    this.reconnectAttempts = 0;
     this.readerRuntime?.disconnected('stopped');
     this.readerRuntime = null;
     this.clearQrTimer();
@@ -332,6 +356,26 @@ export class WhatsAppLinkController {
 
   async shutdownForRestart() {
     return this.stop({ backup: true });
+  }
+
+  async resumePersistedSession() {
+    if (!this.accountSyncConsented || !this.sessionStore.isConfigured) {
+      return { resumed: false, state: this.snapshot().state };
+    }
+    try {
+      const exists = await this.sessionStore.sessionExists({ session: 'RemoteAuth-blackroom-owner-link' });
+      if (!exists) return { resumed: false, state: this.snapshot().state };
+      const status = await this.start();
+      return { resumed: Boolean(this.client), state: status.state };
+    } catch (error) {
+      const state = ['WA_BACKUP_CORRUPT', 'WA_METER_CORRUPT'].includes(error?.code)
+        ? 'backup_corrupt'
+        : ['WA_BUDGET_LIMIT', 'WA_STORAGE_LIMIT'].includes(error?.code)
+          ? 'budget_stopped'
+          : 'backup_failed';
+      this.setState(state);
+      return { resumed: false, state };
+    }
   }
 }
 
@@ -398,3 +442,4 @@ const whatsAppLinkSystem = createWhatsAppLinkSystem({ accountSyncConsented: true
 export const whatsAppLinkPageRouter = whatsAppLinkSystem.pageRouter;
 export const whatsAppLinkApiRouter = whatsAppLinkSystem.apiRouter;
 export const shutdownWhatsAppLinkService = () => whatsAppLinkSystem.controller.shutdownForRestart();
+export const resumeWhatsAppLinkService = () => whatsAppLinkSystem.controller.resumePersistedSession();

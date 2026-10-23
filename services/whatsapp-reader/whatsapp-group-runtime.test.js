@@ -83,21 +83,29 @@ test('runtime only requests history for the four pinned IDs and deduplicates rec
   const first = await firstRuntime.start();
   assert.equal(first.status, 'active');
   assert.equal(first.pendingCount, 1);
+  assert.equal(firstClient.listenerCount('message_reaction'), 0);
+  assert.equal(firstClient.listenerCount('message_ack'), 0);
+  assert.equal(firstClient.calls.some(call => call[0] === 'sendMessage'), false);
   const requestedIds = firstClient.calls.filter(call => call[0] === 'getChatById').map(call => call[1]);
   assert.deepEqual(requestedIds, APPROVED_GROUP_NAMES.map((_, index) => `allowed-${index}@g.us`));
+  firstClient.emit('message_edit', fixtureMessage, 'KONG flyer $35');
+  await new Promise(resolve => setTimeout(resolve, 0));
+  fixtureMessage.body = 'KONG flyer $35';
+  assert.equal(firstRuntime.snapshot().pendingCount, 2);
+  assert.equal(firstRuntime.reader.getReviewItems()[1].change, 'edited');
   let unrelatedBodyRead = false;
   await firstRuntime.handleMessage({
     from: 'private@g.us',
     get body() { unrelatedBodyRead = true; return 'private content'; }
   });
   assert.equal(unrelatedBodyRead, false);
-  assert.equal(firstRuntime.reader.getReviewItems().length, 1);
+  assert.equal(firstRuntime.reader.getReviewItems().length, 2);
 
   const restoredClient = new FakeClient([fixtureMessage]);
   const restoredRuntime = new WhatsAppGroupRuntime({ client: restoredClient, store: storeFor(storage) });
   const restored = await restoredRuntime.start();
-  assert.equal(restored.pendingCount, 1);
-  assert.equal(restored.groups[APPROVED_GROUP_NAMES[0]].lastProcessedAt, first.groups[APPROVED_GROUP_NAMES[0]].lastProcessedAt);
+  assert.equal(restored.pendingCount, 2);
+  assert.equal(restored.groups[APPROVED_GROUP_NAMES[0]].lastProcessedAt, firstRuntime.snapshot().groups[APPROVED_GROUP_NAMES[0]].lastProcessedAt);
   restoredRuntime.disconnected();
   assert.equal(restoredRuntime.snapshot().status, 'disconnected');
 });

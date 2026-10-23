@@ -182,6 +182,7 @@ import registerRouter from './routes/register.js';
 import loginRouter from './routes/login.js';
 import logoutRouter from './routes/logout.js';
 import {
+  resumeWhatsAppLinkService,
   shutdownWhatsAppLinkService,
   whatsAppLinkApiRouter,
   whatsAppLinkPageRouter
@@ -6271,6 +6272,9 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🌍 Custom domain: blackroomus.com configured`);
   console.log(`✅ Server ready for external connections`);
   console.log(`⚡ Server listening successfully at ${new Date().toISOString()}`);
+  void resumeWhatsAppLinkService().then(result => {
+    if (result.resumed) console.log('✅ Restoring encrypted WhatsApp session from private storage');
+  }).catch(() => console.error('⚠️ WhatsApp session restore was blocked'));
 });
 
 async function stopWhatsAppBeforeExit(signal) {

@@ -32,7 +32,8 @@ export class WhatsAppGroupRuntime {
         idPinned: false,
         lastProcessedAt: null,
         status: this.status,
-        discovery: this.resolution?.groups?.[name]?.status || 'pending'
+        discovery: this.resolution?.groups?.[name]?.status || 'pending',
+        candidateCount: this.resolution?.groups?.[name]?.candidates?.length || 0
       }])),
       groupResolution: this.resolution?.groups || null
     };

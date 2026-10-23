@@ -49,4 +49,6 @@ test('duplicate WhatsApp IDs across labels also block pinning', () => {
   const result = resolveApprovedGroupMetadata(groups(['same@g.us', 'same@g.us', 'c@g.us', 'd@g.us']));
   assert.equal(result.ready, false);
   assert.equal(result.pinned, null);
+  assert.equal(result.groups['Promoters 🖤👾🖤'].status, 'duplicate_id');
+  assert.equal(result.groups['LIV MIAMI'].status, 'duplicate_id');
 });

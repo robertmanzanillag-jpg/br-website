@@ -1,12 +1,12 @@
 # WhatsApp session persistence
 
-The offline review processor accepts only messages associated with four exact group IDs validated from exact visible names. It does not connect WhatsApp, enumerate chats, read messages, or send messages, replies, reactions, or read confirmations. The production WhatsApp client remains blocked by the privacy limitation below.
+The production WhatsApp Web client can synchronize the account's chat list and message events. The owner explicitly authorized this technical account synchronization. The application processor accepts content only from four exact, metadata-validated group IDs; it sends no messages, replies, reactions, or read confirmations.
 
-## Group privacy block
+## Account sync and KONG scope
 
-The installed `whatsapp-web.js` client is not considered safe for strict four-group isolation. Its `Client.initialize()` calls `inject()`, which attaches a global `Store.Msg` add-event bridge and constructs/emits `Message` objects without filtering by chat ID. Its `getChats()` API also returns all chat metadata. This project therefore fails closed and does not start the production client until a future transport can prove filtering before message content crosses into the Node process.
+The installed `whatsapp-web.js` client attaches a global `Store.Msg` event bridge and constructs/emits `Message` objects without filtering by chat ID; its `getChats()` API returns all chat metadata. The owner approved this account-level synchronization. Application code checks the exact chat ID before accessing message bodies, media metadata, or downloading attachments, and only fetches history for the four pinned IDs.
 
-The exact metadata resolver is isolated in `group-policy.js`: it accepts only the four approved visible names, reports missing or duplicate matches, and never selects a fuzzy match. Even after unique IDs are found, the current client limitation must be removed and tested before linking or reading.
+The exact metadata resolver accepts only the four approved visible names, reports missing or duplicate matches, and never selects a fuzzy match. The actual IDs remain unknown until the owner links the service and the four exact metadata matches are available.
 
 ## Encryption and recovery
 
@@ -28,11 +28,13 @@ The exact metadata resolver is isolated in `group-policy.js`: it accepts only th
 - The reader does not use the app database for checkpoints, quota, or polling. Opening the panel uses the existing login/session middleware; status then streams over one authenticated SSE connection instead of repeated polling.
 - If a profile, storage, or monthly transfer limit is reached—or the encrypted backup cannot be safely written—the WhatsApp client is stopped. It does not continue unprotected or claim 24/7 availability. A transfer-cap stop stays stopped until the next UTC month and an owner starts it again; other failures require an operator to resolve them.
 
-## Offline review processing
+## Read-only processing and recovery
 
 - `OfflineWhatsAppReviewReader` requires the exact four-name resolver to return four unique, distinct IDs. It checks the incoming `chatId` before reading the body, media metadata, or invoking an attachment download callback.
 - Each message ID is fingerprinted; exact repeats are ignored, while changed content/media keys are stored as a new `edited` revision. Content and image bytes are included in the AES-GCM encrypted reader-state object, with the checkpoint and per-group last-processed timestamp committed in the same write.
 - A failed quota reservation does not update the checkpoint or report an item as saved. The processor changes to `blocked` with `budget_stopped`; already saved review records remain recoverable.
-- The offline processor is not wired to a WhatsApp client. It is safe to fixture-test, but does not imply that production messages are being read.
+- The owner-only start action establishes a new link; after `ready`, the runtime resolves exact group metadata, restores encrypted checkpoints, attaches read-only event handlers, then catches up only those four IDs.
+- Startup recovery fetches at most 100 recent messages per approved group per run. Revisions are deduplicated against encrypted state; older backlog beyond that bounded window requires a later recovery run or operator review.
+- On process startup, the server checks for an existing encrypted session. It starts Chromium only when the dedicated key is configured and a valid session archive exists; a fresh deployment without a linked session stays idle. Unexpected disconnects get at most three bounded retries.
 
-The free deployment has not been activated with a WhatsApp account. The owner must first add the dedicated secret and then scan the service's QR from the private owner-only panel.
+The production account is not yet linked. The owner must add the dedicated secret and scan the service's QR from the private owner-only panel before the UI can report an active connection.
