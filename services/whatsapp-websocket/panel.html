@@ -15,13 +15,18 @@
 const api='__API_PREFIX__'; let csrf='',busy=false,qrRevision=null;
 const states={qr_expired:'El QR venció. Pulsa Iniciar vinculación para generar uno nuevo.',pairing_accepted:'WhatsApp aceptó la vinculación · terminando conexión…',connection_failed:'No se pudo conectar con WhatsApp',stopped:'Lector detenido',connecting:'Conectando con WhatsApp…',qr_required:'Escanea el QR para vincular',reading:'Conectado · recibiendo mensajes autorizados',reconnecting:'Se perdió la conexión · reconectando…',relink_required:'Es necesario volver a vincular WhatsApp',reconnect_exhausted:'No se pudo recuperar la conexión',connect_timeout:'La conexión tardó demasiado',startup_failed:'No se pudo iniciar el lector',processing_failed:'El lector se detuvo por un error',group_identity_unverified:'No se pudieron verificar los cuatro grupos',database_unavailable:'Almacenamiento no disponible',queue_limit:'El lector se detuvo al alcanzar su límite de trabajo'};
 function show(data){
- document.querySelector('#status').textContent=states[data.state]||'Estado no disponible';
+ const retry=data.state==='database_unavailable'&&data.retryAt
+  ? ' · reintento automático '+(data.recoveryAttempt||1)+' programado para '+new Date(data.retryAt).toLocaleTimeString()
+  : '';
+ document.querySelector('#status').textContent=(states[data.state]||'Estado no disponible')+retry;
  const pairing=data.state==='qr_required', img=document.querySelector('#qr');
  img.hidden=!pairing; document.querySelector('#scan').hidden=!pairing;
  if(pairing && qrRevision!==data.qrRevision){qrRevision=data.qrRevision;img.src=api+'/qr.svg?v='+encodeURIComponent(qrRevision);}else if(!pairing){qrRevision=null;img.removeAttribute('src');}
  const groups=document.querySelector('#groups');groups.replaceChildren();
  for(const group of data.groups||[]){const item=document.createElement('li');item.textContent=group.name+' · identificado';groups.append(item);}
- document.querySelector('#diagnostic').textContent=data.startupCode ? 'Diagnóstico de inicio: '+data.startupCode : (data.disconnectCode ? 'Último código de conexión: '+data.disconnectCode : '');
+ document.querySelector('#diagnostic').textContent=data.state==='database_unavailable'
+  ? 'Se conserva la sesión cifrada; no se generará otro QR. El lector reintentará el almacenamiento con espera.'
+  : data.startupCode ? 'Diagnóstico de inicio: '+data.startupCode : (data.disconnectCode ? 'Último código de conexión: '+data.disconnectCode : '');
  document.querySelector('#count').textContent='Novedades guardadas en esta ejecución: '+(data.processed||0);
  document.querySelector('#start').disabled=busy||!csrf||['connecting','qr_required','pairing_accepted','reading','reconnecting'].includes(data.state);
  document.querySelector('#stop').disabled=busy||!csrf;

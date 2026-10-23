@@ -80,9 +80,9 @@ export class WebSocketReader extends EventEmitter {
       this.auth = await encryptedAuth(this.store);
       await this.connect();
     } catch (error) {
-      const known = ['reader_already_running', 'encrypted_state_unreadable', 'storage_limit', 'invalid_encryption_key'];
+      const known = ['reader_already_running', 'encrypted_state_unreadable', 'storage_limit', 'invalid_encryption_key', 'database_unavailable'];
       this.status.startupCode = known.includes(error?.message) ? error.message : (/^[0-9A-Z]{5}$/.test(error?.code || '') ? error.code : 'connection_or_storage_failed');
-      await this.stop('startup_failed');
+      await this.stop(error?.message === 'database_unavailable' ? 'database_unavailable' : 'startup_failed');
     }
   }
   async connect() {
@@ -104,7 +104,7 @@ export class WebSocketReader extends EventEmitter {
     clearTimeout(this.connectTimer);
     this.connectTimer = setTimeout(() => { if (current()) void this.stop('connect_timeout'); }, 45000);
     this.connectTimer.unref?.();
-    const safe = task => { void task().catch(() => { if (current()) void this.stop('processing_failed'); }); };
+    const safe = task => { void task().catch(error => { if (current()) void this.stop(error?.message === 'database_unavailable' ? 'database_unavailable' : 'processing_failed'); }); };
     socket.ev.on('creds.update', () => { if (current()) safe(() => this.auth.save()); });
     socket.ev.on('connection.update', update => {
       if (!current()) return;
@@ -207,7 +207,7 @@ export class WebSocketReader extends EventEmitter {
         sentAt: Number.isSafeInteger(timestamp) && timestamp > 0 ? timestamp : null });
       if (inserted) this.status.processed++;
       this.report('reading');
-    }).catch(() => { void this.stop('processing_failed'); }).finally(() => { this.pending--; });
+    }).catch(error => { void this.stop(error?.message === 'database_unavailable' ? 'database_unavailable' : 'processing_failed'); }).finally(() => { this.pending--; });
   }
   // Called only by an owner-authenticated, no-store endpoint. Never put QR into logs/status.
   pairingQr() { return this.active && this.status.state === 'qr_required' ? this.qr : null; }

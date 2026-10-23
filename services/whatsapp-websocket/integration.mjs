@@ -60,7 +60,12 @@ export async function createProductionReader({ databaseUrl, encryptionKey, legac
   if (legacyReaderDisabled !== true) throw new Error('disable_legacy_reader_first');
   const db = new pg.Client({ connectionString: databaseUrl, application_name: 'br-whatsapp-websocket', connectionTimeoutMillis: 10000, statement_timeout: 15000 });
   const store = new PostgresStore(db, encryptionKey);
-  await db.connect();
+  try {
+    await db.connect();
+  } catch (error) {
+    await db.end().catch(() => {});
+    throw error;
+  }
   const reader = new WebSocketReader({ store });
   db.on('error', () => { void reader.stop('database_unavailable'); });
   return {

@@ -1,6 +1,22 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { BufferJSON } from './baileys-runtime.mjs';
 
+const TRANSIENT_PG_CODES = new Set([
+  '08000', '08001', '08003', '08006', '08007', '08P01',
+  '57P01', '57P02', '57P03', '53300',
+  'ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT', 'EPIPE',
+  'ENETUNREACH', 'EHOSTUNREACH', 'EAI_AGAIN',
+]);
+
+export function isTransientDatabaseError(error) {
+  return TRANSIENT_PG_CODES.has(error?.code);
+}
+
+function storageError(error) {
+  if (!isTransientDatabaseError(error)) return error;
+  return Object.assign(new Error('database_unavailable'), { code: 'database_unavailable' });
+}
+
 export function codec(base64Key) {
   if (!/^[A-Za-z0-9+/]{43}=$/.test(base64Key || '')) throw new Error('invalid_encryption_key');
   const key = Buffer.from(base64Key, 'base64');
@@ -34,10 +50,10 @@ export class PostgresStore {
     this.tail = Promise.resolve(); this.locked = false;
   }
   async acquire() {
-    const result = await this.db.query('SELECT pg_try_advisory_lock(1263488831,20261024) AS acquired');
+    const result = await this.query('SELECT pg_try_advisory_lock(1263488831,20261024) AS acquired');
     if (!result.rows[0]?.acquired) throw new Error('reader_already_running');
     this.locked = true;
-    await this.db.query(`CREATE TABLE IF NOT EXISTS br_wa_ws_state (
+    await this.query(`CREATE TABLE IF NOT EXISTS br_wa_ws_state (
       id text PRIMARY KEY, payload bytea NOT NULL, updated_at timestamptz NOT NULL DEFAULT now());
       CREATE TABLE IF NOT EXISTS br_wa_ws_budget (
       month date PRIMARY KEY, bytes bigint NOT NULL DEFAULT 0);`);
@@ -47,10 +63,17 @@ export class PostgresStore {
     this.tail = next.catch(() => {});
     return next;
   }
+  async query(sql, params) {
+    try {
+      return await this.db.query(sql, params);
+    } catch (error) {
+      throw storageError(error);
+    }
+  }
   async load(id) {
     if (!this.locked) throw new Error('lease_required');
     return this.serial(async () => {
-      const result = await this.db.query('SELECT payload FROM br_wa_ws_state WHERE id=$1', [id]);
+      const result = await this.query('SELECT payload FROM br_wa_ws_state WHERE id=$1', [id]);
       return result.rows.length ? this.crypt.open(result.rows[0].payload, id) : null;
     });
   }
@@ -58,19 +81,19 @@ export class PostgresStore {
     if (!this.locked) throw new Error('lease_required');
     const data = this.crypt.seal(value, id);
     return this.serial(async () => {
-      await this.db.query('BEGIN');
+      await this.query('BEGIN');
       try {
-        const previous = await this.db.query('SELECT octet_length(payload) AS size FROM br_wa_ws_state WHERE id=$1', [id]);
-        if (insertOnly && previous.rows.length) { await this.db.query('COMMIT'); return false; }
-        const size = Number((await this.db.query('SELECT COALESCE(sum(octet_length(payload)),0) AS size FROM br_wa_ws_state')).rows[0].size);
-        await this.db.query("INSERT INTO br_wa_ws_budget(month) VALUES(date_trunc('month',now())::date) ON CONFLICT DO NOTHING");
-        const budget = await this.db.query("SELECT bytes FROM br_wa_ws_budget WHERE month=date_trunc('month',now())::date FOR UPDATE");
+        const previous = await this.query('SELECT octet_length(payload) AS size FROM br_wa_ws_state WHERE id=$1', [id]);
+        if (insertOnly && previous.rows.length) { await this.query('COMMIT'); return false; }
+        const size = Number((await this.query('SELECT COALESCE(sum(octet_length(payload)),0) AS size FROM br_wa_ws_state')).rows[0].size);
+        await this.query("INSERT INTO br_wa_ws_budget(month) VALUES(date_trunc('month',now())::date) ON CONFLICT DO NOTHING");
+        const budget = await this.query("SELECT bytes FROM br_wa_ws_budget WHERE month=date_trunc('month',now())::date FOR UPDATE");
         if (size - Number(previous.rows[0]?.size || 0) + data.length > this.maxStoredBytes || Number(budget.rows[0].bytes) + data.length > this.maxMonthlyBytes) throw new Error('storage_limit');
-        await this.db.query(`INSERT INTO br_wa_ws_state(id,payload) VALUES($1,$2)
+        await this.query(`INSERT INTO br_wa_ws_state(id,payload) VALUES($1,$2)
           ON CONFLICT(id) DO UPDATE SET payload=$2,updated_at=now()`, [id, data]);
-        await this.db.query("UPDATE br_wa_ws_budget SET bytes=bytes+$1 WHERE month=date_trunc('month',now())::date", [data.length]);
-        await this.db.query('COMMIT'); return true;
-      } catch (error) { await this.db.query('ROLLBACK'); throw error; }
+        await this.query("UPDATE br_wa_ws_budget SET bytes=bytes+$1 WHERE month=date_trunc('month',now())::date", [data.length]);
+        await this.query('COMMIT'); return true;
+      } catch (error) { await this.db.query('ROLLBACK').catch(() => {}); throw error; }
     });
   }
   saveMessage(message) {
@@ -80,7 +103,7 @@ export class PostgresStore {
   }
   async release() {
     await this.tail;
-    if (this.locked) await this.db.query('SELECT pg_advisory_unlock(1263488831,20261024)');
+    if (this.locked) await this.db.query('SELECT pg_advisory_unlock(1263488831,20261024)').catch(() => {});
     this.locked = false;
   }
 }
