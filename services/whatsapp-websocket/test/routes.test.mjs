@@ -14,6 +14,7 @@ test('owner-only QR, CSRF and streamed state work behind real compression', asyn
   const reader = new EventEmitter(); let started = 0;
   reader.snapshot = () => ({ state: 'stopped' }); reader.pairingQr = () => 'test-sensitive-qr';
   reader.start = async () => { started++; }; reader.stop = async () => {};
+  reader.listInbox = async () => ({ items: [{ group: 'SPACE TABLES', text: 'test-only' }], truncated: false });
   mountOwnerRoutes(app, reader, { isOwner: user => user?.id === 'owner' });
   const server = app.listen(0, '127.0.0.1'); await new Promise(resolve => server.once('listening', resolve));
   const root = `http://127.0.0.1:${server.address().port}`;
@@ -22,11 +23,15 @@ test('owner-only QR, CSRF and streamed state work behind real compression', asyn
     assert.equal((await fetch(`${endpoint}/qr`)).status, 403);
     assert.equal((await fetch(`${endpoint}/panel`)).status, 403);
     assert.equal((await fetch(`${endpoint}/qr.svg`)).status, 403);
+    assert.equal((await fetch(`${endpoint}/inbox`)).status, 403);
     const login = await fetch(`${root}/test-session`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'owner' }) });
     const cookie = login.headers.get('set-cookie').split(';')[0];
     const status = await fetch(`${endpoint}/status`, { headers: { cookie } });
     assert.match(status.headers.get('cache-control'), /no-store/);
     const { csrf } = await status.json();
+    const inbox = await fetch(`${endpoint}/inbox`, { headers: { cookie } });
+    assert.match(inbox.headers.get('cache-control'), /no-store/);
+    assert.deepEqual((await inbox.json()).items.map(item => item.group), ['SPACE TABLES']);
     assert.equal((await fetch(`${endpoint}/start`, { method: 'POST', headers: { cookie } })).status, 403);
     assert.equal((await fetch(`${endpoint}/start`, { method: 'POST', headers: { cookie, 'X-CSRF-Token': csrf } })).status, 202);
     assert.equal(started, 1);

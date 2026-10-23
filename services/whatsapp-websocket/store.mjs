@@ -98,8 +98,19 @@ export class PostgresStore {
   }
   saveMessage(message) {
     const revision = createHash('sha256').update(JSON.stringify([message.text, message.media])).digest('hex');
-    const id = createHash('sha256').update(`${message.groupId}:${message.id}:${revision}`).digest('hex');
-    return this.save(`inbox:${id}`, { ...message, revision, state: 'pending_review' }, { insertOnly: true });
+    const groupHash = createHash('sha256').update(message.groupId).digest('hex');
+    const messageHash = createHash('sha256').update(`${message.groupId}:${message.id}:${revision}`).digest('hex');
+    return this.save(`inbox:${groupHash}:${messageHash}`, { ...message, revision, state: 'pending_review' }, { insertOnly: true });
+  }
+  async listMessages(groupIds, limit = 100) {
+    if (!Array.isArray(groupIds) || !groupIds.length) return [];
+    const patterns = groupIds.map(groupId => `inbox:${createHash('sha256').update(groupId).digest('hex')}:%`);
+    const rows = await this.serial(async () => this.query(
+      "SELECT id,payload FROM br_wa_ws_state WHERE id LIKE ANY($1::text[]) OR id ~ '^inbox:[a-f0-9]{64}$' ORDER BY updated_at DESC LIMIT $2",
+      [patterns, Math.max(1, Math.min(100, Number(limit) || 100))]
+    ));
+    const allowed = new Set(groupIds);
+    return rows.rows.map(row => this.crypt.open(row.payload, row.id)).filter(item => allowed.has(item.groupId));
   }
   async release() {
     await this.tail;

@@ -4,6 +4,7 @@ import { EventEmitter } from 'node:events';
 import { Readable } from 'node:stream';
 import { randomBytes } from 'node:crypto';
 import { WebSocketReader, GROUP_NAMES, resolveGroups, encryptedAuth } from '../reader.mjs';
+import { proto } from '../baileys-runtime.mjs';
 import { codec, PostgresStore } from '../store.mjs';
 import { PGlite } from '@electric-sql/pglite';
 
@@ -12,21 +13,24 @@ const metadata = Object.fromEntries(GROUP_NAMES.map((subject, i) => [`${100 + i}
 const tick = () => new Promise(resolve => setImmediate(resolve));
 function memory() {
   const crypt = codec(key), data = new Map(), inbox = [];
+  const seen = new Set();
   return { data, inbox, locked: false,
     async acquire() { if (this.locked) throw Error('locked'); this.locked = true; },
     async release() { this.locked = false; },
     async load(id) { return data.has(id) ? crypt.open(data.get(id), id) : null; },
     async save(id, value) { data.set(id, crypt.seal(value, id)); return true; },
-    async saveMessage(value) { inbox.push(value); return true; },
+    async saveMessage(value) { const key = `${value.groupId}:${value.id}:${value.text}:${JSON.stringify(value.media)}`; if (seen.has(key)) return false; seen.add(key); inbox.push(value); return true; },
+    async listMessages(groupIds, limit) { return inbox.filter(item => groupIds.includes(item.groupId)).slice(0, limit); },
   };
 }
 async function fixture(options = {}) {
   const store = options.store || memory(); let config; const sockets = [];
+  if (!options.store) await store.save('groups', resolveGroups(metadata));
   const reader = new WebSocketReader({ store, reconnectDelays: [1], ...options,
     socketFactory: value => {
       config = value;
       const socket = { ev: new EventEmitter(), ended: false,
-        groupFetchAllParticipating: async () => metadata,
+        groupFetchAllParticipating: options.groupFetchAllParticipating || (async () => metadata),
         end() { this.ended = true; },
         sendMessage() { throw Error('outbound forbidden'); },
         readMessages() { throw Error('read receipt forbidden'); },
@@ -78,9 +82,42 @@ test('only approved groups are consumed; unrelated body is never inspected', asy
   await f.reader.queue;
   assert.equal(f.store.inbox.length, 1);
   assert.equal(f.config.markOnlineOnConnect, false);
-  assert.equal(f.config.shouldSyncHistoryMessage(), false);
+  assert.equal(f.config.syncFullHistory, false);
+  assert.equal(f.config.shouldSyncHistoryMessage({ syncType: proto.HistorySync.HistorySyncType.RECENT }), true);
+  assert.equal(f.config.shouldSyncHistoryMessage({ syncType: proto.HistorySync.HistorySyncType.FULL }), false);
   assert.equal(f.config.shouldIgnoreJid('999@g.us'), true);
   assert.equal(f.config.shouldIgnoreJid('123@s.whatsapp.net'), true);
+  await f.reader.stop();
+});
+test('recent history filters unauthorized JIDs before body access and deduplicates against live delivery', async () => {
+  const f = await fixture(); await f.open();
+  const approved = msg('100@g.us', 'Tables Friday $250');
+  const unrelated = { key: { remoteJid: '999@g.us', id: 'private' }, get message() { throw Error('read unauthorized history body'); } };
+  f.sockets[0].ev.emit('messaging-history.set', { syncType: proto.HistorySync.HistorySyncType.RECENT, messages: [unrelated, approved] });
+  f.sockets[0].ev.emit('messages.upsert', { messages: [approved] });
+  await f.reader.queue;
+  assert.equal(f.store.inbox.length, 1);
+  assert.equal(f.store.inbox[0].origin, 'history');
+  assert.equal(f.reader.snapshot().historySaved, 1);
+  const inbox = await f.reader.listInbox();
+  assert.equal(inbox.items.length, 1);
+  assert.equal(inbox.items[0].group, GROUP_NAMES[0]);
+  assert.equal(inbox.items[0].sourceId, 'm1');
+  await f.reader.stop();
+});
+test('authorized live and history messages wait in memory until reconnect group validation finishes', async () => {
+  let completeGroups;
+  const f = await fixture({ groupFetchAllParticipating: () => new Promise(resolve => { completeGroups = resolve; }) });
+  const opening = f.open();
+  const approved = msg('100@g.us', 'VIP $275');
+  const unrelated = { key: { remoteJid: '999@g.us', id: 'private' }, get message() { throw Error('unrelated body inspected'); } };
+  f.sockets[0].ev.emit('messages.upsert', { messages: [approved, unrelated] });
+  assert.equal(f.store.inbox.length, 0);
+  completeGroups(metadata);
+  await opening;
+  await f.reader.queue;
+  assert.equal(f.store.inbox.length, 1);
+  assert.equal(f.store.inbox[0].origin, 'reconnect');
   await f.reader.stop();
 });
 test('QR stays out of status and is erased on stop', async () => {
@@ -136,7 +173,11 @@ test('database transactions deduplicate, retain revisions and roll back quota ov
   assert.equal(await store.saveMessage(message), true);
   assert.equal(await store.saveMessage({ ...message, sentAt: null }), false);
   assert.equal(await store.saveMessage({ ...message, text: 'VIP $300' }), true);
-  assert.equal((await pg.query('SELECT count(*) AS count FROM br_wa_ws_state')).rows[0].count, 2);
+  await store.save('inbox:' + 'a'.repeat(64), { ...message, id: 'legacy', revision: 'old', state: 'pending_review' });
+  assert.equal((await pg.query('SELECT count(*) AS count FROM br_wa_ws_state')).rows[0].count, 3);
+  const listed = await store.listMessages(['100@g.us']);
+  assert.equal(listed.length, 3);
+  assert.equal((await store.listMessages(['999@g.us'])).length, 0);
   await assert.rejects(store.save('oversized', 'x'.repeat(4096)), /storage_limit/);
   assert.equal(await store.load('oversized'), null);
   const raw = (await pg.query('SELECT payload FROM br_wa_ws_state LIMIT 1')).rows[0].payload;

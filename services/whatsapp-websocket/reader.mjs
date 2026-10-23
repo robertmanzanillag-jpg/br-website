@@ -6,6 +6,7 @@ export const GROUP_NAMES = Object.freeze(['Promoters 🖤👾🖤', 'LIV MIAMI',
 const GROUP_ID = /^\d+(?:-\d+)?@g\.us$/;
 const MAX_IMAGE = 5 * 1024 * 1024;
 const MAX_TEXT = 96 * 1024;
+const MAX_INBOX_RESPONSE = 10 * 1024 * 1024;
 const silent = pino({ level: 'silent' });
 
 function containsPrivateView(message) {
@@ -62,7 +63,8 @@ export class WebSocketReader extends EventEmitter {
     super(); this.store = store; this.socketFactory = socketFactory; this.download = download;
     this.delays = reconnectDelays; this.attempt = 0; this.generation = 0;
     this.active = false; this.ready = false; this.pending = 0; this.queue = Promise.resolve();
-    this.status = { state: 'stopped', processed: 0, historyCoverage: 'not_verified', groups: [] };
+    this.validationQueue = [];
+    this.status = { state: 'stopped', processed: 0, historyCoverage: 'awaiting_recent', historySaved: 0, groups: [] };
   }
   snapshot() { return structuredClone(this.status); }
   report(state) {
@@ -94,7 +96,9 @@ export class WebSocketReader extends EventEmitter {
     const socket = this.socketFactory({
       auth: this.auth.state, logger: silent,
       markOnlineOnConnect: false, emitOwnEvents: false,
-      syncFullHistory: false, shouldSyncHistoryMessage: () => false,
+      // Ask only for WhatsApp's recent sync class, never the full account archive.
+      syncFullHistory: false,
+      shouldSyncHistoryMessage: notification => notification?.syncType === proto.HistorySync.HistorySyncType.RECENT,
       shouldIgnoreJid: jid => !Object.values(this.pins || {}).includes(jid),
       connectTimeoutMs: 30000, defaultQueryTimeoutMs: 20000,
       enableAutoSessionRecreation: false, enableRecentMessageCache: false,
@@ -120,7 +124,9 @@ export class WebSocketReader extends EventEmitter {
         if (!current()) return;
         this.pins = groups; this.ready = true; this.attempt = 0;
         this.status.groups = Object.keys(groups).map(name => ({ name, identified: true }));
+        const staged = this.validationQueue.splice(0);
         this.report('reading');
+        for (const item of staged) this.enqueue(item.message, () => this.active && this.ready, item.origin);
       });
       if (update.connection === 'close') {
         clearTimeout(this.connectTimer);
@@ -151,11 +157,20 @@ export class WebSocketReader extends EventEmitter {
     });
     socket.ev.on('messages.upsert', ({ messages }) => {
       if (!current()) return;
-      for (const message of messages) this.enqueue(message, current);
+      for (const message of messages) this.receive(message, current, 'live');
     });
     socket.ev.on('messages.update', changes => {
       if (!current()) return;
-      for (const { key, update } of changes) if (update.message) this.enqueue({ key, ...update }, current);
+      for (const { key, update } of changes) if (update.message) this.receive({ key, ...update }, current, 'live');
+    });
+    socket.ev.on('messaging-history.set', ({ messages = [], syncType }) => {
+      if (!current() || syncType !== proto.HistorySync.HistorySyncType.RECENT) return;
+      for (const message of messages) this.receive(message, current, 'history');
+    });
+    socket.ev.on('messaging-history.status', ({ syncType, status }) => {
+      if (!current() || syncType !== proto.HistorySync.HistorySyncType.RECENT) return;
+      if (status === 'complete') this.status.historyCoverage = this.status.historyCoverage === 'recent_received' ? 'recent_complete' : 'not_delivered';
+      this.report(this.status.state);
     });
     // Never silently follow renamed/replaced groups during a connected session.
     socket.ev.on('groups.update', changes => {
@@ -166,7 +181,24 @@ export class WebSocketReader extends EventEmitter {
       }
     });
   }
-  enqueue(message, current) {
+  receive(message, current, origin) {
+    const key = message?.key;
+    // Check source JID before reading the message body or touching an attachment.
+    if (!current() || !key?.id || key.fromMe || !Object.values(this.pins || {}).includes(key.remoteJid)) return;
+    if (origin === 'history') this.status.historyCoverage = 'recent_received';
+    if (!this.ready) {
+      // During a reconnect, encrypted group pins let us safely hold only authorized
+      // messages until the live metadata has revalidated those same identities.
+      if (!this.pins || this.validationQueue.length >= 128) {
+        if (this.validationQueue.length >= 128) void this.stop('queue_limit');
+        return;
+      }
+      this.validationQueue.push({ message, origin: origin === 'history' ? 'history' : 'reconnect' });
+      return;
+    }
+    this.enqueue(message, current, origin);
+  }
+  enqueue(message, current, origin = 'live') {
     const key = message?.key;
     // This gate runs BEFORE inspecting/decrypting application message bodies or downloading media.
     if (!this.ready || !key?.id || key.fromMe || !Object.values(this.pins || {}).includes(key.remoteJid)) return;
@@ -203,16 +235,35 @@ export class WebSocketReader extends EventEmitter {
       }
       if (!text && !image) return;
       const timestamp = Number(message.messageTimestamp);
-      const inserted = await this.store.saveMessage({ groupId: key.remoteJid, id: key.id, text, media,
+      const inserted = await this.store.saveMessage({ groupId: key.remoteJid, id: key.id, text, media, origin,
         sentAt: Number.isSafeInteger(timestamp) && timestamp > 0 ? timestamp : null });
-      if (inserted) this.status.processed++;
+      if (inserted) {
+        this.status.processed++;
+        if (origin === 'history') this.status.historySaved++;
+      }
       this.report('reading');
     }).catch(error => { void this.stop(error?.message === 'database_unavailable' ? 'database_unavailable' : 'processing_failed'); }).finally(() => { this.pending--; });
+  }
+  async listInbox(limit = 100) {
+    const pins = this.pins || await this.store.load('groups');
+    if (!pins) return { items: [], truncated: false };
+    const items = await this.store.listMessages(Object.values(pins), limit);
+    const result = []; let bytes = 0; let truncated = items.length >= Math.min(100, Number(limit) || 100);
+    for (const item of items) {
+      const recordBytes = Buffer.byteLength(item.text || '') + Buffer.byteLength(item.media?.data || '');
+      if (bytes + recordBytes > MAX_INBOX_RESPONSE) { truncated = true; break; }
+      const group = Object.keys(pins).find(name => pins[name] === item.groupId);
+      if (!group) continue;
+      bytes += recordBytes;
+      result.push({ group, text: item.text || '', media: item.media || null, sentAt: item.sentAt, origin: item.origin, sourceId: item.id });
+    }
+    return { items: result, truncated };
   }
   // Called only by an owner-authenticated, no-store endpoint. Never put QR into logs/status.
   pairingQr() { return this.active && this.status.state === 'qr_required' ? this.qr : null; }
   async stop(state = 'stopped') {
     this.active = false; this.ready = false; this.generation++;
+    this.validationQueue.length = 0;
     clearTimeout(this.timer); clearTimeout(this.connectTimer); this.qr = null;
     const socket = this.socket; this.socket = null;
     try { socket?.end(undefined); } catch {}

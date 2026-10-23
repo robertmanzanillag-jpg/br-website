@@ -23,6 +23,10 @@ export function mountOwnerRoutes(app, reader, { isOwner, prefix = '/api/admin/wh
     next();
   });
   app.get(`${prefix}/status`, (req, res) => res.json({ ...reader.snapshot(), csrf: req.session.whatsappWebsocketCsrf }));
+  app.get(`${prefix}/inbox`, async (req, res) => {
+    try { res.json(await reader.listInbox(100)); }
+    catch { res.status(503).json({ error: 'inbox_unavailable' }); }
+  });
   app.get(`${prefix}/panel`, (req, res) => {
     res.type('html').send(readFileSync(new URL('./panel.html', import.meta.url), 'utf8').replaceAll('__API_PREFIX__', publicPrefix));
   });

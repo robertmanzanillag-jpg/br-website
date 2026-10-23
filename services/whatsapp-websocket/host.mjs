@@ -32,6 +32,10 @@ export class HostedReader extends EventEmitter {
   }
   snapshot() { return structuredClone(this.state); }
   pairingQr() { return this.resource?.reader.pairingQr() || null; }
+  async listInbox(limit) {
+    if (!this.resource) throw new Error('inbox_unavailable');
+    return this.resource.reader.listInbox(limit);
+  }
   enqueue(task) {
     const operation = this.tail.then(task);
     this.tail = operation.catch(() => this.forward({ ...this.state, state: 'startup_failed' }));
