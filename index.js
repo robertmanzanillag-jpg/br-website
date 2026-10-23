@@ -181,6 +181,7 @@ const usersFile = path.join(__dirname, "db/users.json");
 import registerRouter from './routes/register.js';
 import loginRouter from './routes/login.js';
 import logoutRouter from './routes/logout.js';
+import { whatsAppLinkApiRouter, whatsAppLinkPageRouter } from './routes/whatsapp-link.js';
 import profileRouter from './routes/profile.js';
 import likesRouter from './routes/likes.js';
 import ordersRouter from './routes/orders.js';
@@ -216,6 +217,8 @@ app.use('/api/logout', logoutRouter);
 app.use('/api/profile', profileRouter);
 app.use('/api/like', likesRouter);
 app.use('/api/orders', ordersRouter);
+app.use('/api/admin/whatsapp-link', whatsAppLinkApiRouter);
+app.use('/admin/whatsapp-link', whatsAppLinkPageRouter);
 app.use('/api/admin', adminRouter);
 app.use('/admin', adminRouter); // Direct admin routes for file uploads
 // IMPORTANT: Order matters! Specific routes must come BEFORE wildcards

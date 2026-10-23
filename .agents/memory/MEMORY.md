@@ -1,1 +1,2 @@
 - [Gallery duplicate evidence](gallery-curation.md) — repeated filenames can be different shots; hide only confirmed duplicates and preserve source links.
+- [WhatsApp event approval](whatsapp-event-approval.md) — never write production event or price changes from WhatsApp until the exact event match is verified.

@@ -31,6 +31,7 @@
     "raw-body": "^3.0.0",
     "stripe": "^15.12.0",
     "uuid": "^11.1.0",
+    "whatsapp-web.js": "^1.34.7",
     "ytdl-core": "^4.11.5"
   }
 }
