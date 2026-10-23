@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
-import { BufferJSON } from '@whiskeysockets/baileys';
+import { BufferJSON } from './baileys-runtime.mjs';
 
 export function codec(base64Key) {
   if (!/^[A-Za-z0-9+/]{43}=$/.test(base64Key || '')) throw new Error('invalid_encryption_key');

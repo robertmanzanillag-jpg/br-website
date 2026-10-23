@@ -3,7 +3,7 @@
 import { randomBytes } from 'node:crypto';
 import { codec } from './store.mjs';
 import { WebSocketReader } from './reader.mjs';
-import makeWASocket from '@whiskeysockets/baileys';
+import makeWASocket from './baileys-runtime.mjs';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 const crypt = codec(randomBytes(32).toString('base64'));
 const data = new Map();

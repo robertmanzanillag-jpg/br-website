@@ -1,4 +1,4 @@
-import makeWASocket, { initAuthCreds, proto, normalizeMessageContent, downloadMediaMessage, DisconnectReason } from '@whiskeysockets/baileys';
+import makeWASocket, { initAuthCreds, proto, normalizeMessageContent, downloadMediaMessage, DisconnectReason } from './baileys-runtime.mjs';
 import pino from 'pino';
 import { EventEmitter } from 'node:events';
 
