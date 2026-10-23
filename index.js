@@ -186,6 +186,7 @@ import {
   whatsAppLinkApiRouter,
   whatsAppLinkPageRouter
 } from './routes/whatsapp-link.js';
+import { isPrivateWhatsAppStorageObject } from './services/whatsapp-reader/session-store.js';
 import profileRouter from './routes/profile.js';
 import likesRouter from './routes/likes.js';
 import ordersRouter from './routes/orders.js';
@@ -248,6 +249,7 @@ const objectStorage = new Client();
 app.get('/api/storage/*', async (req, res) => {
   try {
     const filePath = req.params[0]; // Get the path after '/api/storage/'
+    if (isPrivateWhatsAppStorageObject(filePath)) return res.sendStatus(404);
     console.log(`📁 Requesting file from Object Storage: ${filePath}`);
 
     const objectStorage = new Client();
@@ -6273,7 +6275,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 
 async function stopWhatsAppBeforeExit(signal) {
   console.log(`🛑 ${signal}: saving the private WhatsApp session before shutdown`);
-  const deadline = setTimeout(() => process.exit(1), 20_000);
+  const deadline = setTimeout(() => process.exit(1), 60_000);
   deadline.unref?.();
   try {
     await shutdownWhatsAppLinkService();
@@ -6284,6 +6286,7 @@ async function stopWhatsAppBeforeExit(signal) {
       clearTimeout(deadline);
       process.exit(0);
     });
+    server.closeAllConnections?.();
   }
 }
 

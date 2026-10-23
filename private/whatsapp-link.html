@@ -82,8 +82,9 @@
       errorNode.hidden = true;
       csrfToken = data.csrfToken || csrfToken;
       if (data.usage) {
-        document.getElementById('usage').textContent =
-          `Respaldo cada ${data.usage.backupIntervalHours} h · transferencia mensual ${formatBytes(data.usage.transferBytes)} / ${formatBytes(data.usage.transferLimitBytes)} · sesión ${formatBytes(data.usage.storedBytes)} / ${formatBytes(data.usage.maxSessionBytes)}.`;
+        document.getElementById('usage').textContent = data.usage.loaded
+          ? `Respaldo cada ${data.usage.backupIntervalHours} h · transferencia mensual ${formatBytes(data.usage.transferBytes)} / ${formatBytes(data.usage.transferLimitBytes)} · sesión ${formatBytes(data.usage.storedBytes)} / ${formatBytes(data.usage.maxSessionBytes)}.`
+          : 'Límites activos: 256 MiB almacenados y 10 GiB transferidos por mes; el uso se consulta al iniciar el servicio.';
       }
     }
 
@@ -91,7 +92,6 @@
       try {
         const response = await fetch('/api/admin/whatsapp-link/status', { credentials: 'same-origin', cache: 'no-store' });
         if (response.status === 401 || response.status === 403) {
-          polling = false;
           statusNode.textContent = 'Acceso denegado: inicia sesión como propietario.';
           startButton.disabled = true;
           return;

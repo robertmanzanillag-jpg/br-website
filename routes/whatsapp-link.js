@@ -12,8 +12,8 @@ import { WhatsAppRemoteSessionStore, WhatsAppStoreError } from '../services/what
 const OWNER_EMAIL = 'robert.manzanillag@gmail.com';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PAGE_PATH = path.join(__dirname, '../private/whatsapp-link.html');
-const SESSION_PATH = process.env.BLACKROOM_WHATSAPP_SESSION_DIR
-  || path.join(os.tmpdir(), 'blackroom-whatsapp-link');
+const SESSION_PATH = path.resolve(process.env.BLACKROOM_WHATSAPP_SESSION_DIR
+  || path.join(os.tmpdir(), 'blackroom-whatsapp-link'));
 const QR_LIFETIME_MS = 5 * 60 * 1000;
 const SESSION_BACKUP_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
@@ -22,10 +22,19 @@ class GuardedRemoteAuth extends whatsapp.RemoteAuth {
     super(options);
     this.onFailure = onFailure;
     this.syncPromise = Promise.resolve();
+    this.failed = false;
+  }
+
+  async afterAuthReady() {
+    await super.afterAuthReady();
+    if (this.failed) clearInterval(this.backupSync);
   }
 
   async storeRemoteSession(options) {
-    const sync = () => super.storeRemoteSession(options).catch(error => this.onFailure(error));
+    const sync = () => super.storeRemoteSession(options).catch(error => {
+      this.failed = true;
+      this.onFailure(error);
+    });
     const pending = this.syncPromise.then(sync, sync);
     this.syncPromise = pending.then(() => undefined, () => undefined);
     return pending;
@@ -76,7 +85,8 @@ export class WhatsAppLinkController {
       storage: storage || new StorageClient(),
       encryptionKey,
       dataPath: SESSION_PATH,
-      onLimit: error => this.handleStoreFailure(error)
+      onLimit: error => this.handleStoreFailure(error),
+      onUsage: () => this.publish()
     });
     if (!clientFactory && !this.sessionStore.isConfigured) this.state = 'storage_unconfigured';
     this.clientFactory = clientFactory || (() => {
@@ -111,7 +121,18 @@ export class WhatsAppLinkController {
     this.state = state;
     this.qrDataUrl = qrDataUrl;
     this.updatedAt = new Date().toISOString();
-    for (const listener of this.listeners) listener(this.snapshot());
+    this.publish();
+  }
+
+  publish() {
+    const snapshot = this.snapshot();
+    for (const listener of this.listeners) {
+      try {
+        listener(snapshot);
+      } catch {
+        this.listeners.delete(listener);
+      }
+    }
   }
 
   subscribe(listener) {
@@ -194,6 +215,8 @@ export class WhatsAppLinkController {
           ? 'backup_corrupt'
           : error?.code === 'WA_BUDGET_LIMIT' || error?.code === 'WA_STORAGE_LIMIT'
             ? 'budget_stopped'
+            : error?.code === 'WA_STORAGE_ERROR'
+              ? 'backup_failed'
             : 'error';
         this.finishClient(client, generation, state);
       });

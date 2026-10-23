@@ -21,6 +21,10 @@ export class WhatsAppStoreError extends Error {
   }
 }
 
+export function isPrivateWhatsAppStorageObject(name) {
+  return typeof name === 'string' && name.startsWith(`${PREFIX}/`);
+}
+
 export function encryptSessionArchive(archive, base64Key) {
   const key = decodeKey(base64Key);
   const iv = randomBytes(12);
@@ -72,6 +76,7 @@ export class WhatsAppRemoteSessionStore {
     encryptionKey = process.env.WHATSAPP_SESSION_ENCRYPTION_KEY,
     dataPath,
     onLimit = () => {},
+    onUsage = () => {},
     transferLimitBytes = MONTHLY_TRANSFER_LIMIT,
     sessionLimitBytes = MAX_SESSION_BYTES,
     storageLimitBytes = MAX_STORAGE_BYTES
@@ -80,12 +85,12 @@ export class WhatsAppRemoteSessionStore {
     this.encryptionKey = encryptionKey;
     this.dataPath = dataPath;
     this.onLimit = onLimit;
+    this.onUsage = onUsage;
     this.transferLimitBytes = transferLimitBytes;
     this.sessionLimitBytes = sessionLimitBytes;
     this.storageLimitBytes = storageLimitBytes;
     this.meter = null;
     this.meterLock = Promise.resolve();
-    this.pendingArchive = null;
   }
 
   get isConfigured() {
@@ -99,6 +104,7 @@ export class WhatsAppRemoteSessionStore {
 
   snapshot() {
     return {
+      loaded: Boolean(this.meter),
       month: this.meter?.month ?? currentMonth(),
       transferBytes: this.meter?.transferBytes ?? 0,
       transferLimitBytes: this.transferLimitBytes,
@@ -141,6 +147,7 @@ export class WhatsAppRemoteSessionStore {
   async persistMeter() {
     const bytes = Buffer.from(JSON.stringify(this.meter));
     resultValue(await this.storage.uploadFromBytes(METER_OBJECT, bytes), 'meter write');
+    this.onUsage(this.snapshot());
   }
 
   async reserveTransfer(bytes) {
@@ -160,8 +167,11 @@ export class WhatsAppRemoteSessionStore {
   async sessionExists({ session }) {
     if (!this.isConfigured) throw new WhatsAppStoreError('WA_KEY_MISSING');
     const exists = resultValue(await this.storage.exists(SESSION_OBJECT), 'session check');
-    if (!exists) return false;
     const meter = await this.loadMeter();
+    if (!exists) {
+      if (meter.storedBytes > 0) throw new WhatsAppStoreError('WA_BACKUP_CORRUPT');
+      return false;
+    }
     if (!meter.storedBytes || meter.storedBytes > this.sessionLimitBytes) {
       throw new WhatsAppStoreError('WA_METER_CORRUPT');
     }
@@ -172,9 +182,9 @@ export class WhatsAppRemoteSessionStore {
     if (!this.isConfigured) throw new WhatsAppStoreError('WA_KEY_MISSING');
     const meter = await this.loadMeter();
     if (meter.storedBytes > this.sessionLimitBytes) throw new WhatsAppStoreError('WA_STORAGE_LIMIT');
-    await this.reserveTransfer(meter.storedBytes);
+    await this.reserveTransfer(Math.max(meter.storedBytes, this.sessionLimitBytes));
     const [encrypted] = resultValue(await this.storage.downloadAsBytes(SESSION_OBJECT), 'session restore');
-    if (encrypted.length !== meter.storedBytes) throw new WhatsAppStoreError('WA_BACKUP_CORRUPT');
+    if (encrypted.length > this.sessionLimitBytes) throw new WhatsAppStoreError('WA_STORAGE_LIMIT');
     const archive = decryptSessionArchive(encrypted, this.encryptionKey);
     await fs.mkdir(path.dirname(destination), { recursive: true, mode: 0o700 });
     await fs.writeFile(destination, archive, { mode: 0o600 });
@@ -196,8 +206,12 @@ export class WhatsAppRemoteSessionStore {
       throw error;
     }
     await this.reserveTransfer(encrypted.length);
-    resultValue(await this.storage.uploadFromBytes(SESSION_OBJECT, encrypted), 'session backup');
     const meter = await this.loadMeter();
+    // Reserve the maximum recoverable size before replacing the archive.
+    // If the final meter write fails, restoration still remains bounded.
+    meter.storedBytes = this.sessionLimitBytes;
+    await this.persistMeter();
+    resultValue(await this.storage.uploadFromBytes(SESSION_OBJECT, encrypted), 'session backup');
     meter.storedBytes = encrypted.length;
     await this.persistMeter();
   }

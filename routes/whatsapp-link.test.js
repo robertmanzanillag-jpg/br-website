@@ -93,7 +93,10 @@ test('linking page and endpoints are private; no client starts before owner acti
       headers: { 'X-Test-User': 'robert.manzanillag@gmail.com' }
     });
     assert.equal(ownerPage.status, 200);
-    assert.match(await ownerPage.text(), /Vinculación privada de WhatsApp/);
+    const pageMarkup = await ownerPage.text();
+    assert.match(pageMarkup, /Vinculación privada de WhatsApp/);
+    assert.match(pageMarkup, /new EventSource/);
+    assert.doesNotMatch(pageMarkup, /setInterval/);
 
     const statusResponse = await fetch(`${base}/api/admin/whatsapp-link/status`, {
       headers: { 'X-Test-User': 'robert.manzanillag@gmail.com' }
@@ -132,6 +135,8 @@ test('linking page and endpoints are private; no client starts before owner acti
     assert.equal(qrResponse.headers.get('cache-control'), 'private, no-store, max-age=0');
     assert.equal(clients[0].calls.includes('getChats'), false);
     assert.equal(clients[0].calls.includes('sendMessage'), false);
+    const publicQrRequest = await fetch(`${base}/api/admin/whatsapp-link/status`);
+    assert.equal(publicQrRequest.status, 401);
 
     const stop = await fetch(`${base}/api/admin/whatsapp-link/stop`, {
       method: 'POST',
@@ -161,4 +166,39 @@ test('connecting never registers message readers or outbound actions', async () 
   assert.equal(client.listenerCount('message_edit'), 0);
   assert.equal(client.listenerCount('message_reaction'), 0);
   await system.controller.stop();
+});
+
+test('a service without its dedicated encryption key cannot start Chromium', async () => {
+  let factoryCalled = false;
+  const system = createWhatsAppLinkSystem({
+    sessionStore: {
+      isConfigured: false,
+      snapshot: () => ({ transferBytes: 0 })
+    },
+    clientFactory: undefined
+  });
+  system.controller.clientFactory = () => {
+    factoryCalled = true;
+    return new FakeClient();
+  };
+  system.controller.usesProductionFactory = true;
+  const status = await system.controller.start();
+  assert.equal(status.state, 'storage_unconfigured');
+  assert.equal(factoryCalled, false);
+});
+
+test('a WhatsApp disconnection is visible and does not start a message reader', async () => {
+  const client = new FakeClient();
+  const system = createWhatsAppLinkSystem({
+    clientFactory: () => client,
+    qrEncoder: async () => 'data:image/png;base64,dGVzdA=='
+  });
+  await system.controller.start();
+  await new Promise(resolve => setTimeout(resolve, 0));
+  client.emit('ready');
+  assert.equal(system.controller.snapshot().state, 'connected');
+  client.emit('disconnected');
+  assert.equal(system.controller.snapshot().state, 'disconnected');
+  assert.equal(client.listenerCount('message'), 0);
+  assert.equal(client.listenerCount('message_create'), 0);
 });
