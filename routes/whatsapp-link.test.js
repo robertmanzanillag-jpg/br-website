@@ -187,6 +187,25 @@ test('a service without its dedicated encryption key cannot start Chromium', asy
   assert.equal(factoryCalled, false);
 });
 
+test('production linking stays blocked until message-event isolation is verified', async () => {
+  let factoryCalled = false;
+  const system = createWhatsAppLinkSystem({
+    sessionStore: {
+      isConfigured: true,
+      snapshot: () => ({ transferBytes: 0 })
+    }
+  });
+  system.controller.clientFactory = () => {
+    factoryCalled = true;
+    return new FakeClient();
+  };
+  system.controller.usesProductionFactory = true;
+  assert.equal(system.controller.snapshot().state, 'privacy_blocked');
+  const status = await system.controller.start();
+  assert.equal(status.state, 'privacy_blocked');
+  assert.equal(factoryCalled, false);
+});
+
 test('a WhatsApp disconnection is visible and does not start a message reader', async () => {
   const client = new FakeClient();
   const system = createWhatsAppLinkSystem({

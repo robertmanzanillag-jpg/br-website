@@ -26,8 +26,9 @@
 <body>
   <main>
     <h1>Vinculación privada de WhatsApp</h1>
-    <p>Esta pantalla solo está disponible con la sesión del propietario. Al iniciar, el servicio genera su propio QR; no usa ni copia la sesión de otro navegador.</p>
-    <p class="notice">Esta etapa solo vincula la cuenta y respalda cifrada la sesión en el bucket privado ya contratado. No consulta chats ni mensajes, y no envía mensajes, respuestas ni reacciones. Si se alcanza un límite de almacenamiento o transferencia, el servicio se detiene; no se garantiza disponibilidad continua.</p>
+    <p>Esta pantalla solo está disponible con la sesión del propietario. No usa ni copia la sesión de otro navegador.</p>
+    <p class="notice">La vinculación está bloqueada: la librería instalada conecta eventos de mensajes de todos los chats y no permite garantizar el aislamiento antes de que el contenido llegue al proceso. No vincules ni escanees un QR hasta sustituirla o demostrar un filtro previo seguro. No se consultan mensajes ni se envían mensajes, respuestas o reacciones desde esta app.</p>
+    <p class="small">La futura lista exacta será: Promoters 🖤👾🖤, LIV MIAMI, SPACE TABLES y STUDIO 60 PROMO. Nombres ausentes o repetidos bloquearán cualquier lectura; nunca se ampliará la lista automáticamente.</p>
     <div id="status" role="status" aria-live="polite">Comprobando estado…</div>
     <div id="qr-wrap"><img id="qr" alt="QR temporal del servicio WhatsApp de Black Room"></div>
     <p id="qr-help" class="small" hidden>Escanea este QR desde el teléfono del propietario. No compartas ni captures esta imagen.</p>
@@ -49,6 +50,7 @@
     let csrfToken = '';
     const labels = {
       storage_unconfigured: 'Falta la clave dedicada de cifrado; el servicio no puede vincularse',
+      privacy_blocked: 'Vinculación bloqueada: esta librería puede recibir eventos de otros chats',
       idle: 'Desconectado · vinculación no iniciada',
       connecting: 'Iniciando el servicio…',
       qr_required: 'Esperando el escaneo del QR',
@@ -77,7 +79,7 @@
       qrHelp.hidden = !showQr;
       qrImage.src = showQr ? data.qrDataUrl : '';
       startButton.disabled = data.persistence === 'key-required'
-        || ['connecting', 'qr_required', 'authenticated', 'connected', 'budget_stopped', 'backup_failed', 'backup_corrupt'].includes(data.state);
+        || ['connecting', 'qr_required', 'authenticated', 'connected', 'budget_stopped', 'backup_failed', 'backup_corrupt', 'privacy_blocked'].includes(data.state);
       stopButton.hidden = !['connecting', 'qr_required', 'authenticated', 'connected'].includes(data.state);
       errorNode.hidden = true;
       csrfToken = data.csrfToken || csrfToken;

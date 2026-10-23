@@ -2,6 +2,12 @@
 
 This stage only links and persists the owner's WhatsApp Web session. It does not enumerate chats, read messages, or send messages, replies, or reactions.
 
+## Group privacy block
+
+The installed `whatsapp-web.js` client is not considered safe for strict four-group isolation. Its `Client.initialize()` calls `inject()`, which attaches a global `Store.Msg` add-event bridge and constructs/emits `Message` objects without filtering by chat ID. Its `getChats()` API also returns all chat metadata. This project therefore fails closed and does not start the production client until a future transport can prove filtering before message content crosses into the Node process.
+
+The exact metadata resolver is isolated in `group-policy.js`: it accepts only the four approved visible names, reports missing or duplicate matches, and never selects a fuzzy match. Even after unique IDs are found, the current client limitation must be removed and tested before linking or reading.
+
 ## Encryption and recovery
 
 - The service uses `RemoteAuth` with the project's existing private App Storage bucket.

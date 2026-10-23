@@ -70,7 +70,15 @@ function safeTokenEquals(expected, actual) {
 }
 
 export class WhatsAppLinkController {
-  constructor({ clientFactory, sessionStore, storage, encryptionKey, qrEncoder = QRCode.toDataURL, qrLifetimeMs = QR_LIFETIME_MS }) {
+  constructor({
+    clientFactory,
+    sessionStore,
+    storage,
+    encryptionKey,
+    privacyIsolationVerified = false,
+    qrEncoder = QRCode.toDataURL,
+    qrLifetimeMs = QR_LIFETIME_MS
+  }) {
     this.qrEncoder = qrEncoder;
     this.qrLifetimeMs = qrLifetimeMs;
     this.client = null;
@@ -89,6 +97,10 @@ export class WhatsAppLinkController {
       onUsage: () => this.publish()
     });
     if (!clientFactory && !this.sessionStore.isConfigured) this.state = 'storage_unconfigured';
+    this.privacyIsolationVerified = privacyIsolationVerified === true;
+    if (!clientFactory && this.sessionStore.isConfigured && !this.privacyIsolationVerified) {
+      this.state = 'privacy_blocked';
+    }
     this.clientFactory = clientFactory || (() => {
       this.authStrategy = new GuardedRemoteAuth({
         clientId: 'blackroom-owner-link',
@@ -157,6 +169,10 @@ export class WhatsAppLinkController {
     if (this.client) return this.snapshot();
     if (this.usesProductionFactory && !this.sessionStore.isConfigured) {
       this.setState('storage_unconfigured');
+      return this.snapshot();
+    }
+    if (this.usesProductionFactory && !this.privacyIsolationVerified) {
+      this.setState('privacy_blocked');
       return this.snapshot();
     }
 
