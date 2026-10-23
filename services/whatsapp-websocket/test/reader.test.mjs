@@ -126,6 +126,22 @@ test('diagnostics count only authorized arrivals, saves and discards; outbound m
   assert.equal(JSON.stringify(f.reader.snapshot()).includes('SQL'), false);
   await f.reader.stop();
 });
+test('saved authorized messages are handed to KONG only after exact group validation', async () => {
+  const delivered = [];
+  const delivery = {
+    on() { return this; }, pause() {},
+    async resume(messages, pins) { assert.equal(Object.keys(pins).length, 4); assert.equal(messages.length, 0); },
+    async record(message, group) { delivered.push({ message, group }); },
+  };
+  const f = await fixture({ delivery }); await f.open();
+  f.sockets[0].ev.emit('messages.upsert', { messages: [msg('100@g.us', 'Venue: Example'), msg('999@g.us', 'private')] });
+  await f.reader.queue;
+  assert.equal(delivered.length, 1);
+  assert.equal(delivered[0].group, GROUP_NAMES[0]);
+  assert.equal(f.store.inbox.length, 1);
+  assert.equal(f.outbound.messages + f.outbound.receipts + f.outbound.reactions, 0);
+  await f.reader.stop();
+});
 test('storage diagnostics expose only allowlisted code and operation', () => {
   assert.deepEqual(safeDatabaseDiagnostic({ code: '08006', message: 'password=private SELECT *' }, 'save'), { code: '08006', operation: 'save' });
   assert.deepEqual(safeDatabaseDiagnostic({ code: 'PRIVATE_ERROR', message: 'sensitive SQL' }, 'raw query'), { code: 'unclassified', operation: 'query' });
@@ -208,4 +224,24 @@ test('database transactions deduplicate, retain revisions and roll back quota ov
   const raw = (await pg.query('SELECT payload FROM br_wa_ws_state LIMIT 1')).rows[0].payload;
   assert.equal(Buffer.from(raw).includes(Buffer.from('VIP')), false);
   await store.release(); await pg.close();
+});
+test('KONG outbox is encrypted and survives a store reload', async () => {
+  const pg = new PGlite();
+  const db = { query: async (sql, params) => {
+    if (sql.includes('pg_try_advisory_lock')) return { rows: [{ acquired: true }] };
+    if (sql.includes('pg_advisory_unlock')) return { rows: [] };
+    if (sql.includes('CREATE TABLE')) { await pg.exec(sql); return { rows: [] }; }
+    return pg.query(sql, params);
+  } };
+  const store = new PostgresStore(db, key);
+  await store.acquire();
+  const item = { id: 'kong:' + 'a'.repeat(64), sourceGroup: 'SPACE TABLES', evidenceExcerpt: 'private synthetic evidence', status: 'pending' };
+  await store.saveDelivery(item.id, item);
+  const raw = (await pg.query('SELECT payload FROM br_wa_ws_state WHERE id=$1', [item.id])).rows[0].payload;
+  assert.equal(Buffer.from(raw).includes(Buffer.from('private synthetic evidence')), false);
+  await store.release();
+  const recovered = new PostgresStore(db, key); await recovered.acquire();
+  assert.equal((await recovered.getDelivery(item.id)).evidenceExcerpt, 'private synthetic evidence');
+  assert.equal((await recovered.listDeliveries()).length, 1);
+  await recovered.release(); await pg.close();
 });

@@ -60,8 +60,11 @@ export async function encryptedAuth(store) {
 }
 
 export class WebSocketReader extends EventEmitter {
-  constructor({ store, socketFactory = makeWASocket, download = downloadMediaMessage, reconnectDelays = [5000, 15000, 30000, 60000, 120000] }) {
+  constructor({ store, socketFactory = makeWASocket, download = downloadMediaMessage, delivery = null, reconnectDelays = [5000, 15000, 30000, 60000, 120000] }) {
     super(); this.store = store; this.socketFactory = socketFactory; this.download = download;
+    this.delivery = delivery;
+    this.delivery?.on('status', status => this.emit('delivery-status', status));
+    this.delivery?.on('storage-error', error => { void this.stop(error?.message === 'database_unavailable' ? 'database_unavailable' : 'processing_failed'); });
     this.delays = reconnectDelays; this.attempt = 0; this.generation = 0;
     this.active = false; this.ready = false; this.pending = 0; this.queue = Promise.resolve();
     this.validationQueue = [];
@@ -135,7 +138,12 @@ export class WebSocketReader extends EventEmitter {
         await this.store.save('groups', groups);
         await this.auth.save();
         if (!current()) return;
-        this.pins = groups; this.ready = true; this.attempt = 0;
+        this.pins = groups;
+        if (this.delivery) {
+          const backlog = await this.store.listMessages(Object.values(groups), 5000);
+          await this.delivery.resume(backlog, groups);
+        }
+        this.ready = true; this.attempt = 0;
         this.status.groups = Object.keys(groups).map(name => ({ name, identified: true }));
         const staged = this.validationQueue.splice(0);
         this.report('reading');
@@ -259,6 +267,8 @@ export class WebSocketReader extends EventEmitter {
       const inserted = await this.store.saveMessage({ groupId: key.remoteJid, id: key.id, text, media, origin,
         sentAt: Number.isSafeInteger(timestamp) && timestamp > 0 ? timestamp : null });
       if (inserted) {
+        const group = Object.keys(this.pins).find(name => this.pins[name] === key.remoteJid);
+        if (group) await this.delivery?.record({ id: key.id, text, media, sentAt: Number.isSafeInteger(timestamp) && timestamp > 0 ? timestamp : null }, group);
         this.status.processed++;
         this.status.saved++;
         this.status.lastSavedAt = new Date().toISOString();
@@ -282,10 +292,13 @@ export class WebSocketReader extends EventEmitter {
     }
     return { items: result, truncated };
   }
+  deliverySnapshot() { return this.delivery?.snapshot() || { enabled: false, status: 'not_started' }; }
+  async deliveryOverview() { return this.delivery ? this.delivery.overview() : { enabled: false, status: 'not_started', counts: {} }; }
   // Called only by an owner-authenticated, no-store endpoint. Never put QR into logs/status.
   pairingQr() { return this.active && this.status.state === 'qr_required' ? this.qr : null; }
   async stop(state = 'stopped') {
     this.active = false; this.ready = false; this.generation++;
+    this.delivery?.pause();
     this.validationQueue.length = 0;
     clearTimeout(this.timer); clearTimeout(this.connectTimer); this.qr = null;
     const socket = this.socket; this.socket = null;

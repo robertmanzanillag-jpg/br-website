@@ -2,6 +2,7 @@ import pg from 'pg';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { PostgresStore, isTransientDatabaseError, safeDatabaseDiagnostic } from './store.mjs';
 import { WebSocketReader } from './reader.mjs';
+import { KongDelivery } from './kong-delivery.mjs';
 import QRCode from 'qrcode';
 import { readFileSync } from 'node:fs';
 
@@ -26,6 +27,10 @@ export function mountOwnerRoutes(app, reader, { isOwner, prefix = '/api/admin/wh
   app.get(`${prefix}/inbox`, async (req, res) => {
     try { res.json(await reader.listInbox(100)); }
     catch { res.status(503).json({ error: 'inbox_unavailable' }); }
+  });
+  app.get(`${prefix}/delivery-status`, async (req, res) => {
+    try { res.json(await reader.deliveryOverview()); }
+    catch { res.status(503).json({ error: 'delivery_status_unavailable' }); }
   });
   app.get(`${prefix}/panel`, (req, res) => {
     res.type('html').send(readFileSync(new URL('./panel.html', import.meta.url), 'utf8').replaceAll('__API_PREFIX__', publicPrefix));
@@ -52,11 +57,11 @@ export function mountOwnerRoutes(app, reader, { isOwner, prefix = '/api/admin/wh
   app.get(`${prefix}/events`, (req, res) => {
     res.set({ 'Content-Type': 'text/event-stream', 'X-Accel-Buffering': 'no' });
     res.flushHeaders();
-    const send = state => { res.write(`data: ${JSON.stringify(state)}\n\n`); res.flush?.(); };
+    const send = state => { res.write(`data: ${JSON.stringify({ ...state, delivery: reader.deliverySnapshot?.() || { enabled: false, status: 'not_started' } })}\n\n`); res.flush?.(); };
     const heartbeat = setInterval(() => { res.write(': heartbeat\n\n'); res.flush?.(); }, 20000);
     const expire = setTimeout(() => res.end(), 5 * 60 * 1000);
-    send(reader.snapshot()); reader.on('status', send);
-    req.on('close', () => { clearInterval(heartbeat); clearTimeout(expire); reader.off('status', send); });
+    send(reader.snapshot()); reader.on('status', send); reader.on('delivery-status', send);
+    req.on('close', () => { clearInterval(heartbeat); clearTimeout(expire); reader.off('status', send); reader.off('delivery-status', send); });
   });
 }
 
@@ -71,7 +76,8 @@ export async function createProductionReader({ databaseUrl, encryptionKey, legac
     const diagnostic = safeDatabaseDiagnostic(error, 'connect');
     throw Object.assign(new Error(isTransientDatabaseError(error) ? 'database_unavailable' : 'storage_operation_failed'), { diagnostic });
   }
-  const reader = new WebSocketReader({ store });
+  const delivery = new KongDelivery({ store });
+  const reader = new WebSocketReader({ store, delivery });
   store.onStorageFailure = diagnostic => reader.recordStorageFailure(diagnostic);
   db.on('error', error => {
     const diagnostic = safeDatabaseDiagnostic(error, 'connect');
@@ -80,6 +86,6 @@ export async function createProductionReader({ databaseUrl, encryptionKey, legac
   });
   return {
     reader,
-    async shutdown() { await reader.stop(); await db.end(); },
+    async shutdown() { delivery.close(); await reader.stop(); await db.end(); },
   };
 }

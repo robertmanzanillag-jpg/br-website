@@ -15,6 +15,8 @@ test('owner-only QR, CSRF and streamed state work behind real compression', asyn
   reader.snapshot = () => ({ state: 'stopped', received: 4, saved: 2, discarded: 2, lastConnectionAt: '2026-01-01T00:00:00.000Z', storageFailure: { code: '08006', operation: 'save' } }); reader.pairingQr = () => 'test-sensitive-qr';
   reader.start = async () => { started++; }; reader.stop = async () => {};
   reader.listInbox = async () => ({ items: [{ group: 'SPACE TABLES', text: 'test-only' }], truncated: false });
+  reader.deliverySnapshot = () => ({ enabled: false, status: 'integration_disabled' });
+  reader.deliveryOverview = async () => ({ enabled: false, status: 'integration_disabled', counts: { pending: 1 } });
   mountOwnerRoutes(app, reader, { isOwner: user => user?.id === 'owner' });
   const server = app.listen(0, '127.0.0.1'); await new Promise(resolve => server.once('listening', resolve));
   const root = `http://127.0.0.1:${server.address().port}`;
@@ -24,6 +26,7 @@ test('owner-only QR, CSRF and streamed state work behind real compression', asyn
     assert.equal((await fetch(`${endpoint}/panel`)).status, 403);
     assert.equal((await fetch(`${endpoint}/qr.svg`)).status, 403);
     assert.equal((await fetch(`${endpoint}/inbox`)).status, 403);
+    assert.equal((await fetch(`${endpoint}/delivery-status`)).status, 403);
     const login = await fetch(`${root}/test-session`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'owner' }) });
     const cookie = login.headers.get('set-cookie').split(';')[0];
     const status = await fetch(`${endpoint}/status`, { headers: { cookie } });
@@ -35,6 +38,8 @@ test('owner-only QR, CSRF and streamed state work behind real compression', asyn
     const inbox = await fetch(`${endpoint}/inbox`, { headers: { cookie } });
     assert.match(inbox.headers.get('cache-control'), /no-store/);
     assert.deepEqual((await inbox.json()).items.map(item => item.group), ['SPACE TABLES']);
+    const deliveryStatus = await fetch(`${endpoint}/delivery-status`, { headers: { cookie } });
+    assert.deepEqual(await deliveryStatus.json(), { enabled: false, status: 'integration_disabled', counts: { pending: 1 } });
     assert.equal((await fetch(`${endpoint}/start`, { method: 'POST', headers: { cookie } })).status, 403);
     assert.equal((await fetch(`${endpoint}/start`, { method: 'POST', headers: { cookie, 'X-CSRF-Token': csrf } })).status, 202);
     assert.equal(started, 1);
@@ -47,7 +52,8 @@ test('owner-only QR, CSRF and streamed state work behind real compression', asyn
     const abort = new AbortController();
     const stream = await fetch(`${endpoint}/events`, { headers: { cookie, 'Accept-Encoding': 'gzip' }, signal: abort.signal });
     const output = stream.body.getReader();
-    assert.match(new TextDecoder().decode((await output.read()).value), /stopped/);
+    assert.match(new TextDecoder().decode((await output.read()).value), /"delivery":/);
+    reader.emit('status', { state: 'stopped' });
     reader.emit('status', { state: 'reading' });
     const next = await Promise.race([output.read(), new Promise((_, reject) => setTimeout(() => reject(Error('buffered SSE')), 2000).unref())]);
     assert.match(new TextDecoder().decode(next.value), /reading/); abort.abort();

@@ -46,11 +46,25 @@ recovering the current production source and checking its diff.
 7. Verify restart restores the encrypted session and the lease excludes a second
    process. An explicit relink is required for revoked/invalid sessions.
 
-The reader saves `pending_review` records; an event matcher/writer is NOT supplied
-by this migration. It must be connected to KONG separately without assuming every
-price/flyer matches an event. There is no full history request or guarantee of
-missed-message recovery; status deliberately reports `historyCoverage:not_verified`.
-Disconnection alerts beyond the owner panel are also not implemented.
+Recent authorized text is considered for KONG only after its source message is
+saved. The parser accepts explicit labeled fields (`Venue`, `Date` as YYYY-MM-DD,
+`Table`, `Minimum spend`, `Currency`, and `Conditions`); incomplete, ambiguous,
+old, or image-only offers remain encrypted and pending. It never infers values
+from ticket prices or flyer images. Source edits become conflicts. The reader
+sends only to the fixed URL in `KONG_CONTRACT.md`, signs the exact JSON body, and
+does not follow redirects. Receiver `202` remains review-only, not applied.
+
+Delivery remains disabled unless the dedicated `BLACK_ROOM_TABLE_READER_HMAC_SECRET`
+is valid AND host readiness is explicitly set with
+`BLACK_ROOM_TABLE_READER_ENABLED=true`. Do not set either here or transmit until
+the receiver host configuration is verified. Pending delivery records are
+encrypted in the existing PostgreSQL state store, resumed after group identity
+validation, and retried with a bounded schedule. No new service or paid inference
+is used. WhatsApp sending, replies, reactions, and read receipts remain absent.
+
+There is no full-history request or guarantee of missed-message recovery; status
+reports the recent history WhatsApp actually delivered. Disconnection alerts
+beyond the owner panel are not implemented.
 
 Database storage and write caps stop processing rather than delete data silently.
 Storage is separate from the old App Storage quota; it does not migrate, read or

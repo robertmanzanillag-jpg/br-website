@@ -17,6 +17,7 @@ export class HostedReader extends EventEmitter {
     this.retryDelays = retryDelays; this.retryAttempt = 0; this.retryTimer = null; this.wanted = false; this.starting = null;
     this.metricTotals = { received: 0, saved: 0, discarded: 0 };
     this.resourceMetrics = { received: 0, saved: 0, discarded: 0 };
+    this.forwardDelivery = () => this.emit('delivery-status', this.deliverySnapshot());
     this.forward = state => {
       for (const metric of Object.keys(this.metricTotals)) {
         if (Number.isFinite(state[metric])) {
@@ -56,9 +57,14 @@ export class HostedReader extends EventEmitter {
   }
   snapshot() { return structuredClone(this.state); }
   pairingQr() { return this.resource?.reader.pairingQr() || null; }
+  deliverySnapshot() { return this.resource?.reader.deliverySnapshot() || { enabled: false, status: 'not_started' }; }
   async listInbox(limit) {
     if (!this.resource) throw new Error('inbox_unavailable');
     return this.resource.reader.listInbox(limit);
+  }
+  async deliveryOverview() {
+    if (!this.resource) return { enabled: false, status: 'not_started', counts: {} };
+    return this.resource.reader.deliveryOverview();
   }
   enqueue(task) {
     const operation = this.tail.then(task);
@@ -78,6 +84,7 @@ export class HostedReader extends EventEmitter {
           const failed = this.resource;
           this.resource = null;
           failed.reader.off('status', this.forward);
+          failed.reader.off('delivery-status', this.forwardDelivery);
           await failed.shutdown().catch(() => {});
         }
         if (!this.resource) {
@@ -85,6 +92,7 @@ export class HostedReader extends EventEmitter {
           this.resource = await this.factory();
           this.resourceMetrics = { received: 0, saved: 0, discarded: 0 };
           this.resource.reader.on('status', this.forward);
+          this.resource.reader.on('delivery-status', this.forwardDelivery);
         }
         await this.resource.reader.start();
         const snapshot = this.resource.reader.snapshot();
@@ -121,6 +129,7 @@ export class HostedReader extends EventEmitter {
         const resource = this.resource;
         await resource.shutdown();
         resource.reader.off('status', this.forward);
+        resource.reader.off('delivery-status', this.forwardDelivery);
         this.resource = null;
       }
       this.forward({ ...this.state, state: 'stopped' });
