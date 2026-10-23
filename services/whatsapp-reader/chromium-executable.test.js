@@ -33,4 +33,12 @@ test('startup diagnostics classify browser failures and never return raw error t
     classifyWhatsAppStartupFailure(new Error('arbitrary private-token-value')),
     'WHATSAPP_START_FAILED'
   );
+  assert.equal(
+    classifyWhatsAppStartupFailure(new Error('Timed out waiting for DevTools endpoint'), 'launching_chromium'),
+    'CHROMIUM_LAUNCH_TIMEOUT'
+  );
+  assert.equal(
+    classifyWhatsAppStartupFailure(new Error('The browser is already running for /tmp/private-profile'), 'launching_chromium'),
+    'CHROMIUM_PROFILE_LOCKED'
+  );
 });

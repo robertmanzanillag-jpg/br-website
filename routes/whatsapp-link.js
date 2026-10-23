@@ -19,6 +19,7 @@ const SESSION_PATH = path.resolve(process.env.BLACKROOM_WHATSAPP_SESSION_DIR
   || path.join(os.tmpdir(), 'blackroom-whatsapp-link'));
 const QR_LIFETIME_MS = 5 * 60 * 1000;
 const STARTUP_TIMEOUT_MS = 120 * 1000;
+const PUPPETEER_LAUNCH_TIMEOUT_MS = 20_000;
 const STAGE_TIMEOUTS_MS = {
   remote_backup_access: 20_000,
   remote_backup_restore: 30_000,
@@ -39,6 +40,7 @@ const SAFE_DIAGNOSTIC_CAUSES = new Set([
   'WA_BUDGET_LIMIT', 'WA_STORAGE_LIMIT', 'WA_STORAGE_ERROR', 'WA_READER_STATE_INVALID',
   'WA_STORAGE_TIMEOUT', 'CHROMIUM_LAUNCH_TIMEOUT', 'WHATSAPP_WEB_LOAD_TIMEOUT', 'QR_WAIT_TIMEOUT',
   'WA_CHROMIUM_NOT_FOUND', 'CHROMIUM_MISSING_LIBRARY', 'CHROMIUM_SANDBOX_FAILURE',
+  'CHROMIUM_PROFILE_LOCKED',
   'CHROMIUM_PROCESS_EXITED', 'CHROMIUM_PROCESS_SIGNALED',
   'CHROMIUM_NOT_FOUND', 'WHATSAPP_START_TIMEOUT', 'WHATSAPP_WEB_UNREACHABLE',
   'WHATSAPP_START_FAILED', 'WHATSAPP_AUTH_FAILED', 'WHATSAPP_DISCONNECTED',
@@ -176,7 +178,8 @@ export class WhatsAppLinkController {
         puppeteer: {
           headless: true,
           executablePath: resolveChromiumExecutable(),
-          args: ['--disable-dev-shm-usage']
+          args: ['--disable-dev-shm-usage'],
+          timeout: PUPPETEER_LAUNCH_TIMEOUT_MS
         }
       });
     });
@@ -334,7 +337,7 @@ export class WhatsAppLinkController {
                         || !['connecting', 'authenticated'].includes(this.state)) return;
                     this.finishClient(client, generation, 'error', {
                       stage: this.diagnostics.stage,
-                      cause: classifyWhatsAppStartupFailure(error)
+                      cause: classifyWhatsAppStartupFailure(error, this.diagnostics.stage)
                     });
                   });
                   child.once('exit', (code, signal) => {
@@ -425,7 +428,7 @@ export class WhatsAppLinkController {
     void Promise.resolve()
       .then(() => client.initialize())
       .catch(error => {
-        const cause = classifyWhatsAppStartupFailure(error);
+        const cause = classifyWhatsAppStartupFailure(error, this.diagnostics.stage);
         const state = error?.code === 'WA_BACKUP_CORRUPT' || error?.code === 'WA_METER_CORRUPT'
           ? 'backup_corrupt'
           : error?.code === 'WA_BUDGET_LIMIT' || error?.code === 'WA_STORAGE_LIMIT'
