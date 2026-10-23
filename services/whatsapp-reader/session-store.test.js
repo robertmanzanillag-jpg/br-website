@@ -116,3 +116,18 @@ test('transfer cap stops before the next backup and private objects are not publ
     await fs.rm(root, { recursive: true, force: true });
   }
 });
+
+test('remote session metadata requests fail closed at the configured storage deadline', async () => {
+  const storage = {
+    exists: () => new Promise(() => {})
+  };
+  const store = new WhatsAppRemoteSessionStore({
+    storage,
+    encryptionKey: testKey,
+    requestTimeoutMs: 10
+  });
+  await assert.rejects(
+    store.sessionExists({ session: 'RemoteAuth-blackroom-owner-link' }),
+    { code: 'WA_STORAGE_TIMEOUT' }
+  );
+});

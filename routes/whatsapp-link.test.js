@@ -96,7 +96,8 @@ test('linking page and endpoints are private; no client starts before owner acti
     const pageMarkup = await ownerPage.text();
     assert.match(pageMarkup, /Vinculación privada de WhatsApp/);
     assert.match(pageMarkup, /new EventSource/);
-    assert.doesNotMatch(pageMarkup, /setInterval/);
+    assert.match(pageMarkup, /setInterval\(updateDiagnosticTime/);
+    assert.doesNotMatch(pageMarkup, /setInterval\(refresh/);
 
     const statusResponse = await fetch(`${base}/api/admin/whatsapp-link/status`, {
       headers: { 'X-Test-User': 'robert.manzanillag@gmail.com' }
@@ -152,6 +153,30 @@ test('linking page and endpoints are private; no client starts before owner acti
   });
 });
 
+test('private HTTP event stream pushes stage changes without status polling', async () => {
+  const system = createWhatsAppLinkSystem({ clientFactory: () => new FakeClient() });
+  const app = makeApp(system);
+  await withServer(app, async base => {
+    const response = await fetch(`${base}/api/admin/whatsapp-link/events`, {
+      headers: { 'X-Test-User': 'robert.manzanillag@gmail.com' }
+    });
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get('content-type'), /text\/event-stream/);
+    const reader = response.body.getReader();
+    try {
+      const decoder = new TextDecoder();
+      const first = decoder.decode((await reader.read()).value);
+      assert.match(first, /"state":"idle"/);
+      system.controller.setDiagnostic('remote_backup_access');
+      const next = decoder.decode((await reader.read()).value);
+      assert.match(next, /"stage":"remote_backup_access"/);
+      assert.match(next, /"stageElapsedMs":/);
+    } finally {
+      await reader.cancel();
+    }
+  });
+});
+
 test('connecting never registers message readers or outbound actions', async () => {
   const client = new FakeClient();
   const system = createWhatsAppLinkSystem({
@@ -168,6 +193,46 @@ test('connecting never registers message readers or outbound actions', async () 
   assert.equal(client.listenerCount('message_edit'), 0);
   assert.equal(client.listenerCount('message_reaction'), 0);
   await system.controller.stop();
+});
+
+test('browser assignment and loading events advance sanitized startup stages', async () => {
+  const client = new FakeClient();
+  client.pupBrowser = null;
+  client.initialize = async () => { client.calls.push('initialize'); };
+  const system = createWhatsAppLinkSystem({
+    clientFactory: () => client,
+    qrEncoder: async () => 'data:image/png;base64,dGVzdA=='
+  });
+  await system.controller.start();
+  await new Promise(resolve => setTimeout(resolve, 0));
+
+  client.pupBrowser = {};
+  assert.equal(system.controller.snapshot().diagnostics.stage, 'loading_whatsapp_web');
+  client.emit('loading_screen', 42, 'ignored private event text');
+  assert.equal(system.controller.snapshot().diagnostics.stage, 'waiting_for_qr');
+  client.emit('qr', 'private-qr-payload');
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert.equal(system.controller.snapshot().state, 'qr_required');
+  assert.equal(system.controller.snapshot().diagnostics.stage, 'waiting_for_scan');
+  await system.controller.stop({ backup: false });
+});
+
+test('a browser that appears after startup timeout is closed instead of becoming an orphan', async () => {
+  const client = new FakeClient();
+  client.pupBrowser = null;
+  client.initialize = async () => new Promise(() => {});
+  const system = createWhatsAppLinkSystem({
+    clientFactory: () => client,
+    startupTimeoutMs: 10
+  });
+  await system.controller.start();
+  await new Promise(resolve => setTimeout(resolve, 20));
+  assert.equal(system.controller.snapshot().state, 'error');
+
+  let closed = false;
+  client.pupBrowser = { close: async () => { closed = true; } };
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert.equal(closed, true);
 });
 
 test('a service without its dedicated encryption key cannot start Chromium', async () => {
@@ -276,10 +341,8 @@ test('initialization errors expose only a sanitized stage and cause', async () =
   await new Promise(resolve => setTimeout(resolve, 0));
   const snapshot = system.controller.snapshot();
   assert.equal(snapshot.state, 'error');
-  assert.deepEqual(snapshot.diagnostics, {
-    stage: 'initializing_whatsapp',
-    cause: 'CHROMIUM_MISSING_LIBRARY'
-  });
+  assert.equal(snapshot.diagnostics.stage, 'initializing_whatsapp');
+  assert.equal(snapshot.diagnostics.cause, 'CHROMIUM_MISSING_LIBRARY');
   assert.equal(JSON.stringify(snapshot).includes('private-token-value'), false);
 });
 

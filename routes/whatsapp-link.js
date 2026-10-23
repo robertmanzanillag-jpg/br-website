@@ -19,16 +19,25 @@ const SESSION_PATH = path.resolve(process.env.BLACKROOM_WHATSAPP_SESSION_DIR
   || path.join(os.tmpdir(), 'blackroom-whatsapp-link'));
 const QR_LIFETIME_MS = 5 * 60 * 1000;
 const STARTUP_TIMEOUT_MS = 120 * 1000;
+const STAGE_TIMEOUTS_MS = {
+  remote_backup_access: 20_000,
+  remote_backup_restore: 30_000,
+  launching_chromium: 30_000,
+  loading_whatsapp_web: 45_000,
+  waiting_for_qr: 45_000
+};
 const SESSION_BACKUP_INTERVAL_MS = 6 * 60 * 60 * 1000;
 const SAFE_DIAGNOSTIC_STAGES = new Set([
-  'idle', 'preparing_browser', 'initializing_whatsapp', 'encoding_qr',
-  'waiting_for_scan', 'authenticated', 'resolving_groups', 'reader_active',
+  'idle', 'preparing_browser', 'remote_backup_access', 'remote_backup_restore',
+  'launching_chromium', 'loading_whatsapp_web', 'waiting_for_qr',
+  'initializing_whatsapp', 'encoding_qr', 'waiting_for_scan', 'authenticated', 'resolving_groups', 'reader_active',
   'reader_blocked', 'restoring_session', 'encrypted_storage', 'disconnected',
   'qr_expired', 'stopped', 'unknown'
 ]);
 const SAFE_DIAGNOSTIC_CAUSES = new Set([
   'WA_KEY_MISSING', 'WA_KEY_INVALID', 'WA_BACKUP_CORRUPT', 'WA_METER_CORRUPT',
   'WA_BUDGET_LIMIT', 'WA_STORAGE_LIMIT', 'WA_STORAGE_ERROR', 'WA_READER_STATE_INVALID',
+  'WA_STORAGE_TIMEOUT', 'CHROMIUM_LAUNCH_TIMEOUT', 'WHATSAPP_WEB_LOAD_TIMEOUT', 'QR_WAIT_TIMEOUT',
   'WA_CHROMIUM_NOT_FOUND', 'CHROMIUM_MISSING_LIBRARY', 'CHROMIUM_SANDBOX_FAILURE',
   'CHROMIUM_NOT_FOUND', 'WHATSAPP_START_TIMEOUT', 'WHATSAPP_WEB_UNREACHABLE',
   'WHATSAPP_START_FAILED', 'WHATSAPP_AUTH_FAILED', 'WHATSAPP_DISCONNECTED',
@@ -108,6 +117,8 @@ export class WhatsAppLinkController {
     this.authStrategy = null;
     this.qrTimer = null;
     this.startupTimer = null;
+    this.stageTimer = null;
+    this.startupStartedAt = null;
     this.reconnectTimer = null;
     this.reconnectAttempts = 0;
     this.reconnectDelaysMs = reconnectDelaysMs;
@@ -123,7 +134,8 @@ export class WhatsAppLinkController {
       encryptionKey,
       dataPath: SESSION_PATH,
       onLimit: error => this.handleStoreFailure(error),
-      onUsage: () => this.publish()
+      onUsage: () => this.publish(),
+      onStage: stage => this.setDiagnostic(stage)
     });
     if (!clientFactory && !this.sessionStore.isConfigured) this.state = 'storage_unconfigured';
     this.accountSyncConsented = accountSyncConsented === true;
@@ -148,6 +160,12 @@ export class WhatsAppLinkController {
         store: this.sessionStore,
         backupSyncIntervalMs: SESSION_BACKUP_INTERVAL_MS
       }, error => this.handleStoreFailure(error));
+      const beforeBrowserInitialized = this.authStrategy.beforeBrowserInitialized.bind(this.authStrategy);
+      this.authStrategy.beforeBrowserInitialized = async () => {
+        this.setDiagnostic('remote_backup_access');
+        await beforeBrowserInitialized();
+        this.setDiagnostic('launching_chromium');
+      };
       return new whatsapp.Client({
         authStrategy: this.authStrategy,
         puppeteer: {
@@ -164,7 +182,13 @@ export class WhatsAppLinkController {
     return {
       state: this.state,
       qrDataUrl: this.qrDataUrl,
-      diagnostics: { ...this.diagnostics },
+      diagnostics: {
+        ...this.diagnostics,
+        elapsedMs: this.diagnostics.startedAt
+          ? Math.max(0, Date.now() - Date.parse(this.diagnostics.startedAt)) : 0,
+        stageElapsedMs: this.diagnostics.stageStartedAt
+          ? Math.max(0, Date.now() - Date.parse(this.diagnostics.stageStartedAt)) : 0
+      },
       updatedAt: this.updatedAt,
       persistence: this.sessionStore.isConfigured ? 'encrypted-object-storage' : 'key-required',
       usage: this.sessionStore.snapshot(),
@@ -189,11 +213,34 @@ export class WhatsAppLinkController {
   }
 
   setDiagnostic(stage, cause = null) {
+    if (this.stageTimer) clearTimeout(this.stageTimer);
+    this.stageTimer = null;
+    const startedAt = this.startupStartedAt || this.diagnostics.startedAt || new Date().toISOString();
     this.diagnostics = {
       stage: SAFE_DIAGNOSTIC_STAGES.has(stage) ? stage : 'unknown',
-      cause: cause == null ? null : SAFE_DIAGNOSTIC_CAUSES.has(cause) ? cause : 'WHATSAPP_START_FAILED'
+      cause: cause == null ? null : SAFE_DIAGNOSTIC_CAUSES.has(cause) ? cause : 'WHATSAPP_START_FAILED',
+      startedAt,
+      stageStartedAt: new Date().toISOString()
     };
     this.updatedAt = new Date().toISOString();
+    const timeoutMs = STAGE_TIMEOUTS_MS[this.diagnostics.stage];
+    if (timeoutMs && this.client) {
+      const client = this.client;
+      const generation = this.generation;
+      const stageAtArm = this.diagnostics.stage;
+      const timeoutCause = {
+        remote_backup_access: 'WA_STORAGE_TIMEOUT',
+        remote_backup_restore: 'WA_STORAGE_TIMEOUT',
+        launching_chromium: 'CHROMIUM_LAUNCH_TIMEOUT',
+        loading_whatsapp_web: 'WHATSAPP_WEB_LOAD_TIMEOUT',
+        waiting_for_qr: 'QR_WAIT_TIMEOUT'
+      }[stageAtArm];
+      this.stageTimer = setTimeout(() => this.finishClient(client, generation, 'error', {
+        stage: stageAtArm,
+        cause: timeoutCause
+      }), timeoutMs);
+      this.stageTimer.unref?.();
+    }
     this.publish();
   }
 
@@ -249,6 +296,7 @@ export class WhatsAppLinkController {
 
     const generation = ++this.generation;
     let client;
+    this.startupStartedAt = new Date().toISOString();
     try {
       this.setDiagnostic('preparing_browser');
       await fs.mkdir(SESSION_PATH, { recursive: true, mode: 0o700 });
@@ -262,6 +310,32 @@ export class WhatsAppLinkController {
     this.client = client;
     this.setState('connecting');
 
+    let currentBrowser = client.pupBrowser;
+    try {
+      Object.defineProperty(client, 'pupBrowser', {
+        configurable: true,
+        enumerable: true,
+        get: () => currentBrowser,
+        set: value => {
+          currentBrowser = value;
+          if (value) {
+            if (this.client === client && this.generation === generation) {
+              this.setDiagnostic('loading_whatsapp_web');
+            } else {
+              void Promise.resolve(value.close?.()).catch(() => {});
+            }
+          }
+        }
+      });
+    } catch {
+      // The loading_screen event below still reports progress for clients with a fixed property.
+    }
+    client.on('loading_screen', () => {
+      if (this.client === client && this.generation === generation
+          && this.diagnostics.stage === 'loading_whatsapp_web') {
+        this.setDiagnostic('waiting_for_qr');
+      }
+    });
     client.on('qr', qr => {
       if (this.client !== client || this.generation !== generation) return;
       this.clearStartupTimer();
@@ -302,10 +376,17 @@ export class WhatsAppLinkController {
     client.on('disconnected', () => this.finishClient(client, generation, 'disconnected'));
 
     this.setDiagnostic('initializing_whatsapp');
-    this.startupTimer = setTimeout(() => this.finishClient(client, generation, 'error', {
-      stage: 'initializing_whatsapp',
-      cause: 'WHATSAPP_START_TIMEOUT'
-    }), this.startupTimeoutMs);
+    this.startupTimer = setTimeout(() => {
+      const currentStage = this.diagnostics.stage;
+      const stageCause = {
+        remote_backup_access: 'WA_STORAGE_TIMEOUT',
+        remote_backup_restore: 'WA_STORAGE_TIMEOUT',
+        launching_chromium: 'CHROMIUM_LAUNCH_TIMEOUT',
+        loading_whatsapp_web: 'WHATSAPP_WEB_LOAD_TIMEOUT',
+        waiting_for_qr: 'QR_WAIT_TIMEOUT'
+      }[currentStage] || 'WHATSAPP_START_TIMEOUT';
+      this.finishClient(client, generation, 'error', { stage: currentStage, cause: stageCause });
+    }, this.startupTimeoutMs);
     this.startupTimer.unref?.();
 
     // Initialization is triggered by the owner's POST /start or by a confirmed
@@ -319,11 +400,11 @@ export class WhatsAppLinkController {
           ? 'backup_corrupt'
           : error?.code === 'WA_BUDGET_LIMIT' || error?.code === 'WA_STORAGE_LIMIT'
             ? 'budget_stopped'
-            : error?.code === 'WA_STORAGE_ERROR'
+            : error?.code === 'WA_STORAGE_ERROR' || error?.code === 'WA_STORAGE_TIMEOUT'
               ? 'backup_failed'
             : 'error';
         this.finishClient(client, generation, state, {
-          stage: 'initializing_whatsapp',
+          stage: this.diagnostics.stage,
           cause
         });
       });
@@ -333,22 +414,27 @@ export class WhatsAppLinkController {
   finishClient(client, generation, state, diagnostic = null) {
     if (this.client !== client || this.generation !== generation) return;
     this.clearStartupTimer();
+    if (this.stageTimer) clearTimeout(this.stageTimer);
+    this.stageTimer = null;
     this.readerRuntime?.disconnected(state);
     this.readerRuntime = null;
     this.clearQrTimer();
-    this.diagnostics = diagnostic
-      ? {
-        stage: SAFE_DIAGNOSTIC_STAGES.has(diagnostic.stage) ? diagnostic.stage : 'unknown',
-        cause: diagnostic.cause == null ? null
-          : SAFE_DIAGNOSTIC_CAUSES.has(diagnostic.cause) ? diagnostic.cause : 'WHATSAPP_START_FAILED'
-      }
-      : state === 'disconnected'
-        ? { stage: 'disconnected', cause: 'WHATSAPP_DISCONNECTED' }
-        : state === 'auth_failed'
-          ? { stage: 'authenticated', cause: 'WHATSAPP_AUTH_FAILED' }
-          : state === 'expired'
-            ? { stage: 'qr_expired', cause: 'QR_EXPIRED' }
-            : { stage: 'stopped', cause: null };
+    const finalDiagnostic = diagnostic || (state === 'disconnected'
+      ? { stage: 'disconnected', cause: 'WHATSAPP_DISCONNECTED' }
+      : state === 'auth_failed'
+        ? { stage: 'authenticated', cause: 'WHATSAPP_AUTH_FAILED' }
+        : state === 'expired'
+          ? { stage: 'qr_expired', cause: 'QR_EXPIRED' }
+          : { stage: 'stopped', cause: null });
+    this.diagnostics = {
+      stage: SAFE_DIAGNOSTIC_STAGES.has(finalDiagnostic.stage) ? finalDiagnostic.stage : 'unknown',
+      cause: finalDiagnostic.cause == null ? null
+        : SAFE_DIAGNOSTIC_CAUSES.has(finalDiagnostic.cause) ? finalDiagnostic.cause : 'WHATSAPP_START_FAILED',
+      startedAt: this.diagnostics.startedAt || new Date().toISOString(),
+      stageStartedAt: new Date().toISOString()
+    };
+    this.updatedAt = new Date().toISOString();
+    this.publish();
     this.setState(state);
     this.client = null;
     void client.destroy().catch(() => {});
@@ -416,6 +502,8 @@ export class WhatsAppLinkController {
     this.generation++;
     this.client = null;
     this.clearStartupTimer();
+    if (this.stageTimer) clearTimeout(this.stageTimer);
+    this.stageTimer = null;
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     this.reconnectTimer = null;
     this.reconnectAttempts = 0;
@@ -454,7 +542,11 @@ export class WhatsAppLinkController {
         : ['WA_BUDGET_LIMIT', 'WA_STORAGE_LIMIT'].includes(error?.code)
           ? 'budget_stopped'
           : 'backup_failed';
-      this.diagnostics = { stage: 'restoring_session', cause };
+      this.setDiagnostic(
+        SAFE_DIAGNOSTIC_STAGES.has(this.diagnostics.stage) && this.diagnostics.stage !== 'idle'
+          ? this.diagnostics.stage : 'restoring_session',
+        cause
+      );
       this.setState(state);
       return { resumed: false, state };
     }

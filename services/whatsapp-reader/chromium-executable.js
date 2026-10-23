@@ -30,6 +30,7 @@ export function classifyWhatsAppStartupFailure(error) {
     'WA_BUDGET_LIMIT',
     'WA_STORAGE_LIMIT',
     'WA_STORAGE_ERROR',
+    'WA_STORAGE_TIMEOUT',
     'WA_READER_STATE_INVALID',
     'WA_CHROMIUM_NOT_FOUND'
   ]);
