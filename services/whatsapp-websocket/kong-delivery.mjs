@@ -65,12 +65,20 @@ export class KongDelivery extends EventEmitter {
     super();
     this.store = store; this.secret = secret; this.hostReady = hostReady === true; this.fetch = fetchImpl; this.now = now;
     this.timers = new Map(); this.inFlight = new Set(); this.closed = false; this.paused = false;
-    this.state = { enabled: this.isConfigured(), status: this.isConfigured() ? 'ready' : 'integration_disabled', delivered: 0, pending: 0, lastAttemptAt: null };
+    this.state = {
+      enabled: this.isConfigured(), hostReady: this.hostReady, secretValid: this.validSecret(),
+      status: this.isConfigured() ? 'ready' : 'integration_disabled',
+      delivered: 0, pending: 0, attempts: 0, applied: 0, duplicates: 0,
+      receiverPending: 0, rejected: 0, networkFailures: 0, lastAttemptAt: null,
+    };
   }
   validSecret() { return typeof this.secret === 'string' && this.secret.length >= 32 && this.secret.trim() === this.secret; }
   isConfigured() { return this.hostReady && this.validSecret(); }
   snapshot() { return { ...this.state }; }
-  update(patch) { this.state = { ...this.state, ...patch }; this.emit('status', this.snapshot()); }
+  update(patch) {
+    this.state = { ...this.state, ...patch, hostReady: this.hostReady, secretValid: this.validSecret() };
+    this.emit('status', this.snapshot());
+  }
   async record(message, group) {
     if (!GROUPS.has(group)) return { accepted: false, reason: 'forbidden_group' };
     const next = prepareKongRecord(message, group, this.now());
@@ -163,7 +171,11 @@ export class KongDelivery extends EventEmitter {
         }
         const timestamp = String(Math.floor(this.now() / 1000));
         const signature = createHmac('sha256', this.secret).update(`${timestamp}.${raw}`).digest('hex');
-      this.update({ lastAttemptAt: new Date(this.now()).toISOString(), status: 'delivering' });
+        this.update({
+          attempts: this.state.attempts + 1,
+          lastAttemptAt: new Date(this.now()).toISOString(),
+          status: 'delivering',
+        });
         let response;
         try {
           response = await this.fetch(KONG_URL, {
@@ -173,20 +185,26 @@ export class KongDelivery extends EventEmitter {
           });
         } catch (error) { networkFailed = true; throw error; }
         if (response.status >= 300 && response.status < 400) {
+          this.state.rejected++;
           states[i] = { ...itemState, status: 'pending', reason: 'redirect_rejected' }; continue;
         }
         if (response.status === 200) {
           const body = await response.json().catch(() => ({}));
           const status = body?.status === 'duplicate' ? 'duplicate' : body?.status === 'applied' ? 'applied' : 'pending';
           states[i] = { ...itemState, status, reason: status === 'pending' ? 'unrecognized_receiver_response' : null };
-          if (status !== 'pending') this.state.delivered++;
+          if (status === 'applied') { this.state.applied++; this.state.delivered++; }
+          else if (status === 'duplicate') { this.state.duplicates++; this.state.delivered++; }
+          else this.state.rejected++;
         } else if (response.status === 202) {
+          this.state.receiverPending++;
           states[i] = { ...itemState, status: 'receiver_pending', reason: 'receiver_review' };
         } else if ([401, 403, 503].includes(response.status)) {
+          this.state.rejected++;
           states[i] = { ...itemState, status: 'pending', reason: response.status === 401 ? 'invalid_signature' : response.status === 403 ? 'forbidden_group' : 'integration_disabled' };
           this.update({ enabled: response.status !== 401 && response.status !== 503, status: states[i].reason });
           break;
         } else {
+          this.state.rejected++;
           states[i] = await this.retryItem(id, itemState);
           if (states[i].status === 'retry_wait') break;
         }
@@ -201,6 +219,7 @@ export class KongDelivery extends EventEmitter {
       this.update({ status: record.status });
     } catch (error) {
       if (!networkFailed) { this.emit('storage-error', error); return; }
+      this.state.networkFailures++;
       try {
         const record = await this.store.getDelivery(id);
         if (record) {
