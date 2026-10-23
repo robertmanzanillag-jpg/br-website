@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
+import compression from 'compression';
 import express from 'express';
 import test from 'node:test';
 import { createWhatsAppLinkSystem, isWhatsAppLinkOwner } from './whatsapp-link.js';
@@ -36,6 +37,7 @@ async function withServer(app, run) {
 function makeApp(system) {
   const app = express();
   const sessions = new Map();
+  app.use(compression());
   app.use((req, res, next) => {
     const email = req.get('x-test-user');
     if (!email) {
@@ -155,20 +157,43 @@ test('linking page and endpoints are private; no client starts before owner acti
 
 test('private HTTP event stream pushes stage changes without status polling', async () => {
   const system = createWhatsAppLinkSystem({ clientFactory: () => new FakeClient() });
+  system.controller.readerSnapshot = {
+    status: 'blocked',
+    pendingCount: 0,
+    groups: {},
+    compressionProbe: 'x'.repeat(1500)
+  };
   const app = makeApp(system);
   await withServer(app, async base => {
     const response = await fetch(`${base}/api/admin/whatsapp-link/events`, {
-      headers: { 'X-Test-User': 'robert.manzanillag@gmail.com' }
+      headers: {
+        'X-Test-User': 'robert.manzanillag@gmail.com',
+        'Accept-Encoding': 'gzip'
+      }
     });
     assert.equal(response.status, 200);
     assert.match(response.headers.get('content-type'), /text\/event-stream/);
+    assert.equal(response.headers.get('content-encoding'), 'gzip');
     const reader = response.body.getReader();
+    const readWithTimeout = async () => {
+      let timer;
+      try {
+        return await Promise.race([
+          reader.read(),
+          new Promise((_, reject) => {
+            timer = setTimeout(() => reject(new Error('SSE event was buffered')), 1500);
+          })
+        ]);
+      } finally {
+        clearTimeout(timer);
+      }
+    };
     try {
       const decoder = new TextDecoder();
-      const first = decoder.decode((await reader.read()).value);
+      const first = decoder.decode((await readWithTimeout()).value);
       assert.match(first, /"state":"idle"/);
       system.controller.setDiagnostic('remote_backup_access');
-      const next = decoder.decode((await reader.read()).value);
+      const next = decoder.decode((await readWithTimeout()).value);
       assert.match(next, /"stage":"remote_backup_access"/);
       assert.match(next, /"stageElapsedMs":/);
     } finally {
@@ -215,6 +240,25 @@ test('browser assignment and loading events advance sanitized startup stages', a
   assert.equal(system.controller.snapshot().state, 'qr_required');
   assert.equal(system.controller.snapshot().diagnostics.stage, 'waiting_for_scan');
   await system.controller.stop({ backup: false });
+});
+
+test('Chromium process exit exposes only sanitized status diagnostics', async () => {
+  const client = new FakeClient();
+  client.pupBrowser = null;
+  client.initialize = async () => { client.calls.push('initialize'); };
+  const system = createWhatsAppLinkSystem({ clientFactory: () => client });
+  await system.controller.start();
+  await new Promise(resolve => setTimeout(resolve, 0));
+
+  const child = new EventEmitter();
+  client.pupBrowser = { process: () => child };
+  child.emit('exit', 127, null);
+
+  const snapshot = system.controller.snapshot();
+  assert.equal(snapshot.state, 'error');
+  assert.equal(snapshot.diagnostics.cause, 'CHROMIUM_PROCESS_EXITED');
+  assert.equal(snapshot.diagnostics.processExitCode, 127);
+  assert.equal(JSON.stringify(snapshot).includes('raw'), false);
 });
 
 test('a browser that appears after startup timeout is closed instead of becoming an orphan', async () => {
