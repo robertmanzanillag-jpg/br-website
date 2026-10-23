@@ -59,6 +59,8 @@ export class OfflineWhatsAppReviewReader {
           throw Object.assign(new Error('Reader state is invalid or belongs to different pinned IDs.'), { code: 'WA_READER_STATE_INVALID' });
         }
         this.state = restored;
+      } else {
+        await this.store.saveReaderState(Buffer.from(JSON.stringify(this.state)));
       }
       this.status = 'prepared';
       this.stopReason = null;
@@ -136,11 +138,18 @@ export class OfflineWhatsAppReviewReader {
     }
 
     let attachments = [];
-    if (typeof message.downloadAttachments === 'function') {
+    let attachmentsStatus = 'none';
+    const mediaSize = message.mediaSize;
+    if (message.hasMedia === true
+        && (!Number.isSafeInteger(mediaSize) || mediaSize < 0 || mediaSize > MAX_ATTACHMENT_BYTES)) {
+      attachmentsStatus = 'skipped_size_unknown_or_over_limit';
+    } else if (typeof message.downloadAttachments === 'function') {
       const downloaded = await message.downloadAttachments();
       attachments = (downloaded || []).map(serializeBytes);
+      attachmentsStatus = attachments.length ? 'saved' : message.hasMedia ? 'unavailable' : 'none';
     } else if (Array.isArray(message.attachments)) {
       attachments = message.attachments.map(serializeBytes);
+      attachmentsStatus = attachments.length ? 'saved' : 'none';
     }
     if (attachments.some(file => file.length > MAX_ATTACHMENT_BYTES)
         || attachments.reduce((sum, file) => sum + file.length, 0) > MAX_ATTACHMENT_BYTES) {
@@ -160,6 +169,7 @@ export class OfflineWhatsAppReviewReader {
       processedAt,
       type,
       body: text,
+      attachmentsStatus,
       attachments: attachments.map(file => file.toString('base64'))
     };
     const next = {

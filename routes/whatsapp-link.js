@@ -9,6 +9,7 @@ import whatsapp from 'whatsapp-web.js';
 import { Client as StorageClient } from '@replit/object-storage';
 import { WhatsAppRemoteSessionStore, WhatsAppStoreError } from '../services/whatsapp-reader/session-store.js';
 import { APPROVED_GROUP_NAMES } from '../services/whatsapp-reader/group-policy.js';
+import { WhatsAppGroupRuntime } from '../services/whatsapp-reader/whatsapp-group-runtime.js';
 
 const OWNER_EMAIL = 'robert.manzanillag@gmail.com';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -76,7 +77,8 @@ export class WhatsAppLinkController {
     sessionStore,
     storage,
     encryptionKey,
-    privacyIsolationVerified = false,
+    accountSyncConsented = false,
+    readerRuntimeFactory,
     reviewReader = null,
     qrEncoder = QRCode.toDataURL,
     qrLifetimeMs = QR_LIFETIME_MS
@@ -99,9 +101,19 @@ export class WhatsAppLinkController {
       onUsage: () => this.publish()
     });
     if (!clientFactory && !this.sessionStore.isConfigured) this.state = 'storage_unconfigured';
-    this.privacyIsolationVerified = privacyIsolationVerified === true;
+    this.accountSyncConsented = accountSyncConsented === true;
     this.reviewReader = reviewReader;
-    if (!clientFactory && this.sessionStore.isConfigured && !this.privacyIsolationVerified) {
+    this.readerRuntime = null;
+    this.readerSnapshot = null;
+    this.readerRuntimeFactory = readerRuntimeFactory || (client => new WhatsAppGroupRuntime({
+      client,
+      store: this.sessionStore,
+      onUpdate: snapshot => {
+        this.readerSnapshot = snapshot;
+        this.publish();
+      }
+    }));
+    if (!clientFactory && this.sessionStore.isConfigured && !this.accountSyncConsented) {
       this.state = 'privacy_blocked';
     }
     this.clientFactory = clientFactory || (() => {
@@ -129,7 +141,7 @@ export class WhatsAppLinkController {
       updatedAt: this.updatedAt,
       persistence: this.sessionStore.isConfigured ? 'encrypted-object-storage' : 'key-required',
       usage: this.sessionStore.snapshot(),
-      reader: this.reviewReader?.snapshot() || {
+      reader: this.reviewReader?.snapshot() || this.readerSnapshot || {
         status: 'blocked',
         stopReason: 'privacy_isolation_unverified',
         pendingCount: 0,
@@ -184,7 +196,7 @@ export class WhatsAppLinkController {
       this.setState('storage_unconfigured');
       return this.snapshot();
     }
-    if (this.usesProductionFactory && !this.privacyIsolationVerified) {
+    if (this.usesProductionFactory && !this.accountSyncConsented) {
       this.setState('privacy_blocked');
       return this.snapshot();
     }
@@ -228,6 +240,7 @@ export class WhatsAppLinkController {
       if (this.client !== client || this.generation !== generation) return;
       this.clearQrTimer();
       this.setState('connected');
+      void this.startGroupReader(client, generation);
     });
     client.on('auth_failure', () => this.finishClient(client, generation, 'auth_failed'));
     client.on('disconnected', () => this.finishClient(client, generation, 'disconnected'));
@@ -254,10 +267,35 @@ export class WhatsAppLinkController {
 
   finishClient(client, generation, state) {
     if (this.client !== client || this.generation !== generation) return;
+    this.readerRuntime?.disconnected(state);
+    this.readerRuntime = null;
     this.clearQrTimer();
     this.setState(state);
     this.client = null;
     void client.destroy().catch(() => {});
+  }
+
+  async startGroupReader(client, generation) {
+    let runtime;
+    try {
+      runtime = this.readerRuntimeFactory(client);
+      this.readerRuntime = runtime;
+      this.readerSnapshot = await runtime.start();
+      if (this.client === client && this.generation === generation) this.publish();
+    } catch (error) {
+      if (this.client !== client || this.generation !== generation) return;
+      this.readerSnapshot = runtime?.snapshot() || {
+        status: 'blocked',
+        stopReason: error?.code || 'group_reader_start_failed',
+        pendingCount: 0,
+        groups: Object.fromEntries(APPROVED_GROUP_NAMES.map(name => [name, {
+          idPinned: false,
+          lastProcessedAt: null,
+          status: 'blocked'
+        }]))
+      };
+      this.publish();
+    }
   }
 
   handleStoreFailure(error) {
@@ -278,6 +316,8 @@ export class WhatsAppLinkController {
     if (client !== this.client) return this.snapshot();
     this.generation++;
     this.client = null;
+    this.readerRuntime?.disconnected('stopped');
+    this.readerRuntime = null;
     this.clearQrTimer();
     this.setState('stopped');
     if (client) {
@@ -354,7 +394,7 @@ function ensureCsrf(req) {
   }
 }
 
-const whatsAppLinkSystem = createWhatsAppLinkSystem();
+const whatsAppLinkSystem = createWhatsAppLinkSystem({ accountSyncConsented: true });
 export const whatsAppLinkPageRouter = whatsAppLinkSystem.pageRouter;
 export const whatsAppLinkApiRouter = whatsAppLinkSystem.apiRouter;
 export const shutdownWhatsAppLinkService = () => whatsAppLinkSystem.controller.shutdownForRestart();

@@ -151,8 +151,10 @@ test('deduplicates repeats, stores edits and attachments encrypted, and restores
 
 test('shared transfer exhaustion stops processing without saving or advancing the checkpoint', async () => {
   const storage = new MemoryStorage();
-  const reader = readerFor(storage, { transferLimitBytes: 128 });
+  const reader = readerFor(storage);
   await reader.initialize();
+  reader.store.transferLimitBytes = 128;
+  const before = Buffer.from(storage.objects.get('private/whatsapp-link/reader-v1.enc'));
   const result = await reader.processIncoming({
     chatId: 'authorized-1@g.us',
     messageId: 'price-1',
@@ -164,5 +166,5 @@ test('shared transfer exhaustion stops processing without saving or advancing th
   assert.equal(reader.snapshot().stopReason, 'budget_stopped');
   assert.equal(reader.snapshot().pendingCount, 0);
   assert.equal(reader.snapshot().groups[names[1]].lastProcessedAt, null);
-  assert.equal(storage.objects.has('private/whatsapp-link/reader-v1.enc'), false);
+  assert.deepEqual(storage.objects.get('private/whatsapp-link/reader-v1.enc'), before);
 });
