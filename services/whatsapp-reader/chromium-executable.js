@@ -20,7 +20,7 @@ export function resolveChromiumExecutable(env = process.env) {
   throw Object.assign(new Error('No executable system Chromium was found.'), { code: 'WA_CHROMIUM_NOT_FOUND' });
 }
 
-export function classifyWhatsAppStartupFailure(error) {
+export function classifyWhatsAppStartupFailure(error, stage = null) {
   const code = typeof error?.code === 'string' ? error.code : '';
   const knownCodes = new Set([
     'WA_KEY_MISSING',
@@ -37,9 +37,13 @@ export function classifyWhatsAppStartupFailure(error) {
   if (knownCodes.has(code)) return code;
 
   const text = `${error?.message || ''} ${error?.cause?.message || ''}`.toLowerCase();
+  if (/processsingleton|browser is already running|profile directory.*lock/.test(text)) {
+    return 'CHROMIUM_PROFILE_LOCKED';
+  }
   if (/libgbm\.so|shared librar|error while loading shared object/.test(text)) return 'CHROMIUM_MISSING_LIBRARY';
   if (/no usable sandbox|sandbox/.test(text)) return 'CHROMIUM_SANDBOX_FAILURE';
   if (/enoent|could not find chrome|executable.*not found/.test(text)) return 'CHROMIUM_NOT_FOUND';
+  if (/timeout|timed out/.test(text) && stage === 'launching_chromium') return 'CHROMIUM_LAUNCH_TIMEOUT';
   if (/timeout|timed out/.test(text)) return 'WHATSAPP_START_TIMEOUT';
   if (/net::err|navigation.*failed|failed to navigate/.test(text)) return 'WHATSAPP_WEB_UNREACHABLE';
   return 'WHATSAPP_START_FAILED';
