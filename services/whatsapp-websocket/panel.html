@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>WhatsApp · Vinculación privada</title>
-<style>body{font:16px system-ui;background:#141019;color:#eee;max-width:680px;margin:8vh auto;padding:24px}button{padding:12px 20px;border:0;border-radius:8px;margin:12px 8px 12px 0;cursor:pointer}#qr{display:block;width:280px;max-width:100%;background:white;margin:24px 0}#qr[hidden]{display:none}small{color:#bab2c6}li{margin:8px 0}</style>
+<style>body{font:16px system-ui;background:#141019;color:#eee;max-width:680px;margin:8vh auto;padding:24px}button{padding:12px 20px;border:0;border-radius:8px;margin:12px 8px 12px 0;cursor:pointer}#qr{display:block;width:360px;image-rendering:pixelated;max-width:100%;background:white;margin:24px 0}#qr[hidden]{display:none}small{color:#bab2c6}li{margin:8px 0}</style>
 <h1>WhatsApp en la nube</h1>
 <p>Acceso exclusivo del propietario. Este lector solo procesa los cuatro grupos autorizados. No envía mensajes, respuestas, reacciones ni confirmaciones de lectura.</p>
 <p id="status" role="status">Comprobando conexión…</p>
@@ -9,24 +9,26 @@
 <img id="qr" hidden alt="QR privado para vincular WhatsApp">
 <p id="scan" hidden>En tu teléfono: WhatsApp → Dispositivos vinculados → Vincular un dispositivo. Escanea este QR.</p>
 <ul id="groups"></ul>
-<p id="count"></p>
+<p id="count"></p><small id="diagnostic"></small>
 <small>Los cambios recibidos se guardan para revisión. La actualización automática de KONG todavía requiere conectar su procesador. El historial recibido durante desconexiones no está verificado. Una sesión revocada puede requerir volver a escanear.</small>
 <script>
-const api='__API_PREFIX__'; let csrf='',busy=false;
-const states={stopped:'Lector detenido',connecting:'Conectando con WhatsApp…',qr_required:'Escanea el QR para vincular',reading:'Conectado · recibiendo mensajes autorizados',reconnecting:'Se perdió la conexión · reconectando…',relink_required:'Es necesario volver a vincular WhatsApp',reconnect_exhausted:'No se pudo recuperar la conexión',connect_timeout:'La conexión tardó demasiado',startup_failed:'No se pudo iniciar el lector',processing_failed:'El lector se detuvo por un error',group_identity_unverified:'No se pudieron verificar los cuatro grupos',database_unavailable:'Almacenamiento no disponible',queue_limit:'El lector se detuvo al alcanzar su límite de trabajo'};
+const api='__API_PREFIX__'; let csrf='',busy=false,qrRevision=null;
+const states={qr_expired:'El QR venció. Pulsa Iniciar vinculación para generar uno nuevo.',pairing_accepted:'WhatsApp aceptó la vinculación · terminando conexión…',connection_failed:'No se pudo conectar con WhatsApp',stopped:'Lector detenido',connecting:'Conectando con WhatsApp…',qr_required:'Escanea el QR para vincular',reading:'Conectado · recibiendo mensajes autorizados',reconnecting:'Se perdió la conexión · reconectando…',relink_required:'Es necesario volver a vincular WhatsApp',reconnect_exhausted:'No se pudo recuperar la conexión',connect_timeout:'La conexión tardó demasiado',startup_failed:'No se pudo iniciar el lector',processing_failed:'El lector se detuvo por un error',group_identity_unverified:'No se pudieron verificar los cuatro grupos',database_unavailable:'Almacenamiento no disponible',queue_limit:'El lector se detuvo al alcanzar su límite de trabajo'};
 function show(data){
  document.querySelector('#status').textContent=states[data.state]||'Estado no disponible';
  const pairing=data.state==='qr_required', img=document.querySelector('#qr');
  img.hidden=!pairing; document.querySelector('#scan').hidden=!pairing;
- if(pairing)img.src=api+'/qr.svg?v='+Date.now();else img.removeAttribute('src');
+ if(pairing && qrRevision!==data.qrRevision){qrRevision=data.qrRevision;img.src=api+'/qr.svg?v='+encodeURIComponent(qrRevision);}else if(!pairing){qrRevision=null;img.removeAttribute('src');}
  const groups=document.querySelector('#groups');groups.replaceChildren();
  for(const group of data.groups||[]){const item=document.createElement('li');item.textContent=group.name+' · identificado';groups.append(item);}
+ document.querySelector('#diagnostic').textContent=data.disconnectCode ? 'Último código de conexión: '+data.disconnectCode : '';
  document.querySelector('#count').textContent='Novedades guardadas en esta ejecución: '+(data.processed||0);
- document.querySelector('#start').disabled=busy||!csrf||['connecting','qr_required','reading','reconnecting'].includes(data.state);
+ document.querySelector('#start').disabled=busy||!csrf||['connecting','qr_required','pairing_accepted','reading','reconnecting'].includes(data.state);
  document.querySelector('#stop').disabled=busy||!csrf;
 }
 async function status(){const response=await fetch(api+'/status',{cache:'no-store'});if(!response.ok)throw Error('auth');const data=await response.json();csrf=data.csrf;show(data);}
 async function action(name){busy=true;document.querySelector('#'+name).disabled=true;try{const response=await fetch(api+'/'+name,{method:'POST',headers:{'X-CSRF-Token':csrf}});if(!response.ok)throw Error('request');}catch{document.querySelector('#status').textContent='No se pudo completar la solicitud.';}finally{busy=false;await status().catch(()=>{});}}
+document.querySelector('#qr').onerror=()=>{document.querySelector('#qr').hidden=true;document.querySelector('#scan').hidden=true;document.querySelector('#status').textContent='No se pudo cargar el QR. Detén el lector y vuelve a iniciar la vinculación.';};
 document.querySelector('#start').onclick=()=>action('start');document.querySelector('#stop').onclick=()=>action('stop');
 status().then(()=>{const events=new EventSource(api+'/events');events.onmessage=event=>show(JSON.parse(event.data));events.onerror=()=>{document.querySelector('#status').textContent='Reconectando con el panel…';document.querySelector('#qr').hidden=true;};}).catch(()=>{document.querySelector('#status').textContent='Inicia sesión con la cuenta del propietario para continuar.';});
 </script></html>

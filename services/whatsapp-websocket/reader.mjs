@@ -72,7 +72,8 @@ export class WebSocketReader extends EventEmitter {
   async start() {
     if (this.active) return;
     this.active = true;
-    this.attempt = 0;
+    this.attempt = 0; this.pairingRestarted = false;
+    this.status.disconnectCode = null;
     try {
       await this.store.acquire();
       this.pins = await this.store.load('groups');
@@ -103,7 +104,8 @@ export class WebSocketReader extends EventEmitter {
     socket.ev.on('creds.update', () => { if (current()) safe(() => this.auth.save()); });
     socket.ev.on('connection.update', update => {
       if (!current()) return;
-      if (update.qr) { clearTimeout(this.connectTimer); this.qr = update.qr; this.report('qr_required'); }
+      if (update.qr) { clearTimeout(this.connectTimer); this.qr = update.qr; this.status.qrRevision = (this.status.qrRevision || 0) + 1; this.report('qr_required'); }
+      if (update.isNewLogin) { this.qr = null; this.report('pairing_accepted'); }
       if (update.connection === 'open') safe(async () => {
         clearTimeout(this.connectTimer);
         this.qr = null;
@@ -118,8 +120,21 @@ export class WebSocketReader extends EventEmitter {
       });
       if (update.connection === 'close') {
         clearTimeout(this.connectTimer);
+        const hadQr = Boolean(this.qr);
         this.ready = false; this.qr = null;
         const code = update.lastDisconnect?.error?.output?.statusCode;
+        this.status.disconnectCode = Number.isSafeInteger(code) ? code : null;
+        // QR expiry is not a network outage. Wait for the owner to request a fresh code.
+        if (hadQr && !this.auth.state.creds.me && code === DisconnectReason.timedOut) {
+          safe(() => this.stop('qr_expired')); return;
+        }
+        // WhatsApp intentionally restarts the transport after successful pairing.
+        if (code === DisconnectReason.restartRequired && !this.pairingRestarted) {
+          this.pairingRestarted = true; this.generation++;
+          this.report('pairing_accepted');
+          this.timer = setTimeout(() => { void this.connect().catch(() => this.stop('connection_failed')); }, 0);
+          return;
+        }
         if ([DisconnectReason.loggedOut, DisconnectReason.badSession, DisconnectReason.connectionReplaced, DisconnectReason.forbidden, DisconnectReason.multideviceMismatch].includes(code)) {
           safe(() => this.stop('relink_required')); return;
         }

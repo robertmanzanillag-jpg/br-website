@@ -29,7 +29,7 @@ export function mountOwnerRoutes(app, reader, { isOwner, prefix = '/api/admin/wh
   app.get(`${prefix}/qr.svg`, async (req, res) => {
     const qr = reader.pairingQr();
     if (!qr) return res.sendStatus(404);
-    try { res.type('svg').send(await QRCode.toString(qr, { type: 'svg', margin: 3 })); }
+    try { res.type('svg').send(await QRCode.toString(qr, { type: 'svg', margin: 4 })); }
     catch { res.sendStatus(503); }
   });
   app.get(`${prefix}/qr`, (req, res) => {
