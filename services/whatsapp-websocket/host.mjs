@@ -34,6 +34,11 @@ const FAILURE_STATES = new Set([
 const SAFE_LOG_EVENTS = new Set([
   'reader_status', 'delivery_status', 'recovery_attempt',
 ]);
+const RETRYABLE_STORAGE_STARTUP_OPERATIONS = new Set(['connect', 'lease']);
+const PERMANENT_STARTUP_CODES = new Set([
+  'invalid_encryption_key', 'encrypted_state_unreadable',
+  'group_identity_unverified', 'relink_required',
+]);
 
 const counter = value => Number.isSafeInteger(value) && value >= 0 ? value : 0;
 const safeTimestamp = value => typeof value === 'string' && Number.isFinite(Date.parse(value))
@@ -141,8 +146,15 @@ export class HostedReader extends EventEmitter {
         this.state.retryAt = null;
         this.state.recoveryScheduledAt = null;
       }
+      const retryableStorageStartup = state.state === 'startup_failed'
+        && RETRYABLE_STORAGE_STARTUP_OPERATIONS.has(this.state.storageFailure?.operation)
+        && !PERMANENT_STARTUP_CODES.has(state.startupCode)
+        && (this.state.storageFailure?.code === 'unclassified'
+          || isTransientDatabaseError({ code: this.state.storageFailure?.code }));
       const retryable = state.state === 'database_unavailable'
-        || (state.state === 'startup_failed' && ['database_unavailable', 'reader_already_running'].includes(state.startupCode));
+        || (state.state === 'startup_failed'
+          && (['database_unavailable', 'reader_already_running'].includes(state.startupCode)
+            || retryableStorageStartup));
       const previousStorage = previous.storageFailure
         ? `${previous.storageFailure.code}:${previous.storageFailure.operation}` : '';
       const currentStorage = this.state.storageFailure
