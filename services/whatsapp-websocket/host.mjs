@@ -129,11 +129,13 @@ export class HostedReader extends EventEmitter {
       this.lastDeliveryState = status;
       this.logDiagnostic('delivery_status', this.state, status, changed);
     };
-    this.forward = state => {
-      for (const metric of Object.keys(this.metricTotals)) {
-        if (Number.isFinite(state[metric])) {
-          this.metricTotals[metric] += Math.max(0, state[metric] - this.resourceMetrics[metric]);
-          this.resourceMetrics[metric] = state[metric];
+    this.forward = (state, countMetrics = true) => {
+      if (countMetrics) {
+        for (const metric of Object.keys(this.metricTotals)) {
+          if (Number.isFinite(state[metric])) {
+            this.metricTotals[metric] += Math.max(0, state[metric] - this.resourceMetrics[metric]);
+            this.resourceMetrics[metric] = state[metric];
+          }
         }
       }
       const previous = this.state;
@@ -206,7 +208,7 @@ export class HostedReader extends EventEmitter {
   }
   enqueue(task) {
     const operation = this.tail.then(task);
-    this.tail = operation.catch(() => this.forward({ ...this.state, state: 'startup_failed' }));
+    this.tail = operation.catch(() => this.forward({ ...this.state, state: 'startup_failed' }, false));
     return this.tail;
   }
   start() {
@@ -226,7 +228,7 @@ export class HostedReader extends EventEmitter {
           await failed.shutdown().catch(() => {});
         }
         if (!this.resource) {
-          this.forward({ ...this.state, state: 'connecting' });
+          this.forward({ ...this.state, state: 'connecting' }, false);
           this.resource = await this.factory();
           this.resourceMetrics = { received: 0, saved: 0, discarded: 0 };
           this.resource.reader.on('status', this.forward);
@@ -244,7 +246,7 @@ export class HostedReader extends EventEmitter {
         const storageFailure = error?.diagnostic
           ? safeDatabaseDiagnostic({ code: error.diagnostic.code }, error.diagnostic.operation)
           : this.state.storageFailure;
-        this.forward({ ...this.state, state: transient ? 'database_unavailable' : 'startup_failed', startupCode, storageFailure });
+        this.forward({ ...this.state, state: transient ? 'database_unavailable' : 'startup_failed', startupCode, storageFailure }, false);
       }
     });
     this.starting = operation.finally(() => { this.starting = null; });
@@ -255,7 +257,7 @@ export class HostedReader extends EventEmitter {
     clearTimeout(this.retryTimer); this.retryTimer = null;
     return this.enqueue(async () => {
       if (this.resource) await this.resource.reader.stop();
-      this.forward({ ...this.state, state: 'stopped' });
+      this.forward({ ...this.state, state: 'stopped' }, false);
     });
   }
   shutdown() {
@@ -270,7 +272,7 @@ export class HostedReader extends EventEmitter {
         resource.reader.off('delivery-status', this.forwardDelivery);
         this.resource = null;
       }
-      this.forward({ ...this.state, state: 'stopped' });
+      this.forward({ ...this.state, state: 'stopped' }, false);
     });
   }
 }

@@ -3,8 +3,8 @@ name: WhatsApp storage recovery
 description: Recovery policy for temporary PostgreSQL interruptions in the hosted WhatsApp reader.
 ---
 
-Treat classified PostgreSQL connection interruptions as recoverable infrastructure failures, not as a reason to relink WhatsApp. Keep the encrypted auth/session record intact, retry through a single host supervisor with bounded exponential backoff, and cancel retries on owner stop. Invalid encryption keys, unreadable auth, revoked sessions, and unverified group identity are permanent states and must not trigger automatic relinking or retry loops.
+Treat PostgreSQL connection interruptions as recoverable infrastructure failures, not as a reason to relink WhatsApp. For sanitized, unclassified failures limited to startup `connect`/`lease` operations, retry through the single host supervisor with bounded backoff; do not retry explicitly permanent auth, permission, or session failures. Keep encrypted auth intact and cancel retries on owner stop.
 
-**Why:** Restarting WhatsApp pairing can invalidate a still-linked account and risks duplicate readers or inbox writes after a database outage.
+**Why:** Restarting WhatsApp pairing can invalidate a still-linked account and risks duplicate readers or inbox writes after a database outage. Sanitized production logs may omit the underlying transient error code, so no retry on `unclassified` can leave a temporary outage permanently stopped.
 
-**How to apply:** Normalize only known transient network/PostgreSQL error codes; keep retries serialized under the existing advisory lease and rely on inbox insert-only deduplication for ambiguous commits.
+**How to apply:** Normalize known transient network/PostgreSQL codes; also allow slow, capped retries for unclassified startup `connect`/`lease` errors, but never for invalid keys, unreadable or revoked auth, or unverified groups. Keep retries serialized under the existing advisory lease and rely on inbox insert-only deduplication for ambiguous commits.

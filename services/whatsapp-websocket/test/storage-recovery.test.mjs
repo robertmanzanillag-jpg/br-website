@@ -107,3 +107,57 @@ test('deployment lock contention recovers automatically without overlapping read
  try{await host.start();assert.equal(host.snapshot().startupCode,'reader_already_running');assert.ok(host.snapshot().retryAt);for(let i=0;i<50&&host.snapshot().state!=='reading';i++)await delay(10);assert.equal(host.snapshot().state,'reading');assert.equal(factories,3);assert.equal(shutdowns,2);}finally{await host.shutdown();}
 });
 test('owner stop cancels lock-contention retry',async()=>{let attempts=0;const host=new HostedReader(async()=>{attempts++;throw new Error('reader_already_running');},{retryDelays:[20]});await host.start();await host.stop();await delay(50);assert.equal(attempts,1);assert.equal(host.snapshot().state,'stopped');await host.shutdown();});
+
+test('unclassified transient lease failure schedules recovery and replaces the failed resource serially', async () => {
+  let factories = 0;
+  let activeReaders = 0;
+  let shutdowns = 0;
+  const persistedMessages = [{ id: 'already-saved' }];
+  const host = new HostedReader(async () => {
+    factories++;
+    const reader = new EventEmitter();
+    let snapshot = { state: 'connecting', groups: [], received: 0, saved: 0, discarded: 0 };
+    reader.snapshot = () => structuredClone(snapshot);
+    reader.start = async () => {
+      activeReaders++;
+      assert.equal(activeReaders, 1, 'only one reader may be active');
+      if (factories === 1) {
+        snapshot = {
+          ...snapshot, state: 'startup_failed', received: 1, saved: 1,
+          startupCode: 'connection_or_storage_failed',
+          storageFailure: { code: 'unclassified', operation: 'lease' },
+        };
+        reader.emit('status', reader.snapshot());
+        return;
+      }
+      snapshot = { ...snapshot, state: 'reading' };
+      reader.emit('status', reader.snapshot());
+    };
+    reader.stop = async () => {
+      if (activeReaders) activeReaders--;
+      snapshot = { ...snapshot, state: 'stopped' };
+    };
+    return {
+      reader,
+      async shutdown() { shutdowns++; await reader.stop(); },
+    };
+  }, { retryDelays: [10] });
+
+  try {
+    await host.start();
+    assert.equal(host.snapshot().state, 'startup_failed');
+    assert.equal(host.snapshot().storageFailure.operation, 'lease');
+    assert.ok(host.snapshot().retryAt);
+    for (let i = 0; i < 50 && host.snapshot().state !== 'reading'; i++) await delay(10);
+    assert.equal(host.snapshot().state, 'reading');
+    assert.equal(factories, 2);
+    assert.equal(shutdowns, 1);
+    assert.equal(activeReaders, 1);
+    assert.equal(persistedMessages.length, 1);
+    assert.equal(host.snapshot().received, 1);
+    assert.equal(host.snapshot().saved, 1);
+  } finally { await host.shutdown(); }
+  assert.equal(activeReaders, 0);
+  assert.equal(host.snapshot().received, 1);
+  assert.equal(host.snapshot().saved, 1);
+});
