@@ -25,6 +25,7 @@ function fakeReader() {
   reader.deliverySnapshot = () => ({
     enabled: true, hostReady: true, secretValid: true, status: 'ready',
     attempts: 4, applied: 2, duplicates: 1, receiverPending: 1,
+    pendingReasons: { image_unidentified: 2, ambiguous_date: 1, 'private message': 99 },
     rejected: 0, networkFailures: 0, lastAttemptAt: '2026-10-23T23:03:00.000Z',
   });
   return reader;
@@ -53,7 +54,9 @@ test('private diagnostics log safe counts and stages without group identities or
       [delivery.kong.attempts, delivery.kong.applied, delivery.kong.duplicates, delivery.kong.receiverPending],
       [4, 2, 1, 1],
     );
+    assert.deepEqual(delivery.kong.pendingReasons, { image_unidentified: 2, ambiguous_date: 1 });
     assert.doesNotMatch(joined, /Promoters|LIV MIAMI|SPACE TABLES|STUDIO 60|private-[1-4]|message body|qr/i);
+    assert.doesNotMatch(joined, /private message/i);
   } finally { await host.shutdown(); }
 });
 

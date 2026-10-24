@@ -26,6 +26,12 @@ const SAFE_DELIVERY_STATES = new Set([
   'explicit_fields_required', 'older_than_7_days', 'payload_limit',
   'retry_limit_reached', 'unrecognized_receiver_response',
 ]);
+const SAFE_PENDING_REASONS = new Set([
+  'image_unidentified', 'ambiguous_date', 'incomplete_price', 'contradictory_fields',
+  'announcement_without_price', 'ticket_not_table_price', 'older_than_7_days',
+  'no_text_evidence', 'integration_disabled', 'source_conflict',
+  'explicit_fields_required', 'flyer_requires_review',
+]);
 const FAILURE_STATES = new Set([
   'database_unavailable', 'startup_failed', 'relink_required', 'qr_expired',
   'connect_timeout', 'connection_failed', 'group_identity_unverified',
@@ -97,6 +103,9 @@ function readerDiagnostic(event, state, delivery) {
       rejected: counter(delivery?.rejected),
       networkFailures: counter(delivery?.networkFailures),
       lastAttemptAt: safeTimestamp(delivery?.lastAttemptAt),
+      pendingReasons: Object.fromEntries(Object.entries(delivery?.pendingReasons || {})
+        .filter(([reason, count]) => SAFE_PENDING_REASONS.has(reason) && counter(count) > 0)
+        .map(([reason, count]) => [reason, counter(count)])),
     },
   };
 }
@@ -125,7 +134,8 @@ export class HostedReader extends EventEmitter {
       this.emit('delivery-status', status);
       const changed = !this.lastDeliveryState
         || this.lastDeliveryState.enabled !== status?.enabled
-        || this.lastDeliveryState.status !== status?.status;
+        || this.lastDeliveryState.status !== status?.status
+        || JSON.stringify(this.lastDeliveryState.pendingReasons || {}) !== JSON.stringify(status?.pendingReasons || {});
       this.lastDeliveryState = status;
       this.logDiagnostic('delivery_status', this.state, status, changed);
     };
@@ -188,7 +198,8 @@ export class HostedReader extends EventEmitter {
   logDiagnostic(event, state = this.state, delivery = this.deliverySnapshot(), force = false) {
     const record = readerDiagnostic(event, state, delivery);
     const signature = JSON.stringify([record.event, record.stage, record.state, record.reason,
-      record.storage?.code, record.storage?.operation, record.kong.enabled, record.kong.status]);
+      record.storage?.code, record.storage?.operation, record.kong.enabled, record.kong.status,
+      record.kong.pendingReasons]);
     const now = Date.now();
     if (!force && signature === this.lastDiagnosticSignature && now - this.lastDiagnosticAt < this.diagnosticIntervalMs) return;
     try { this.diagnosticLogger(JSON.stringify(record)); } catch {}
