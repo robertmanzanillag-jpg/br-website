@@ -209,9 +209,9 @@ export class HostedReader extends EventEmitter {
   snapshot() { return structuredClone(this.state); }
   pairingQr() { return this.resource?.reader.pairingQr() || null; }
   deliverySnapshot() { return this.resource?.reader.deliverySnapshot?.() || { enabled: false, status: 'not_started' }; }
-  async listInbox(limit) {
+  async listInbox(limit, options) {
     if (!this.resource) throw new Error('inbox_unavailable');
-    return this.resource.reader.listInbox(limit);
+    return this.resource.reader.listInbox(limit, options);
   }
   async deliveryOverview() {
     if (!this.resource) return { enabled: false, status: 'not_started', counts: {} };
@@ -314,3 +314,4 @@ export function createHostSystem(express, { factory = () => createProductionRead
     shutdown: () => controller.shutdown(),
   };
 }
+
