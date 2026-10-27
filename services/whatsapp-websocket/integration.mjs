@@ -3,6 +3,7 @@ import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { PostgresStore, isTransientDatabaseError, safeDatabaseDiagnostic } from './store.mjs';
 import { WebSocketReader } from './reader.mjs';
 import { KongDelivery } from './kong-delivery.mjs';
+import { SpacePromoDelivery } from './space-promo-delivery.mjs';
 import QRCode from 'qrcode';
 import { readFileSync } from 'node:fs';
 
@@ -77,7 +78,8 @@ export async function createProductionReader({ databaseUrl, encryptionKey, legac
     throw Object.assign(new Error(isTransientDatabaseError(error) ? 'database_unavailable' : 'storage_operation_failed'), { diagnostic });
   }
   const delivery = new KongDelivery({ store });
-  const reader = new WebSocketReader({ store, delivery });
+  const promoDelivery = new SpacePromoDelivery({ store });
+  const reader = new WebSocketReader({ store, delivery, promoDelivery });
   store.onStorageFailure = diagnostic => reader.recordStorageFailure(diagnostic);
   db.on('error', error => {
     const diagnostic = safeDatabaseDiagnostic(error, 'connect');
@@ -86,7 +88,7 @@ export async function createProductionReader({ databaseUrl, encryptionKey, legac
   });
   return {
     reader,
-    async shutdown() { delivery.close(); await reader.stop(); await db.end(); },
+    async shutdown() { delivery.close(); promoDelivery.close(); await reader.stop(); await db.end(); },
   };
 }
 
