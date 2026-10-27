@@ -1,5 +1,6 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { BufferJSON } from './baileys-runtime.mjs';
+import { isClosedDatabaseClient } from './database-failure.mjs';
 
 const TRANSIENT_PG_CODES = new Set([
   '08000', '08001', '08003', '08006', '08007', '08P01',
@@ -14,12 +15,12 @@ const SAFE_PG_CODES = new Set([
 const SAFE_DB_OPERATIONS = new Set(['connect', 'lease', 'schema', 'load', 'transaction', 'budget', 'save', 'commit', 'rollback', 'list', 'unlock']);
 
 export function isTransientDatabaseError(error) {
-  return TRANSIENT_PG_CODES.has(error?.code);
+  return TRANSIENT_PG_CODES.has(error?.code) || isClosedDatabaseClient(error);
 }
 
 export function safeDatabaseDiagnostic(error, operation) {
   return {
-    code: SAFE_PG_CODES.has(error?.code) ? error.code : 'unclassified',
+    code: SAFE_PG_CODES.has(error?.code) ? error.code : isClosedDatabaseClient(error) ? 'ECONNRESET' : 'unclassified',
     operation: SAFE_DB_OPERATIONS.has(operation) ? operation : 'query',
   };
 }
@@ -147,3 +148,4 @@ export class PostgresStore {
     this.locked = false;
   }
 }
+
