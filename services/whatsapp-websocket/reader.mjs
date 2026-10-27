@@ -60,9 +60,11 @@ export async function encryptedAuth(store) {
 }
 
 export class WebSocketReader extends EventEmitter {
-  constructor({ store, socketFactory = makeWASocket, download = downloadMediaMessage, delivery = null, reconnectDelays = [5000, 15000, 30000, 60000, 120000] }) {
+  constructor({ store, socketFactory = makeWASocket, download = downloadMediaMessage, delivery = null, promoDelivery = null, reconnectDelays = [5000, 15000, 30000, 60000, 120000] }) {
     super(); this.store = store; this.socketFactory = socketFactory; this.download = download;
     this.delivery = delivery;
+    this.promoDelivery = promoDelivery;
+    this.promoDelivery?.on('storage-error', error => { void this.stop(error?.message === 'database_unavailable' ? 'database_unavailable' : 'processing_failed'); });
     this.delivery?.on('status', status => this.emit('delivery-status', status));
     this.delivery?.on('storage-error', error => { void this.stop(error?.message === 'database_unavailable' ? 'database_unavailable' : 'processing_failed'); });
     this.delays = reconnectDelays; this.attempt = 0; this.generation = 0;
@@ -139,10 +141,14 @@ export class WebSocketReader extends EventEmitter {
         await this.auth.save();
         if (!current()) return;
         this.pins = groups;
-        if (this.delivery) {
+        if (this.delivery || this.promoDelivery) {
           const backlog = await this.store.listMessages(Object.values(groups), 5000);
-          await this.delivery.resume(backlog, groups);
+          await this.delivery?.resume(backlog, groups);
+          await this.promoDelivery?.resume(backlog, groups);
         }
+        // A socket may close while its encrypted backlog is being resumed.
+        // Never let that stale open callback advertise a healthy connection.
+        if (!current()) return;
         this.ready = true; this.attempt = 0;
         this.status.groups = Object.keys(groups).map(name => ({ name, identified: true }));
         const staged = this.validationQueue.splice(0);
@@ -234,7 +240,19 @@ export class WebSocketReader extends EventEmitter {
     if (this.pending >= 128) { this.status.discarded++; this.report(this.status.state); void this.stop('queue_limit'); return; }
     this.pending++;
     this.queue = this.queue.then(async () => {
-      if (!current() || !this.ready) return;
+      if (!this.active) return;
+      // Already-authorized arrivals queued behind a slow image must survive a
+      // transport reconnect. Revalidate the pinned groups before processing.
+      if (!this.ready) {
+        if (this.validationQueue.length >= 128) {
+          this.status.discarded++;
+          this.report(this.status.state);
+          void this.stop('queue_limit');
+          return;
+        }
+        this.validationQueue.push({ message, origin });
+        return;
+      }
       if (containsPrivateView(message.message)) { this.status.discarded++; this.report(this.status.state); return; }
       const body = normalizeMessageContent(message.message);
       if (!body) { this.status.discarded++; this.report(this.status.state); return; }
@@ -266,6 +284,7 @@ export class WebSocketReader extends EventEmitter {
       const timestamp = Number(message.messageTimestamp);
       const inserted = await this.store.saveMessage({ groupId: key.remoteJid, id: key.id, text, media, origin,
         sentAt: Number.isSafeInteger(timestamp) && timestamp > 0 ? timestamp : null });
+      await this.promoDelivery?.record({ groupId: key.remoteJid, id: key.id, text, sentAt: Number.isSafeInteger(timestamp) && timestamp > 0 ? timestamp : null }, this.pins);
       if (inserted) {
         const group = Object.keys(this.pins).find(name => this.pins[name] === key.remoteJid);
         if (group) await this.delivery?.record({ id: key.id, text, media, sentAt: Number.isSafeInteger(timestamp) && timestamp > 0 ? timestamp : null }, group);
@@ -274,7 +293,7 @@ export class WebSocketReader extends EventEmitter {
         this.status.lastSavedAt = new Date().toISOString();
         if (origin === 'history') this.status.historySaved++;
       } else this.status.discarded++;
-      this.report('reading');
+      this.report(this.ready ? 'reading' : this.status.state);
     }).catch(error => { void this.stop(error?.message === 'database_unavailable' ? 'database_unavailable' : 'processing_failed'); }).finally(() => { this.pending--; });
   }
   async listInbox(limit = 100, { group: selectedGroup = null, includeMedia = true } = {}) {
@@ -286,18 +305,23 @@ export class WebSocketReader extends EventEmitter {
     return inboxView(items, pins, limit, { group: selectedGroup, includeMedia });
   }
   deliverySnapshot() { return this.delivery?.snapshot() || { enabled: false, status: 'not_started' }; }
-  async deliveryOverview() { return this.delivery ? this.delivery.overview() : { enabled: false, status: 'not_started', counts: {} }; }
+  async deliveryOverview() {
+    const prices = this.delivery ? await this.delivery.overview() : { enabled: false, status: 'not_started', counts: {} };
+    return { ...prices, spacePromo: this.promoDelivery ? await this.promoDelivery.overview() : null };
+  }
   // Called only by an owner-authenticated, no-store endpoint. Never put QR into logs/status.
   pairingQr() { return this.active && this.status.state === 'qr_required' ? this.qr : null; }
   async stop(state = 'stopped') {
     this.active = false; this.ready = false; this.generation++;
     this.delivery?.pause();
+    this.promoDelivery?.pause();
     this.validationQueue.length = 0;
     clearTimeout(this.timer); clearTimeout(this.connectTimer); this.qr = null;
     const socket = this.socket; this.socket = null;
     try { socket?.end(undefined); } catch {}
     // Do not logout: logout invalidates the saved linked-device credentials.
     await this.queue;
+    await this.promoDelivery?.drain();
     await this.store.release().catch(() => {});
     this.report(state);
   }
