@@ -7,7 +7,7 @@ export const GROUP_NAMES = Object.freeze(['Promoters 🖤👾🖤', 'LIV MIAMI',
 const GROUP_ID = /^\d+(?:-\d+)?@g\.us$/;
 const MAX_IMAGE = 5 * 1024 * 1024;
 const MAX_TEXT = 96 * 1024;
-const MAX_INBOX_RESPONSE = 10 * 1024 * 1024;
+import { inboxView } from './inbox-view.mjs';
 const silent = pino({ level: 'silent' });
 
 function containsPrivateView(message) {
@@ -277,20 +277,13 @@ export class WebSocketReader extends EventEmitter {
       this.report('reading');
     }).catch(error => { void this.stop(error?.message === 'database_unavailable' ? 'database_unavailable' : 'processing_failed'); }).finally(() => { this.pending--; });
   }
-  async listInbox(limit = 100) {
+  async listInbox(limit = 100, { group: selectedGroup = null, includeMedia = true } = {}) {
     const pins = this.pins || await this.store.load('groups');
     if (!pins) return { items: [], truncated: false };
-    const items = await this.store.listMessages(Object.values(pins), limit);
-    const result = []; let bytes = 0; let truncated = items.length >= Math.min(100, Number(limit) || 100);
-    for (const item of items) {
-      const recordBytes = Buffer.byteLength(item.text || '') + Buffer.byteLength(item.media?.data || '');
-      if (bytes + recordBytes > MAX_INBOX_RESPONSE) { truncated = true; break; }
-      const group = Object.keys(pins).find(name => pins[name] === item.groupId);
-      if (!group) continue;
-      bytes += recordBytes;
-      result.push({ group, text: item.text || '', media: item.media || null, sentAt: item.sentAt, origin: item.origin, sourceId: item.id });
-    }
-    return { items: result, truncated };
+    const groupIds = selectedGroup ? (Object.hasOwn(pins, selectedGroup) ? [pins[selectedGroup]] : []) : Object.values(pins);
+    if (!groupIds.length) return { items: [], truncated: false };
+    const items = await this.store.listMessages(groupIds, limit);
+    return inboxView(items, pins, limit, { group: selectedGroup, includeMedia });
   }
   deliverySnapshot() { return this.delivery?.snapshot() || { enabled: false, status: 'not_started' }; }
   async deliveryOverview() { return this.delivery ? this.delivery.overview() : { enabled: false, status: 'not_started', counts: {} }; }
@@ -309,3 +302,4 @@ export class WebSocketReader extends EventEmitter {
     this.report(state);
   }
 }
+
