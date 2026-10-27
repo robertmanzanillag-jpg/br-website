@@ -1,5 +1,6 @@
 import { createHash, createHmac } from 'node:crypto';
 import { EventEmitter } from 'node:events';
+import { parseGroupPrices } from './group-price-formats.mjs';
 
 export const KONG_URL = 'https://kongnightlife.com/api/integrations/black-room/table-price-updates';
 const RETRY_MS = [30_000, 120_000, 600_000, 3_600_000, 21_600_000];
@@ -153,8 +154,9 @@ export function prepareKongRecord(message, group, now = Date.now()) {
   const text = typeof message.text === 'string' ? message.text : '';
   const fingerprint = hash(JSON.stringify([text, message.media?.state || null, message.media?.mimeType || null, message.media?.data || null]));
   const sentAt = Number(message.sentAt);
+  const formatted = parseGroupPrices(message, group, now);
   const blocks = text.split(/^\s*---+\s*$/m).map(value => value.trim()).filter(Boolean);
-  const parsed = blocks.map((block, index) => {
+  const parsed = formatted ? formatted.candidates : blocks.map((block, index) => {
     const quote = parseQuote(block, { ...message, id: `${message.id}:item:${index + 1}` }, group);
     return quote;
   });
@@ -168,7 +170,7 @@ export function prepareKongRecord(message, group, now = Date.now()) {
   const candidates = complete ? parsed : [];
   return {
     id: stableId, sourceGroup: group, sourceMessageId: message.id, fingerprint,
-    evidenceExcerpt: text, candidates,
+    evidenceExcerpt: text, candidates, pendingItems: formatted?.pendingItems || [],
     itemStates: candidates.map(() => ({ status: 'queued', attempts: 0, nextAttemptAt: null, reason: null })),
     status, reason, createdAt: new Date(now).toISOString(),
   };
@@ -400,3 +402,4 @@ export class KongDelivery extends EventEmitter {
   pause() { this.paused = true; for (const timer of this.timers.values()) clearTimeout(timer); this.timers.clear(); }
   close() { this.closed = true; for (const timer of this.timers.values()) clearTimeout(timer); this.timers.clear(); }
 }
+
