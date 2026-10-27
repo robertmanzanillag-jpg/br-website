@@ -45,6 +45,9 @@ const PERMANENT_STARTUP_CODES = new Set([
   'invalid_encryption_key', 'encrypted_state_unreadable',
   'group_identity_unverified', 'relink_required',
 ]);
+// A long transport outage must not permanently disable a linked reader.
+// Authentication and group-identity failures remain owner-action states.
+const RETRYABLE_TRANSPORT_STATES = new Set(['connect_timeout', 'connection_failed', 'reconnect_exhausted']);
 
 const counter = value => Number.isSafeInteger(value) && value >= 0 ? value : 0;
 const safeTimestamp = value => typeof value === 'string' && Number.isFinite(Date.parse(value))
@@ -164,6 +167,7 @@ export class HostedReader extends EventEmitter {
         && (this.state.storageFailure?.code === 'unclassified'
           || isTransientDatabaseError({ code: this.state.storageFailure?.code }));
       const retryable = state.state === 'database_unavailable'
+        || RETRYABLE_TRANSPORT_STATES.has(state.state)
         || (state.state === 'startup_failed'
           && (['database_unavailable', 'reader_already_running'].includes(state.startupCode)
             || retryableStorageStartup));
@@ -231,7 +235,8 @@ export class HostedReader extends EventEmitter {
       if (this.closed || !this.wanted) return;
       if (this.resource && ['connecting', 'qr_required', 'pairing_accepted', 'reading', 'reconnecting'].includes(this.state.state)) return;
       try {
-        if (this.resource && ['database_unavailable', 'startup_failed'].includes(this.state.state)) {
+        if (this.resource && (['database_unavailable', 'startup_failed'].includes(this.state.state)
+          || RETRYABLE_TRANSPORT_STATES.has(this.state.state))) {
           const failed = this.resource;
           this.resource = null;
           failed.reader.off('status', this.forward);
