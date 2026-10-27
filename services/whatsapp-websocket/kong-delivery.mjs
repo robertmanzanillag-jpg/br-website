@@ -333,8 +333,9 @@ export class KongDelivery extends EventEmitter {
           else if (status === 'duplicate') { this.state.duplicates++; this.state.delivered++; }
           else this.state.rejected++;
         } else if (response.status === 202) {
+          const body = await response.json().catch(() => ({}));
           this.state.receiverPending++;
-          states[i] = { ...itemState, status: 'receiver_pending', reason: 'receiver_review' };
+          states[i] = { ...itemState, status: 'receiver_pending', reason: typeof body.reason === 'string' && /^[a-z_]{1,100}$/.test(body.reason) ? body.reason : 'receiver_review' };
         } else if ([401, 403, 503].includes(response.status)) {
           this.state.rejected++;
           states[i] = { ...itemState, status: 'pending', reason: response.status === 401 ? 'invalid_signature' : response.status === 403 ? 'forbidden_group' : 'integration_disabled' };
@@ -391,8 +392,13 @@ export class KongDelivery extends EventEmitter {
   async overview() {
     const records = await this.store.listDeliveries(1000);
     const counts = {};
+    const itemCounts = {}, reasons = {};
     for (const record of records) counts[record.status] = (counts[record.status] || 0) + 1;
-    return { ...this.snapshot(), counts };
+    for (const record of records) for (const item of record.itemStates || []) {
+      itemCounts[item.status] = (itemCounts[item.status] || 0) + 1;
+      if (typeof item.reason === 'string' && /^[a-z_]{1,100}$/.test(item.reason)) reasons[item.reason] = (reasons[item.reason] || 0) + 1;
+    }
+    return { ...this.snapshot(), counts, itemCounts, receiverReasons: reasons };
   }
   schedule(id, delay) {
     if (this.timers.has(id) || this.closed || this.paused) return;
