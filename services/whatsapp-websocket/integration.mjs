@@ -25,7 +25,7 @@ export function mountOwnerRoutes(app, reader, { isOwner, prefix = '/api/admin/wh
   });
   app.get(`${prefix}/status`, (req, res) => res.json({ ...reader.snapshot(), csrf: req.session.whatsappWebsocketCsrf }));
   app.get(`${prefix}/inbox`, async (req, res) => {
-    try { res.json(await reader.listInbox(100)); }
+    try { res.json(await reader.listInbox(100, { group: typeof req.query?.group === 'string' ? req.query.group : null, includeMedia: req.query?.media !== 'none' })); }
     catch { res.status(503).json({ error: 'inbox_unavailable' }); }
   });
   app.get(`${prefix}/delivery-status`, async (req, res) => {
@@ -89,3 +89,4 @@ export async function createProductionReader({ databaseUrl, encryptionKey, legac
     async shutdown() { delivery.close(); await reader.stop(); await db.end(); },
   };
 }
+
