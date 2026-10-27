@@ -74,6 +74,25 @@ test('only transient connection errors are converted to retryable storage failur
   await assert.rejects(permanent.acquire(), error => error.code === '28P01');
 });
 
+test('an already dead pg client is replaced on the first recovery attempt', async () => {
+  let factories = 0;
+  const host = new HostedReader(async () => {
+    factories++;
+    return fakeResource(async report => {
+      if (factories === 1) {
+        const store = new PostgresStore({async query() { throw new Error('Client has encountered a connection error and is not queryable'); }}, Buffer.alloc(32).toString('base64'));
+        try { await store.acquire(); } catch (error) { report(error.message === 'database_unavailable' ? 'database_unavailable' : 'processing_failed'); }
+      } else report('reading');
+    });
+  }, {retryDelays:[5], diagnosticLogger:()=>{}});
+  try {
+    await host.start();
+    for (let i=0;i<30 && host.snapshot().state !== 'reading';i++) await delay(5);
+    assert.equal(host.snapshot().state,'reading');
+    assert.equal(factories,2);
+  } finally { await host.shutdown(); }
+});
+
 test('invalid key, unreadable auth and revoked sessions do not enter the retry loop', async () => {
   for (const code of ['invalid_encryption_key', 'encrypted_state_unreadable']) {
     let factories = 0;
@@ -161,3 +180,4 @@ test('unclassified transient lease failure schedules recovery and replaces the f
   assert.equal(host.snapshot().received, 1);
   assert.equal(host.snapshot().saved, 1);
 });
+
