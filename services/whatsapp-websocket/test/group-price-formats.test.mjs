@@ -76,6 +76,38 @@ test('conflicting same-table prices are withheld and changed event headings clea
   assert.equal(badHeading.candidates.length, 1);
 });
 
+test('Unicode line separators retain LIV prices, conditions and ambiguity guards', () => {
+  const lines = [
+    'LIV Friday 10/30 **Synthetic Artist**',
+    '- Alcohol included',
+    '- Please note we add approximately 36% tax/service charge to your spend below',
+    'MAIN FLOOR:',
+    '- Dance floor: $6,000++ (BG)',
+    '- Main Floor Small: $2,000++ (SG)',
+    '- Front Stage: Highest Offer',
+  ];
+  const normal = record(lines.join('\n'), 'LIV MIAMI');
+  const unicode = record(lines.join('\u2028').replace('\u2028MAIN FLOOR:', '\u2029MAIN FLOOR:'), 'LIV MIAMI');
+  assert.deepEqual(unicode.candidates, normal.candidates);
+  assert.deepEqual(unicode.pendingItems, normal.pendingItems);
+  assert.equal(unicode.candidates.length, 2);
+  assert.match(unicode.candidates[0].conditions, /36% tax\/service/);
+  const ambiguous = record(lines.join('\u2028').replace('Friday 10/30', 'Saturday 10/30'), 'LIV MIAMI');
+  assert.equal(ambiguous.candidates.length, 0);
+  assert.ok(ambiguous.pendingItems.some(item => item.reason === 'ambiguous_date'));
+});
+
+test('LIV preserves the explicit no-view annotation and rejects unknown additions', () => {
+  const header = 'LIV Friday 10/30 **Synthetic Artist**\u2028';
+  const accepted = record(`${header}- Mezzanine VIP: $1,000++ (SG) No view of Dj`, 'LIV MIAMI');
+  assert.equal(accepted.candidates.length, 1);
+  assert.equal(accepted.candidates[0].minimumSpend, '1000');
+  assert.match(accepted.candidates[0].conditions, /\(SG\) No view of Dj/);
+  const unknown = record(`${header}- Mezzanine VIP: $1,000++ (SG) No view of Dj unless paid`, 'LIV MIAMI');
+  assert.equal(unknown.candidates.length, 0);
+  assert.ok(unknown.pendingItems.some(item => item.reason === 'unrecognized_price_conditions'));
+});
+
 test('stale source and wrong explicit year never deliver, nearby New Year resolves correctly', () => {
   assert.equal(record('Music ON, Friday, Dec 4\nE1 $10k++', 'SPACE TABLES', '2026-10-15T12:00:00Z').status, 'pending');
   assert.equal(record('2025 space tables\nMusic ON, Friday, Dec 4\nE1 $10k++').candidates.length, 0);

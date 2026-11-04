@@ -20,7 +20,8 @@ function eventDate(month, day, weekday, year, sentAt) {
 
 export function parseGroupPrices(message, group, now) {
   if (!['SPACE TABLES', 'LIV MIAMI'].includes(group) || !Number.isSafeInteger(message.sentAt) || message.sentAt <= 0) return null;
-  const text = String(message.text || '');
+  // WhatsApp can preserve Unicode line/paragraph separators in copied tariffs.
+  const text = String(message.text || '').replace(/[\u2028\u2029]/g, '\n');
   const lines = text.replace(/\r/g, '').split('\n').map(line => line.trim()).filter(Boolean);
   const isSpace = group === 'SPACE TABLES';
   const declaredYear = isSpace ? text.match(/\b(20\d{2})\s+space\s+tables\b/i)?.[1] : null;
@@ -55,7 +56,7 @@ export function parseGroupPrices(message, group, now) {
       continue;
     }
     // Only known LIV annotations may follow a fixed price. No invented capacity.
-    if ((isSpace && amount[4]) || (!isSpace && amount[4] && !/^(?:\((?:BG|SG|Next To Artist|Near Artist)\)\s*)+$/i.test(amount[4]))) {
+    if ((isSpace && amount[4]) || (!isSpace && amount[4] && !/^(?:(?:\((?:BG|SG|Next To Artist|Near Artist)\)\s*)+|\(SG\)\s+No\s+view\s+of\s+Dj)$/i.test(amount[4]))) {
       pendingItems.push({ line: index + 1, reason: 'unrecognized_price_conditions' });
       continue;
     }
