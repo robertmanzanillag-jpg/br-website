@@ -56,7 +56,7 @@ export function parseGroupPrices(message, group, now) {
       continue;
     }
     // Only known LIV annotations may follow a fixed price. No invented capacity.
-    if ((isSpace && amount[4]) || (!isSpace && amount[4] && !/^(?:\((?:BG|SG|Next To Artist|Near Artist)\)\s*)+$/i.test(amount[4]))) {
+    if ((isSpace && amount[4]) || (!isSpace && amount[4] && !/^(?:(?:\((?:BG|SG|Next To Artist|Near Artist)\)\s*)+|\(SG\)\s+No\s+view\s+of\s+Dj)$/i.test(amount[4]))) {
       pendingItems.push({ line: index + 1, reason: 'unrecognized_price_conditions' });
       continue;
     }

@@ -97,6 +97,17 @@ test('Unicode line separators retain LIV prices, conditions and ambiguity guards
   assert.ok(ambiguous.pendingItems.some(item => item.reason === 'ambiguous_date'));
 });
 
+test('LIV preserves the explicit no-view annotation and rejects unknown additions', () => {
+  const header = 'LIV Friday 10/30 **Synthetic Artist**\u2028';
+  const accepted = record(`${header}- Mezzanine VIP: $1,000++ (SG) No view of Dj`, 'LIV MIAMI');
+  assert.equal(accepted.candidates.length, 1);
+  assert.equal(accepted.candidates[0].minimumSpend, '1000');
+  assert.match(accepted.candidates[0].conditions, /\(SG\) No view of Dj/);
+  const unknown = record(`${header}- Mezzanine VIP: $1,000++ (SG) No view of Dj unless paid`, 'LIV MIAMI');
+  assert.equal(unknown.candidates.length, 0);
+  assert.ok(unknown.pendingItems.some(item => item.reason === 'unrecognized_price_conditions'));
+});
+
 test('stale source and wrong explicit year never deliver, nearby New Year resolves correctly', () => {
   assert.equal(record('Music ON, Friday, Dec 4\nE1 $10k++', 'SPACE TABLES', '2026-10-15T12:00:00Z').status, 'pending');
   assert.equal(record('2025 space tables\nMusic ON, Friday, Dec 4\nE1 $10k++').candidates.length, 0);
