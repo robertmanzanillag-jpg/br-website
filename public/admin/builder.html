@@ -2353,11 +2353,11 @@
       </div>
       <div class="form-group">
         <label>URL</label>
-        <input type="url" id="newLinkUrl" placeholder="https://...">
+        <input type="url" id="newLinkUrl" placeholder="https://..." oninput="queueNewLinkFlyer()">
       </div>
       <div class="form-group">
         <label for="newLinkImageUrl">Flyer image URL (optional)</label>
-        <input type="url" id="newLinkImageUrl" placeholder="https://.../flyer.jpg" oninput="previewNewFlyer()">
+        <input type="url" id="newLinkImageUrl" placeholder="https://.../flyer.jpg" oninput="newFlyerEditRevision++; delete this.dataset.sourceUrl; previewNewFlyer()">
         <label for="newLinkPhoto">Or upload a photo</label>
         <input type="file" id="newLinkPhoto" accept="image/jpeg,image/png,image/gif,image/webp" aria-describedby="newLinkPhotoStatus" onchange="uploadFlyer(this)">
         <p id="newLinkPhotoStatus" role="status">JPG, PNG, GIF or WebP · Maximum 5 MB</p>
@@ -3084,11 +3084,11 @@
           </div>
           <div class="form-group">
             <label>URL</label>
-            <input type="url" value="${el.url || ''}" onchange="updateField('url', this.value)">
+            <input type="url" value="${el.url || ''}" oninput="updateField('url', this.value)">
           </div>
           <div class="form-group">
             <label for="editLinkImageUrl">Flyer image URL</label>
-            <input id="editLinkImageUrl" type="url" value="${LinkFlyers.escapeAttribute(LinkFlyers.imageUrl(el))}" onchange="updateFlyer(this.value)" placeholder="https://.../flyer.jpg">
+            <input id="editLinkImageUrl" type="url" value="${LinkFlyers.escapeAttribute(LinkFlyers.imageUrl(el))}" data-link-flyer oninput="updateFlyer(this.value)" onchange="updateFlyer(this.value, true)" placeholder="https://.../flyer.jpg">
             <label for="editLinkPhoto">Or upload a photo</label>
             <input type="file" id="editLinkPhoto" accept="image/jpeg,image/png,image/gif,image/webp" aria-describedby="editLinkPhotoStatus" onchange="uploadFlyer(this, ${el.id})">
             <p id="editLinkPhotoStatus" role="status">JPG, PNG, GIF or WebP · Maximum 5 MB</p>
@@ -3331,9 +3331,77 @@
       }).join('');
     }
     
+    let newFlyerTimer;
+    let linkModalGeneration = 0;
+    let creatingLink = false;
+    const flyerTimers = new Map();
+    const flyerEditRevisions = new WeakMap();
+    const manualFlyerEdits = new WeakSet();
+    let newFlyerEditRevision = 0;
+    const flyerJobs = new Set();
+    function trackFlyer(job) {
+      flyerJobs.add(job);
+      job.finally(() => flyerJobs.delete(job));
+      return job;
+    }
+    async function fillLinkFlyer(el) {
+      if (manualFlyerEdits.has(el)) return;
+      const url = el.url;
+      const before = el.metadata?.image_url;
+      const revision = flyerEditRevisions.get(el);
+      if (before && !el.metadata?.image_source_url) return;
+      const image = await LinkFlyers.resolve(url);
+      // A late result must never replace another URL or a manually edited photo.
+      if (el.url !== url || el.metadata?.image_url !== before || flyerEditRevisions.get(el) !== revision || !elements.includes(el)) return;
+      if (!image) { showToast('No se encontró foto. Puedes añadirla en Flyer image URL.', 'error'); return; }
+      el.metadata = { ...el.metadata, image_url: image, image_source_url: url };
+      renderElements();
+      if (selectedElement === el) {
+        const output = document.getElementById('settingsPanel').querySelector('[data-link-flyer]');
+        if (output && document.activeElement !== output) output.value = image;
+      }
+    }
+    function queueNewLinkFlyer() {
+      const output = document.getElementById('newLinkImageUrl');
+      if (output.dataset.sourceUrl && output.dataset.sourceUrl !== document.getElementById('newLinkUrl').value.trim()) {
+        output.value = '';
+        delete output.dataset.sourceUrl;
+        previewNewFlyer();
+      }
+      clearTimeout(newFlyerTimer);
+      newFlyerTimer = setTimeout(() => trackFlyer(fillNewLinkFlyer()), 350);
+    }
+    async function fillNewLinkFlyer() {
+      const generation = linkModalGeneration;
+      const editRevision = newFlyerEditRevision;
+      const input = document.getElementById('newLinkUrl');
+      const output = document.getElementById('newLinkImageUrl');
+      const url = input.value.trim();
+      const before = output.value;
+      if (!url || before || flyerUploadPending) return;
+      const image = await LinkFlyers.resolve(url);
+      if (generation === linkModalGeneration && editRevision === newFlyerEditRevision && input.value.trim() === url && output.value === before && image) {
+        output.value = image;
+        output.dataset.sourceUrl = url;
+        previewNewFlyer();
+      }
+    }
+
     function updateField(field, value) {
       if (!selectedElement) return;
-      selectedElement[field] = value;
+      const el = selectedElement;
+      if (field === 'url' && el.element_type === 'link' && el.url !== value) {
+        clearTimeout(flyerTimers.get(el));
+        if (el.metadata?.image_source_url) {
+          delete el.metadata.image_url;
+          delete el.metadata.image_source_url;
+        }
+        el[field] = value;
+        flyerTimers.set(el, setTimeout(() => {
+          flyerTimers.delete(el);
+          trackFlyer(fillLinkFlyer(el));
+        }, 350));
+      } else el[field] = value;
       renderElements();
     }
     
@@ -3431,6 +3499,10 @@
     async function saveAllChanges() {
       if (flyerUploadPending) return showToast('Wait for the photo to finish uploading', 'error');
       try {
+        for (const timer of flyerTimers.values()) clearTimeout(timer);
+        flyerTimers.clear();
+        await Promise.all([...flyerJobs]);
+        await Promise.all(elements.filter(el => el.element_type === 'link' && el.url && !LinkFlyers.imageUrl(el) && !Object.hasOwn(el.metadata || {}, 'image_url')).map(fillLinkFlyer));
         for (const el of elements) {
           const response = await fetch(`/api/admin/bio-elements/${el.id}`, {
             method: 'PUT',
@@ -3485,10 +3557,12 @@
     document.getElementById('socialSelector')?.addEventListener('change', updateSocialUrls);
     
     function openModal(id) {
+      if (id === 'linkModal') linkModalGeneration++;
       document.getElementById(id).classList.add('active');
     }
     
     function closeModal(id) {
+      if (id === 'linkModal') { linkModalGeneration++; clearTimeout(newFlyerTimer); }
       document.getElementById(id).classList.remove('active');
     }
     
@@ -3516,10 +3590,17 @@
     async function uploadFlyer(input, elementId = null) {
       const file = input.files[0];
       if (!file) return;
+      if (creatingLink) {
+        input.value = '';
+        return showToast('Wait for the link to finish saving before uploading a photo', 'error');
+      }
       if (flyerUploadPending) {
         input.value = '';
         return showToast('Wait for the current photo to finish uploading', 'error');
       }
+      const generation = linkModalGeneration;
+      const element = elementId === null ? null : elements.find(item => item.id === elementId);
+      if (elementId !== null && !element) return;
       const status = document.getElementById(elementId === null ? 'newLinkPhotoStatus' : 'editLinkPhotoStatus');
       if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
         status.textContent = 'Choose a JPG, PNG, GIF or WebP photo, 5 MB or smaller.';
@@ -3527,6 +3608,13 @@
         return;
       }
       flyerUploadPending = true;
+      if (element) {
+        manualFlyerEdits.add(element);
+        flyerEditRevisions.set(element, (flyerEditRevisions.get(element) || 0) + 1);
+      } else {
+        clearTimeout(newFlyerTimer);
+        newFlyerEditRevision++;
+      }
       const urlInput = document.getElementById(elementId === null ? 'newLinkImageUrl' : 'editLinkImageUrl');
       urlInput.disabled = true;
       input.disabled = true;
@@ -3543,14 +3631,19 @@
         const imageUrl = LinkFlyers.safeImageUrl(result.imageUrl);
         if (!imageUrl) throw new Error('Invalid photo URL');
         if (elementId === null) {
+          if (generation !== linkModalGeneration) {
+            status.textContent = 'Upload canceled. Choose a photo again.';
+            return;
+          }
+          delete urlInput.dataset.sourceUrl;
           document.getElementById('newLinkImageUrl').value = imageUrl;
           previewNewFlyer();
           status.textContent = 'Photo uploaded. Add the link to save it.';
         } else {
           // Keep the upload tied to its original link even if selection changes.
-          const element = elements.find(item => item.id === elementId);
-          if (!element) throw new Error('Link no longer exists');
+          if (!elements.includes(element)) throw new Error('Link no longer exists');
           element.metadata = { ...element.metadata, image_url: imageUrl };
+          delete element.metadata.image_source_url;
           saveHistory();
           renderElements();
           if (selectedElement?.id === elementId) renderSettingsPanel();
@@ -3567,16 +3660,25 @@
       }
     }
 
-    function updateFlyer(value) {
+    function updateFlyer(value, validate = false) {
+      if (!selectedElement) return;
+      manualFlyerEdits.add(selectedElement);
+      flyerEditRevisions.set(selectedElement, (flyerEditRevisions.get(selectedElement) || 0) + 1);
       if (value.trim() && !LinkFlyers.safeImageUrl(value)) {
-        showToast('Use an HTTPS image URL or a local /images/ path', 'error');
+        if (validate) showToast('Use an HTTPS image URL or a local /images/ path', 'error');
         return;
       }
-      updateMeta('image_url', value.trim());
+      delete selectedElement.metadata?.image_source_url;
+      selectedElement.metadata = { ...selectedElement.metadata, image_url: value.trim() };
+      renderElements();
     }
 
     async function createLink() {
       if (flyerUploadPending) return showToast('Wait for the photo to finish uploading', 'error');
+      if (creatingLink) return;
+      clearTimeout(newFlyerTimer);
+      const generation = linkModalGeneration;
+      const editRevision = newFlyerEditRevision;
       const iconGrid = document.getElementById('newLinkIconGrid');
       const selectedIcon = iconGrid.querySelector('.icon-option.selected');
       
@@ -3602,10 +3704,21 @@
         showToast('Use an HTTPS image URL or a local /images/ path', 'error');
         return;
       }
-      const image = flyer || LinkFlyers.imageUrl(data);
-      if (image) data.metadata.image_url = image;
-      
-      await createElementAPI(data, 'linkModal');
+      const source = document.getElementById('newLinkImageUrl').dataset.sourceUrl;
+      creatingLink = true;
+      try {
+        const image = flyer || LinkFlyers.imageUrl(data) || await LinkFlyers.resolve(data.url.trim());
+        if (generation !== linkModalGeneration) return;
+        if (editRevision !== newFlyerEditRevision || data.url !== document.getElementById('newLinkUrl').value) {
+          showToast('Link or photo changed. Click Add Link again to save it.', 'error');
+          return;
+        }
+        if (image) {
+          data.metadata.image_url = image;
+          if (!flyer || source === data.url.trim()) data.metadata.image_source_url = data.url.trim();
+        }
+        await createElementAPI(data, 'linkModal');
+      } finally { creatingLink = false; }
     }
     
     async function createPromo() {
@@ -3801,6 +3914,7 @@
         closeModal(modalId);
         if (modalId === 'linkModal') {
           document.getElementById('newLinkImageUrl').value = '';
+          delete document.getElementById('newLinkImageUrl').dataset.sourceUrl;
           document.getElementById('newLinkPhoto').value = '';
           document.getElementById('newLinkPhotoStatus').textContent = 'JPG, PNG, GIF or WebP · Maximum 5 MB';
           previewNewFlyer();
