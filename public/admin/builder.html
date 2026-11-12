@@ -2356,8 +2356,12 @@
         <input type="url" id="newLinkUrl" placeholder="https://...">
       </div>
       <div class="form-group">
-        <label>Flyer image URL (optional)</label>
-        <input type="url" id="newLinkImageUrl" placeholder="https://.../flyer.jpg">
+        <label for="newLinkImageUrl">Flyer image URL (optional)</label>
+        <input type="url" id="newLinkImageUrl" placeholder="https://.../flyer.jpg" oninput="previewNewFlyer()">
+        <label for="newLinkPhoto">Or upload a photo</label>
+        <input type="file" id="newLinkPhoto" accept="image/jpeg,image/png,image/gif,image/webp" aria-describedby="newLinkPhotoStatus" onchange="uploadFlyer(this)">
+        <p id="newLinkPhotoStatus" role="status">JPG, PNG, GIF or WebP · Maximum 5 MB</p>
+        <img id="newLinkPhotoPreview" alt="Selected flyer preview" hidden style="max-width:100%;max-height:140px;object-fit:contain">
       </div>
       <div class="form-group">
         <label>Icon</label>
@@ -3083,8 +3087,11 @@
             <input type="url" value="${el.url || ''}" onchange="updateField('url', this.value)">
           </div>
           <div class="form-group">
-            <label>Flyer image URL</label>
-            <input type="url" value="${LinkFlyers.escapeAttribute(LinkFlyers.imageUrl(el))}" onchange="updateFlyer(this.value)" placeholder="https://.../flyer.jpg">
+            <label for="editLinkImageUrl">Flyer image URL</label>
+            <input id="editLinkImageUrl" type="url" value="${LinkFlyers.escapeAttribute(LinkFlyers.imageUrl(el))}" onchange="updateFlyer(this.value)" placeholder="https://.../flyer.jpg">
+            <label for="editLinkPhoto">Or upload a photo</label>
+            <input type="file" id="editLinkPhoto" accept="image/jpeg,image/png,image/gif,image/webp" aria-describedby="editLinkPhotoStatus" onchange="uploadFlyer(this, ${el.id})">
+            <p id="editLinkPhotoStatus" role="status">JPG, PNG, GIF or WebP · Maximum 5 MB</p>
           </div>
           <div class="form-group">
             <label>Icon</label>
@@ -3422,6 +3429,7 @@
     }
     
     async function saveAllChanges() {
+      if (flyerUploadPending) return showToast('Wait for the photo to finish uploading', 'error');
       try {
         for (const el of elements) {
           const response = await fetch(`/api/admin/bio-elements/${el.id}`, {
@@ -3495,6 +3503,70 @@
       document.getElementById(inputId + 'Text').value = color;
     }
     
+    function previewNewFlyer() {
+      const imageUrl = LinkFlyers.safeImageUrl(document.getElementById('newLinkImageUrl').value);
+      const preview = document.getElementById('newLinkPhotoPreview');
+      preview.hidden = !imageUrl;
+      if (imageUrl) preview.src = imageUrl;
+      else preview.removeAttribute('src');
+    }
+
+    let flyerUploadPending = false;
+
+    async function uploadFlyer(input, elementId = null) {
+      const file = input.files[0];
+      if (!file) return;
+      if (flyerUploadPending) {
+        input.value = '';
+        return showToast('Wait for the current photo to finish uploading', 'error');
+      }
+      const status = document.getElementById(elementId === null ? 'newLinkPhotoStatus' : 'editLinkPhotoStatus');
+      if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+        status.textContent = 'Choose a JPG, PNG, GIF or WebP photo, 5 MB or smaller.';
+        input.value = '';
+        return;
+      }
+      flyerUploadPending = true;
+      const urlInput = document.getElementById(elementId === null ? 'newLinkImageUrl' : 'editLinkImageUrl');
+      urlInput.disabled = true;
+      input.disabled = true;
+      status.textContent = 'Uploading photo…';
+      try {
+        // Decode before uploading so unsupported/corrupt files cannot replace the flyer.
+        const bitmap = await createImageBitmap(file);
+        bitmap.close();
+        const body = new FormData();
+        body.append('image', file);
+        const response = await fetch('/api/admin/bio-flyers', { method: 'POST', credentials: 'include', body });
+        if (!response.ok) throw new Error('Upload failed');
+        const result = await response.json();
+        const imageUrl = LinkFlyers.safeImageUrl(result.imageUrl);
+        if (!imageUrl) throw new Error('Invalid photo URL');
+        if (elementId === null) {
+          document.getElementById('newLinkImageUrl').value = imageUrl;
+          previewNewFlyer();
+          status.textContent = 'Photo uploaded. Add the link to save it.';
+        } else {
+          // Keep the upload tied to its original link even if selection changes.
+          const element = elements.find(item => item.id === elementId);
+          if (!element) throw new Error('Link no longer exists');
+          element.metadata = { ...element.metadata, image_url: imageUrl };
+          saveHistory();
+          renderElements();
+          if (selectedElement?.id === elementId) renderSettingsPanel();
+          showToast('Photo uploaded. Click Save All to save the link.');
+        }
+      } catch {
+        status.textContent = 'Photo could not be uploaded. Try again; your previous photo is unchanged.';
+        showToast('Photo could not be uploaded. Please try again.', 'error');
+      } finally {
+        flyerUploadPending = false;
+        urlInput.disabled = false;
+        input.disabled = false;
+        input.value = '';
+      }
+    }
+
     function updateFlyer(value) {
       if (value.trim() && !LinkFlyers.safeImageUrl(value)) {
         showToast('Use an HTTPS image URL or a local /images/ path', 'error');
@@ -3504,6 +3576,7 @@
     }
 
     async function createLink() {
+      if (flyerUploadPending) return showToast('Wait for the photo to finish uploading', 'error');
       const iconGrid = document.getElementById('newLinkIconGrid');
       const selectedIcon = iconGrid.querySelector('.icon-option.selected');
       
@@ -3726,6 +3799,12 @@
         saveHistory();
         renderElements();
         closeModal(modalId);
+        if (modalId === 'linkModal') {
+          document.getElementById('newLinkImageUrl').value = '';
+          document.getElementById('newLinkPhoto').value = '';
+          document.getElementById('newLinkPhotoStatus').textContent = 'JPG, PNG, GIF or WebP · Maximum 5 MB';
+          previewNewFlyer();
+        }
         showToast('Element added!', 'success');
       } catch (err) {
         showToast('Error adding element', 'error');

@@ -236,6 +236,8 @@ app.use('/api/auto-sync', autoSyncRouter); // Auto sync every Thursday 8PM
 // Import Object Storage
 import { Client } from '@replit/object-storage';
 const objectStorage = new Client();
+import { createBioFlyerRouter } from './routes/bio-flyers.js';
+app.use('/api', createBioFlyerRouter(objectStorage));
 
 // API endpoint to serve images from Object Storage
 app.get('/api/storage/*', async (req, res) => {
